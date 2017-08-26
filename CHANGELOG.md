@@ -16,4 +16,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - readme file
 - license
 
-[Unreleased]: https://github.com/dgriffen/flif.rs/compare/0.0.1...HEAD
+[Unreleased]: https://github.com/dgriffen/flif.rs/compare/v0.0.1...HEAD
