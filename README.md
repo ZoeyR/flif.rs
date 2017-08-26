@@ -3,7 +3,7 @@
   <img src="https://cdn.rawgit.com/dgriffen/flif.rs/e9cb5c4a/flif.rs.svg" alt="logo" height=150 />
 </p>
 
-[![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
+ [![Build Status](https://travis-ci.org/dgriffen/flif.rs.svg?branch=master)](https://travis-ci.org/dgriffen/flif.rs) [![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
 
 flif.rs is a Rust implementation of the [flif16](http://flif.info/spec.html) image format. This project was inspired by the work on [flif-rs](https://github.com/panicbit/flif-rs). I have no plans to try and one-up the other Rust library; this project was simply created to be a learning experience.
 
