@@ -1,11 +1,10 @@
 extern crate flif;
 
-use flif::Decoder;
+use flif::components::header::Header;
 
 fn main() {
     let file = std::fs::File::open("examples/flif.flif").unwrap();
 
-    let mut decoder = Decoder::new(file);
-    let header = decoder.read_main_header().unwrap();
+    let header = Header::from_reader(file).unwrap();
     println!("{:?}", header);
 }
