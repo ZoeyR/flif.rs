@@ -1,0 +1,6 @@
+[package]
+name = "flif"
+version = "0.0.1"
+authors = ["Daniel Griffen <daniel@griffen.io>"]
+
+[dependencies]
