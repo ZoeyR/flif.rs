@@ -28,7 +28,7 @@ mod private {
 mod tests {
     #[test]
     fn test_varint_read() {
-        use util::ReadVarintExt;
+        use numbers::FlifReadExt;
 
         let buf = [0x82, 0x5F, 0x82, 0x2F];
 
@@ -40,10 +40,10 @@ mod tests {
 
     #[test]
     fn test_varint_overflow_read() {
-        use util::ReadVarintExt;
+        use numbers::FlifReadExt;
 
         let buf = [0xFF, 0xFF, 0xFF, 0xFF, 0x7F];
         let num = buf.as_ref().read_varint().unwrap();
-        assert_eq!(num, 351);
+        assert_eq!(num, u32::max_value());
     }
 }
