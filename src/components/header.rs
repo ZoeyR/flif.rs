@@ -79,7 +79,7 @@ impl Header {
 }
 
 #[derive(Debug)]
-pub struct SecondHeader {
+struct SecondHeader {
     pub bits_per_pixel: Vec<u8>,
     pub alpha_zero: bool,
     pub loops: u8,

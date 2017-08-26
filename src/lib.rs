@@ -1,6 +1,6 @@
 extern crate inflate;
 
-use components::header::{Header, SecondHeader};
+use components::header::Header;
 use components::metadata::Metadata;
 
 pub use decoder::Decoder;
@@ -16,7 +16,7 @@ pub struct Flif {
     pub header: Header,
     // For this first iteration we won't handle metadata sections. In fact, if they exist we will likely error
     pub metadata: Vec<Metadata>,
-    second_header: SecondHeader, //Just like second breakfast
+    second_header: (), //Just like second breakfast
     image_data: () // TODO: decide on format of image data
 }
 

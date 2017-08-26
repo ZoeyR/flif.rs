@@ -5,6 +5,7 @@ use inflate::inflate_bytes;
 use error::*;
 use numbers::FlifReadExt;
 
+#[derive(Debug)]
 pub enum ChunkType {
     Iccp,
     Exif,
@@ -16,6 +17,7 @@ enum MetadataType {
     Required(u8)
 }
 
+#[derive(Debug)]
 pub struct Metadata {
     pub chunk_type: ChunkType,
     pub content: Vec<u8>,
