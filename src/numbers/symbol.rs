@@ -22,9 +22,9 @@ where
         // we can use unwraps in this method because 1 and 2 should never fail to convert to any
         // integer type
         while max != min {
-            let mid = min + (max - min) / T::from(2).unwrap();
+            let mid = min + (max - min) / (T::one() + T::one());
             if self.rac.read_bit()? {
-                min = mid + T::from(1).unwrap();
+                min = mid + T::one();
             } else {
                 max = mid;
             }

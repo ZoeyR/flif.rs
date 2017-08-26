@@ -12,6 +12,7 @@ pub enum Error {
     UnknownOptionalMetadata([u8; 4]),
     UnknownRequiredMetadata(u8),
     InvalidMetadata(String),
+    Unimplemented(&'static str),
 }
 
 impl error::Error for Error {
@@ -22,6 +23,7 @@ impl error::Error for Error {
             &Error::UnknownOptionalMetadata(_) => "encountered an unknown optional metadata",
             &Error::UnknownRequiredMetadata(_) => "encountered an unknown required metadata",
             &Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
+            &Error::Unimplemented(desc) => desc,
         }
     }
 
@@ -32,6 +34,7 @@ impl error::Error for Error {
             &Error::UnknownOptionalMetadata(_) => None,
             &Error::UnknownRequiredMetadata(_) => None,
             &Error::InvalidMetadata(_) => None,
+            &Error::Unimplemented(_) => None,
         }
     }
 }
@@ -59,6 +62,9 @@ impl fmt::Display for Error {
             ),
             &Error::InvalidMetadata(_) => {
                 write!(fmt, "metadata content was not a valid deflate stream")
+            }
+            &Error::Unimplemented(desc) => {
+                write!(fmt, "feature is currently unimplemented: {}", desc)
             }
         }
     }

@@ -44,7 +44,7 @@ impl Header {
 
         let flags = reader.read_u8()?;
 
-        let (interlaced, animated) = match flags & 0x0F {
+        let (interlaced, animated) = match flags >> 4 & 0x0F {
             flag @ 3...4 => (flag == 4, false),
             flag @ 5...6 => (flag == 6, true),
             _ => {
@@ -54,7 +54,7 @@ impl Header {
             }
         };
 
-        let channels = match flags >> 4 & 0x0F {
+        let channels = match flags & 0x0F {
             1 => Channels::Grayscale,
             3 => Channels::RGB,
             4 => Channels::RGBA,
@@ -160,15 +160,17 @@ impl SecondHeader {
 
         if custom_bitchance {
             // this is currently unimplemented in the reference implementation
-            unimplemented!();
+            return Err(Error::Unimplemented(
+                "custom bitchances are currently unimplemented in flif",
+            ));
         }
 
         // TODO: read transformations
-        if uni_decoder.read_bool()? {
-            unimplemented!("reading transformation data is not currently implemented");
-        }
-
-        let invis_pixel_predictor = uni_decoder.read_val(0, 2)?;
+        let invis_pixel_predictor = if uni_decoder.read_bool()? {
+            255 // placeholder
+        } else {
+            uni_decoder.read_val(0, 2)?
+        };
 
         Ok(SecondHeader {
             bits_per_pixel,
