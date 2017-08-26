@@ -1,5 +1,5 @@
 # flif.rs
-<img src="flif.rs.png" alt="logo" style="width: 10em;"/>
+<center><img src="flif.rs.png" alt="logo" height=150 /></center>
 
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
 
