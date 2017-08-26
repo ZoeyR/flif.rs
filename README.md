@@ -1,6 +1,6 @@
 # flif.rs
 <p align="center">
-  <img src="flif.rs.svg" alt="logo" height=150 />
+  <img src="https://cdn.rawgit.com/dgriffen/flif.rs/e9cb5c4a/flif.rs.svg" alt="logo" height=150 />
 </p>
 
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
