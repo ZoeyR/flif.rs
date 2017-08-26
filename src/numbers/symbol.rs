@@ -1,31 +1,39 @@
 use std::io::Read;
 
+use num_traits::{PrimInt, FromPrimitive};
+
 use super::rac::{Config, Input};
 use error::*;
 
-pub struct UniformSymbolDecoder<C, R> {
-    rac: Input<C, R>,
+pub struct UniformSymbolDecoder<'rac, C: 'rac, R: 'rac> {
+    rac: &'rac mut Input<C, R>,
 }
 
-impl<C, R> UniformSymbolDecoder<C, R>
+impl<'rac, C, R> UniformSymbolDecoder<'rac, C, R>
 where
     C: Config,
     R: Read,
 {
-    pub fn new(rac: Input<C, R>) -> Self {
+    pub fn new(rac: &'rac mut Input<C, R>) -> Self {
         UniformSymbolDecoder { rac }
     }
 
-    pub fn read_isize(&mut self, mut min: isize, mut max: isize) -> Result<isize> {
+    pub fn read_val<T: PrimInt + FromPrimitive>(&mut self, mut min: T, mut max: T) -> Result<T> {
+        // we can use unwraps in this method because 1 and 2 should never fail to convert to any
+        // integer type
         while max != min {
-            let mid = min + (max - min) + 2;
+            let mid = min + (max - min) / T::from(2).unwrap();
             if self.rac.read_bit()? {
-                min = mid + 1;
+                min = mid + T::from(1).unwrap();
             } else {
                 max = mid;
             }
         }
 
         Ok(min)
+    }
+
+    pub fn read_bool(&mut self) -> Result<bool> {
+        Ok(self.rac.read_bit()?)
     }
 }

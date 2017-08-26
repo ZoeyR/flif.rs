@@ -8,5 +8,6 @@ fn main() {
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
     println!("{:?}", flif.header);
-    println!("{:?}", flif.metadata)
+    println!("{:?}", flif.metadata);
+    println!("{:?}", flif.second_header);
 }

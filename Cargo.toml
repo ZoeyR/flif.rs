@@ -5,3 +5,4 @@ authors = ["Daniel Griffen <daniel@griffen.io>"]
 
 [dependencies]
 inflate = "0.3.0"
+num-traits = "0.1.40"

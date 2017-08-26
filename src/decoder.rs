@@ -1,7 +1,9 @@
 use std::io::Read;
 
 use error::*;
-use {Flif, Header, Metadata};
+use {Flif, Metadata};
+use components::header::{Header, SecondHeader};
+use numbers::rac::{Config24, Input};
 
 pub struct Decoder<R> {
     reader: R,
@@ -23,11 +25,16 @@ impl<R: Read> Decoder<R> {
             return Err(Error::UnknownRequiredMetadata(non_optional_byte));
         }
 
+        // After this point all values are encoding using the RAC so methods should no longer take
+        // the Read object directly.
+        let mut rac: Input<Config24, _> = Input::new(&mut self.reader)?;
+
+        let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
         Ok(Flif {
             header: main_header,
             metadata,
-            second_header: (),
-            image_data: (),
+            second_header,
+            _image_data: (),
         })
     }
 }
