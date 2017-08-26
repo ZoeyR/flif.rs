@@ -10,5 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - framework for reading secondary flif header
 - example that decodes and prints the header of a flif file
 - started a changelog
+- readme file
+- license
 
 [Unreleased]: https://github.com/dgriffen/flif.rs
