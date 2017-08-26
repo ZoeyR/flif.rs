@@ -1,5 +1,6 @@
 # flif.rs
 
+
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
 
 flif.rs is a Rust implementation of the [flif16](http://flif.info/spec.html) image format. This project was inspired by the work on [flif-rs](https://github.com/panicbit/flif-rs). I have no plans to try and one-up the other Rust library; this project was simply created to be a learning experience.
@@ -42,3 +43,8 @@ fn main() {
     println!("{:?}", header);
 }
 ```
+
+[CHANGELOG]: ./CHANGELOG.md
+[LICENSE]: ./LICENSE
+[version-badge]: https://img.shields.io/badge/version-0.0.1-blue.svg
+[license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
