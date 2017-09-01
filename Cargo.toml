@@ -2,6 +2,17 @@
 name = "flif"
 version = "0.0.1"
 authors = ["Daniel Griffen <daniel@griffen.io>"]
+license = "MIT"
+description = "flif decoder written in pure Rust"
+
+[lib]
+name = "flif"
+path = "src/flif/lib.rs"
+
+[[bin]]
+name = "flif"
+path = "src/bin/main.rs"
+doc = false
 
 [dependencies]
 inflate = "0.3.0"
