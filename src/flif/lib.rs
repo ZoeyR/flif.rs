@@ -15,10 +15,9 @@ pub mod error;
 
 pub struct Flif {
     pub header: Header,
-    // For this first iteration we won't handle metadata sections. In fact, if they exist we will likely error
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader, //Just like second breakfast
-    _image_data: () // TODO: decide on format of image data
+    _image_data: (),                 // TODO: decide on format of image data
 }
 
 mod private {

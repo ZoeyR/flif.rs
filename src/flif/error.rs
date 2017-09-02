@@ -63,9 +63,7 @@ impl fmt::Display for Error {
             &Error::InvalidMetadata(_) => {
                 write!(fmt, "metadata content was not a valid deflate stream")
             }
-            &Error::Unimplemented(desc) => {
-                write!(fmt, "feature is currently unimplemented: {}", desc)
-            }
+            &Error::Unimplemented(desc) => write!(fmt, "{}", desc),
         }
     }
 }

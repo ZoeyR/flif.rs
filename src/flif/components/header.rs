@@ -38,7 +38,7 @@ impl Header {
 
         if &magic_buf != b"FLIF" {
             return Err(Error::InvalidHeader {
-                desc: "file did not start with magic phrase",
+                desc: "file is corrupt or not a FLIF",
             });
         }
 
@@ -115,7 +115,6 @@ impl SecondHeader {
         main_header: &Header,
         rac: &mut Input<C, R>,
     ) -> Result<Self> {
-
         let mut uni_decoder = UniformSymbolDecoder::new(rac);
 
         let bits_per_pixel = (0..main_header.channels as u8)
@@ -161,7 +160,7 @@ impl SecondHeader {
         if custom_bitchance {
             // this is currently unimplemented in the reference implementation
             return Err(Error::Unimplemented(
-                "custom bitchances are currently unimplemented in flif",
+                "custom bitchances are currently unimplemented in the flif standard",
             ));
         }
 
