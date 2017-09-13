@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use num_traits::{PrimInt, FromPrimitive};
+use num_traits::PrimInt;
 
 use super::rac::{Config, Input};
 use error::*;
@@ -18,11 +18,9 @@ where
         UniformSymbolDecoder { rac }
     }
 
-    pub fn read_val<T: PrimInt + FromPrimitive>(&mut self, mut min: T, mut max: T) -> Result<T> {
-        // we can use unwraps in this method because 1 and 2 should never fail to convert to any
-        // integer type
+    pub fn read_val<T: PrimInt>(&mut self, mut min: T, mut max: T) -> Result<T> {
         while max != min {
-            let mid = min + (max - min) / (T::one() + T::one());
+            let mid = min + ((max - min) >> 1);
             if self.rac.read_bit()? {
                 min = mid + T::one();
             } else {

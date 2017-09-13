@@ -39,6 +39,25 @@ mod tests {
     }
 
     #[test]
+    fn test_varint_max_read() {
+        use numbers::FlifReadExt;
+
+        let buf = [0x8F, 0xFF, 0xFF, 0xFF, 0x7F];
+        let num = buf.as_ref().read_varint().unwrap();
+        assert_eq!(num, u32::max_value());
+    }
+
+    #[test]
+    fn test_varint_min_read() {
+        use numbers::FlifReadExt;
+
+        let buf = [0x00];
+        let num = buf.as_ref().read_varint().unwrap();
+        assert_eq!(num, u32::min_value());
+    }
+
+    #[test]
+    #[should_panic(expected = "too large")]
     fn test_varint_overflow_read() {
         use numbers::FlifReadExt;
 
