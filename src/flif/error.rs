@@ -1,7 +1,7 @@
-use std::result;
 use std::error;
 use std::fmt;
 use std::io;
+use std::result;
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -12,6 +12,7 @@ pub enum Error {
     UnknownOptionalMetadata([u8; 4]),
     UnknownRequiredMetadata(u8),
     InvalidMetadata(String),
+    InvalidVarint,
     Unimplemented(&'static str),
 }
 
@@ -23,6 +24,9 @@ impl error::Error for Error {
             &Error::UnknownOptionalMetadata(_) => "encountered an unknown optional metadata",
             &Error::UnknownRequiredMetadata(_) => "encountered an unknown required metadata",
             &Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
+            &Error::InvalidVarint => {
+                "reader did not contain a varint, or varint was too large to store"
+            }
             &Error::Unimplemented(desc) => desc,
         }
     }
@@ -34,6 +38,7 @@ impl error::Error for Error {
             &Error::UnknownOptionalMetadata(_) => None,
             &Error::UnknownRequiredMetadata(_) => None,
             &Error::InvalidMetadata(_) => None,
+            &Error::InvalidVarint => None,
             &Error::Unimplemented(_) => None,
         }
     }
@@ -63,6 +68,10 @@ impl fmt::Display for Error {
             &Error::InvalidMetadata(_) => {
                 write!(fmt, "metadata content was not a valid deflate stream")
             }
+            &Error::InvalidVarint => write!(
+                fmt,
+                "reader did not contain a varint, or varint was too large to store"
+            ),
             &Error::Unimplemented(desc) => write!(fmt, "{}", desc),
         }
     }

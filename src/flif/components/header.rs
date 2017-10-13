@@ -1,5 +1,4 @@
 use std::io::Read;
-
 use error::*;
 use numbers::FlifReadExt;
 use numbers::rac::{Config, Input};
@@ -75,11 +74,11 @@ impl Header {
                 })
             }
         };
-        let width = 1 + reader.read_varint()?;
-        let height = 1 + reader.read_varint()?;
+        let width = 1 + reader.read_varint::<u32>()?;
+        let height = 1 + reader.read_varint::<u32>()?;
 
         let num_frames = if animated {
-            2 + reader.read_varint()?
+            2 + reader.read_varint::<u32>()?
         } else {
             1
         };

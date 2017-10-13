@@ -1,17 +1,14 @@
 use std::io::Read;
-
+use error::{Error, Result};
 use num_traits::{PrimInt, Unsigned};
-
-use error::*;
 use super::FlifReadExt;
 
+// T::from(_).unwrap() is panic-safe in this function because there exists no type that is both
+// PrimInt and Unsigned that cannot store a u8
 pub fn read_varint<R: Read, T: PrimInt + Unsigned>(mut reader: R) -> Result<T> {
+    let bitshift_multiplier = &T::from(128).unwrap();
     let mut acc: T = T::zero();
-    // The specification is vague on the exact properties of varints. For the purposes of this
-    // implementation we will assume that a varint can be stored in an unsigned 32bit number.
-    // We could also assume that the varint was maximally compact, if we did so we could change
-    // the following loop to only read 5 bytes, however, the reference implementation loops for
-    // a maximum of 10 bytes so we will do the same for compatibility.
+
     loop {
         let byte = reader.read_u8()?;
 
@@ -22,13 +19,11 @@ pub fn read_varint<R: Read, T: PrimInt + Unsigned>(mut reader: R) -> Result<T> {
 
         let byte = byte & 0b0111_1111;
         if let Some(val) = acc.checked_add(&T::from(byte).unwrap())
-            .and_then(|val| val.checked_mul(&T::from(128).unwrap()))
+            .and_then(|val| val.checked_mul(bitshift_multiplier))
         {
             acc = val;
         } else {
-            break Err(Error::InvalidHeader {
-                desc: "reader did not contain a varint, or varint was too large for u32",
-            });
+            break Err(Error::InvalidVarint);
         }
     }
 }

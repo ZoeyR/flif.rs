@@ -1,8 +1,7 @@
 use std::io::Read;
-
+use components::header::{Header, SecondHeader};
 use error::*;
 use {Flif, Metadata};
-use components::header::{Header, SecondHeader};
 use numbers::rac::{Config24, Input};
 
 pub struct Decoder<R> {

@@ -1,8 +1,6 @@
 use std::io::Read;
-
-use inflate::inflate_bytes;
-
 use error::*;
+use inflate::inflate_bytes;
 use numbers::FlifReadExt;
 
 #[derive(Debug)]
@@ -60,7 +58,7 @@ impl Metadata {
         };
 
         let chunk_size = reader.read_varint()?;
-        let mut deflated_chunk = vec![0; chunk_size as usize];
+        let mut deflated_chunk = vec![0; chunk_size];
         reader.read_exact(&mut deflated_chunk)?;
         let inflated_chunk = inflate_bytes(&deflated_chunk).map_err(|s| Error::InvalidMetadata(s))?;
 

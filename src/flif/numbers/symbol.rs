@@ -1,9 +1,7 @@
 use std::io::Read;
-
-use num_traits::PrimInt;
-
-use super::rac::{Config, Input};
 use error::*;
+use num_traits::PrimInt;
+use super::rac::{Config, Input};
 
 pub struct UniformSymbolDecoder<'rac, C: 'rac, R: 'rac> {
     rac: &'rac mut Input<C, R>,
