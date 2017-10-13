@@ -41,8 +41,10 @@ use flif::Decoder;
 fn main() {
     let file = std::fs::File::open("some_image.flif").unwrap();
     let mut decoder = Decoder::new(file);
-    let header = decoder.read_main_header().unwrap();
-    println!("{:?}", header);
+    let flif = decoder.decode().unwrap();
+    println!("{:?}", flif.header);
+    println!("{:?}", flif.metadata);
+    println!("{:?}", flif.second_header);
 }
 ```
 
