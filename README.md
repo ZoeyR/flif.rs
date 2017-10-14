@@ -6,6 +6,9 @@
  [![Build Status](https://travis-ci.org/dgriffen/flif.rs.svg?branch=master)](https://travis-ci.org/dgriffen/flif.rs) [![version][version-badge]][CHANGELOG] [![license][license-badge]][LICENSE]
 
 flif.rs is a Rust implementation of the [flif16](http://flif.info/spec.html) image format. This project was inspired by the work on [flif-rs](https://github.com/panicbit/flif-rs).
+## Current Status
+
+Currently this project is pre-alpha. As of right now it is only capable of decoding header data, pixel decoding is not yet implemented. The project will enter alpha status once enough pixel decoding is implemented to successfully decode the reference image in the examples folder.
 
 ## Development
 ### Prerequisites
