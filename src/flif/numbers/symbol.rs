@@ -1,18 +1,14 @@
 use std::io::Read;
 use error::*;
 use num_traits::PrimInt;
-use super::rac::{Config, Input};
+use super::rac::Rac;
 
-pub struct UniformSymbolDecoder<'rac, C: 'rac, R: 'rac> {
-    rac: &'rac mut Input<C, R>,
+pub struct UniformSymbolDecoder<'rac, R: 'rac> {
+    rac: &'rac mut Rac<R>,
 }
 
-impl<'rac, C, R> UniformSymbolDecoder<'rac, C, R>
-where
-    C: Config,
-    R: Read,
-{
-    pub fn new(rac: &'rac mut Input<C, R>) -> Self {
+impl<'rac, R: Read> UniformSymbolDecoder<'rac, R> {
+    pub fn new(rac: &'rac mut Rac<R>) -> Self {
         UniformSymbolDecoder { rac }
     }
 

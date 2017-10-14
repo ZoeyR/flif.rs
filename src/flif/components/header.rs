@@ -1,7 +1,7 @@
 use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
-use numbers::rac::{Config, Input};
+use numbers::rac::Rac;
 use numbers::symbol::UniformSymbolDecoder;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -110,10 +110,7 @@ pub struct SecondHeader {
 }
 
 impl SecondHeader {
-    pub fn from_rac<C: Config, R: Read>(
-        main_header: &Header,
-        rac: &mut Input<C, R>,
-    ) -> Result<Self> {
+    pub fn from_rac<R: Read>(main_header: &Header, rac: &mut Rac<R>) -> Result<Self> {
         let mut uni_decoder = UniformSymbolDecoder::new(rac);
 
         let bits_per_pixel = (0..main_header.channels as u8)
