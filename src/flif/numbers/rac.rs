@@ -10,7 +10,7 @@ pub trait Config: Sealed {
     const MIN_RANGE: u32 = 1 << Self::MIN_RANGE_BITS;
     const BASE_RANGE: u32 = 1 << Self::MAX_RANGE_BITS;
 
-    fn chance_12bit_chance(b12: u32, range: u32) -> Result<u32>;
+    fn apply_chance(chance: u32, range: u32) -> u32;
 }
 
 pub struct Config24;
@@ -19,10 +19,22 @@ impl Config for Config24 {
     const MAX_RANGE_BITS: u32 = 24;
     const MIN_RANGE_BITS: u32 = 16;
 
-    fn chance_12bit_chance(b12: u32, range: u32) -> Result<u32> {
-        assert_eq!(b12 >> 12, 0);
+    /// chances are a number between 0 and 4096, this function expands that into range, e.g.
+    /// let x = chance / 4096
+    /// chance_12bit_chance returns an integer ciel(y) such that y/range = x
+    /// in otherwords, chance_12bit_chance(chance, range) = ciel((chance / 4096) * range)
+    fn apply_chance(chance: u32, range: u32) -> u32 {
+        assert_eq!(chance >> 12, 0);
+        assert_eq!(range >> 24, 0);
 
-        Ok((((range & 0xFFF) * b12 + 0x800) >> 12) + ((range >> 12) * b12))
+        // there is the possibility of integer overflow so we break up the calculation to prevent
+        // overflow by applying the following tranformations to the formula
+        // range = (range >> 12) + (range & 0xFFF)
+        // range * chance = ((range >> 12) * chance) + ((range & 0xFFF) * chance)
+        // range * chance / 4096 = range / 4096 * chance
+        let lower_12bits = (((range & 0xFFF) * chance) + 2048) >> 12;
+        let upper_bits = (range >> 12) * chance;
+        upper_bits + lower_12bits
     }
 }
 
@@ -88,6 +100,7 @@ where
     }
 
     pub fn read_bit(&mut self) -> Result<bool> {
+        // creates a 50% chance
         let chance = self.range >> 1;
         self.get(chance)
     }
