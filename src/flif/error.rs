@@ -9,7 +9,7 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
     Io(io::Error),
     InvalidHeader { desc: &'static str },
-    UnknownOptionalMetadata([u8; 4]),
+    UnknownCriticalMetadata([u8; 4]),
     UnknownRequiredMetadata(u8),
     InvalidMetadata(String),
     InvalidVarint,
@@ -21,7 +21,7 @@ impl error::Error for Error {
         match self {
             &Error::InvalidHeader { desc } => desc,
             &Error::Io(ref err) => err.description(),
-            &Error::UnknownOptionalMetadata(_) => "encountered an unknown optional metadata",
+            &Error::UnknownCriticalMetadata(_) => "encountered an unknown critical metadata",
             &Error::UnknownRequiredMetadata(_) => "encountered an unknown required metadata",
             &Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
             &Error::InvalidVarint => {
@@ -35,7 +35,7 @@ impl error::Error for Error {
         match self {
             &Error::InvalidHeader { .. } => None,
             &Error::Io(ref err) => Some(err),
-            &Error::UnknownOptionalMetadata(_) => None,
+            &Error::UnknownCriticalMetadata(_) => None,
             &Error::UnknownRequiredMetadata(_) => None,
             &Error::InvalidMetadata(_) => None,
             &Error::InvalidVarint => None,
@@ -55,9 +55,9 @@ impl fmt::Display for Error {
         match self {
             &Error::InvalidHeader { desc } => write!(fmt, "FLIF header was invalid: {}", desc),
             &Error::Io(ref err) => write!(fmt, "error reading from stream: {}", err),
-            &Error::UnknownOptionalMetadata(ref header) => write!(
+            &Error::UnknownCriticalMetadata(ref header) => write!(
                 fmt,
-                "unknown metadata header encountered: {}",
+                "unknown critical metadata header encountered: {}",
                 String::from_utf8_lossy(header)
             ),
             &Error::UnknownRequiredMetadata(ref byte) => write!(
