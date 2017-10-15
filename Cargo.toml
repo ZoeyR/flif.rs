@@ -1,6 +1,6 @@
 [package]
 name = "flif"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Daniel Griffen <daniel@griffen.io>"]
 license = "MIT"
 description = "flif decoder written in pure Rust"

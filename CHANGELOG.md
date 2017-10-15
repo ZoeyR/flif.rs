@@ -5,7 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## 0.0.2 - 2017-10-14
+### Added
 - reading of second header (minus transformations)
+- RAC chance decoding+encoding
+
+### Fixed
+- RAC no longer returns Err on end of file
+    - previously the RAC could not read streams within 4 bytes of the end
+
+### Changed
+- reodered cli commands
+
 ## 0.0.1 - 2017-08-26
 ### Added
 - ability to decode main flif header
@@ -16,4 +28,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - readme file
 - license
 
-[Unreleased]: https://github.com/dgriffen/flif.rs/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/dgriffen/flif.rs/compare/v0.0.2...HEAD
