@@ -56,6 +56,6 @@ The flif.rs logo is a combination of the official flif logo and Rust logo.
 
 [CHANGELOG]: ./CHANGELOG.md
 [LICENSE]: ./LICENSE
-[version-badge]: https://img.shields.io/badge/version-0.0.1-blue.svg
+[version-badge]: https://img.shields.io/badge/version-0.0.2-blue.svg
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [logo]: ./flif.rs.png

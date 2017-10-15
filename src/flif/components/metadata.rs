@@ -8,6 +8,7 @@ pub enum ChunkType {
     Iccp,
     Exif,
     Exmp,
+    Unknown([u8; 4])
 }
 
 enum MetadataType {
@@ -44,7 +45,8 @@ impl Metadata {
 
         header_buf[0] = reader.read_u8()?;
         match header_buf[0] {
-            byte @ 0...31 => return Ok(MetadataType::Required(byte)),
+            0 => return Ok(MetadataType::Required(0)),
+            byte @ 1...31 => return Err(Error::UnknownRequiredMetadata(byte)),
             _ => {}
         }
 
@@ -54,7 +56,8 @@ impl Metadata {
             b"iCCP" => ChunkType::Iccp,
             b"eXif" => ChunkType::Exif,
             b"eXmp" => ChunkType::Exmp,
-            header => return Err(Error::UnknownOptionalMetadata(*header))
+            header if header[0] >= b'a' && header[0] <= b'z' => ChunkType::Unknown(*header),
+            header => return Err(Error::UnknownCriticalMetadata(*header))
         };
 
         let chunk_size = reader.read_varint()?;
