@@ -26,7 +26,7 @@ impl<R: Read> Decoder<R> {
 
         // After this point all values are encoding using the RAC so methods should no longer take
         // the Read object directly.
-        let mut rac: Rac<_> = Rac::new(&mut self.reader)?;
+        let mut rac: Rac<_> = Rac::from_reader(&mut self.reader)?;
 
         let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
         Ok(Flif {
