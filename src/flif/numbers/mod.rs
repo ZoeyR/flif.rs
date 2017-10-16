@@ -5,6 +5,7 @@ use num_traits::{PrimInt, Unsigned};
 pub mod rac;
 pub mod varint;
 pub mod symbol;
+pub mod near_zero;
 
 pub trait FlifReadExt {
     fn read_u8(&mut self) -> Result<u8>;
