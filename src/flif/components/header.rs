@@ -2,7 +2,7 @@ use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
 use numbers::rac::Rac;
-use numbers::symbol::UniformSymbolDecoder;
+use numbers::symbol;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -111,43 +111,41 @@ pub struct SecondHeader {
 
 impl SecondHeader {
     pub fn from_rac<R: Read>(main_header: &Header, rac: &mut Rac<R>) -> Result<Self> {
-        let mut uni_decoder = UniformSymbolDecoder::new(rac);
-
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
                 BytesPerChannel::Two => Ok(16),
-                BytesPerChannel::Custom => uni_decoder.read_val(1, 16),
+                BytesPerChannel::Custom => symbol::read_val(rac, 1, 16),
             })
             .collect::<Result<Vec<_>>>()?;
 
         let alpha_zero = if main_header.channels == Channels::RGBA {
-            uni_decoder.read_bool()?
+            symbol::read_bool(rac)?
         } else {
             false
         };
 
         let loops = if main_header.animated {
-            Some(uni_decoder.read_val(0, 100)?)
+            Some(symbol::read_val(rac, 0, 100)?)
         } else {
             None
         };
 
         let frame_delay = if main_header.animated {
             Some((0..main_header.num_frames)
-                .map(|_| uni_decoder.read_val(0, 60_000))
+                .map(|_| symbol::read_val(rac, 0, 60_000))
                 .collect::<Result<Vec<_>>>()?)
         } else {
             None
         };
 
-        let custom_cutoff = uni_decoder.read_bool()?;
+        let custom_cutoff = symbol::read_bool(rac)?;
 
         let (cutoff, alpha_divisor, custom_bitchance) = if custom_cutoff {
             (
-                uni_decoder.read_val(1, 128)?,
-                uni_decoder.read_val(2, 128)?,
-                uni_decoder.read_bool()?,
+                symbol::read_val(rac, 1, 128)?,
+                symbol::read_val(rac, 2, 128)?,
+                symbol::read_bool(rac)?,
             )
         } else {
             (2, 19, false)
