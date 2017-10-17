@@ -3,7 +3,6 @@ use error::*;
 use numbers::FlifReadExt;
 use numbers::rac::Rac;
 use numbers::symbol::UniformSymbolDecoder;
-use components::transformation::Transformations;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -106,7 +105,7 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: Vec<Transformations>, // Placeholder until transformations are implemented
+    pub transformations: (), // Placeholder until transformations are implemented
     pub invis_pixel_predictor: u8,
 }
 
@@ -162,7 +161,7 @@ impl SecondHeader {
         }
 
         // TODO: read transformations
-        let (t, invis_pixel_predictor) = Self::read_transformations(&mut uni_decoder)?;
+        let invis_pixel_predictor = 255;
 
         Ok(SecondHeader {
             bits_per_pixel,
@@ -173,23 +172,8 @@ impl SecondHeader {
             cutoff,
             alpha_divisor,
             custom_bitchance,
-            transformations: t,
+            transformations: (),
             invis_pixel_predictor,
         })
-    }
-
-    fn read_transformations<'rac, R: 'rac + Read>(uni_decoder: &mut UniformSymbolDecoder<'rac, R>) -> Result<(Vec<Transformations>, u8)> {
-        let mut transformations = vec![];
-        while uni_decoder.read_bool()? {
-            let transformation = Transformations::from_int(uni_decoder.read_val(0, 13)?);
-            transformations.push(transformation);
-            match transformation {
-                Transformations::YCoGg => continue,
-                _ => return Ok((transformations, 255))
-
-            }
-        }
-
-        Ok((transformations, uni_decoder.read_val(0, 2)?)) 
     }
 }

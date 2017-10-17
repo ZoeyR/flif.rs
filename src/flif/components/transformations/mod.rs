@@ -1,32 +1,16 @@
-#[derive(Copy, Clone, Debug)]
-pub enum Transformations {
-    ChannelCompact,
-    YCoGg,
-    PermutePlanes,
-    Bounds,
-    PalleteAlpha,
-    Pallete,
-    ColorBuckets,
-    DuplicateFrame,
-    FrameShape,
-    FrameLookback,
-}
+mod bounds;
+mod channel_compact;
+mod permute_planes;
+mod ycocg;
 
-impl Transformations {
-    pub fn from_int(num: u32) -> Transformations {
-        use self::Transformations::*;
-        match num {
-            0 => ChannelCompact,
-            1 => YCoGg,
-            3 => PermutePlanes,
-            4 => Bounds,
-            5 => PalleteAlpha,
-            6 => Pallete,
-            7 => ColorBuckets,
-            10 => DuplicateFrame,
-            11 => FrameShape,
-            12 => FrameLookback,
-            _ => unimplemented!(),
-        }
-    }
+pub trait Transformation {
+    fn snap(&self, channel: u8, values: u16, pixel: u16) -> u16;
+
+    fn min(&self, channel: u8) -> u16;
+
+    fn max(&self, channel: u8) -> u16;
+
+    fn cmin(&self, channel: u8, values: u16) -> u16;
+
+    fn cmax(&self, channel: u8, values: u16) -> u16;
 }
