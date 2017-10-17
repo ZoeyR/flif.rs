@@ -9,7 +9,7 @@ pub enum Transformations {
     ColorBuckets,
     DuplicateFrame,
     FrameShape,
-    FrameLookback
+    FrameLookback,
 }
 
 impl Transformations {
@@ -26,7 +26,7 @@ impl Transformations {
             10 => DuplicateFrame,
             11 => FrameShape,
             12 => FrameLookback,
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }
