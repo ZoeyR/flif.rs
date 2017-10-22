@@ -56,7 +56,7 @@ impl<R: Read> NearZeroCoder for Rac<R> {
         let mut left = have - 1;
 
         // read mantissa bits from most-significant to least-significant
-        for pos in (exponent - 1)..0 {
+        for pos in (0..exponent).rev() {
             left >>= 1;
 
             // if the bit is 1, then the value will be at least minabs1
