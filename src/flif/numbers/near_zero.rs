@@ -6,11 +6,11 @@ use numbers::rac::ChanceTableEntry;
 use numbers::rac::Rac;
 
 pub trait NearZeroCoder {
-    fn read_near_zero(&mut self, min: i32, max: i32, context: &mut ChanceTable);
+    fn read_near_zero(&mut self, min: i32, max: i32, context: &mut ChanceTable) -> Result<i32>;
 }
 
 impl<R: Read> NearZeroCoder for Rac<R> {
-    fn read_near_zero<R: Read>(
+    fn read_near_zero(
         &mut self,
         min: i32,
         max: i32,
