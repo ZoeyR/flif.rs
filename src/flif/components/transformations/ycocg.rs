@@ -1,32 +1,45 @@
 use super::Transformation;
 
 #[derive(Debug)]
-pub struct YCoGg;
+pub struct YCoGg {
+    max: i16,
+}
 
 impl YCoGg {
-    pub fn new<T: Transformation>(transformation: &T) -> YCoGg {
-        YCoGg
+    pub fn new<T: ?Sized + Transformation>(transformation: &T) -> YCoGg {
+        let max_iter = [
+            transformation.max(0),
+            transformation.max(1),
+            transformation.max(2),
+        ];
+
+        let old_max = max_iter.iter().max().unwrap();
+        let new_max = (((old_max / 4) + 1) * 4) - 1;
+        YCoGg { max: new_max }
     }
 }
 
 impl Transformation for YCoGg {
-    fn snap(&self, channel: u8, values: u16, pixel: u16) -> u16 {
+    fn snap(&self, _channel: u8, _values: i16, _pixel: i16) -> i16 {
         unimplemented!()
     }
 
-    fn min(&self, channel: u8) -> u16 {
-        0
+    fn min(&self, channel: u8) -> i16 {
+        match channel {
+            0 => 0,
+            _ => -self.max,
+        }
     }
 
-    fn max(&self, channel: u8) -> u16 {
-        255
+    fn max(&self, _channel: u8) -> i16 {
+        self.max
     }
 
-    fn cmin(&self, channel: u8, values: u16) -> u16 {
+    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
         unimplemented!()
     }
 
-    fn cmax(&self, channel: u8, values: u16) -> u16 {
+    fn cmax(&self, _channel: u8, _values: i16) -> i16 {
         unimplemented!()
     }
 }

@@ -3,13 +3,13 @@ use numbers::rac::Rac;
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use components::header::{Header, SecondHeader};
-use numbers::rac::{ChanceTable, ChanceTableEntry};
+use numbers::rac::ChanceTable;
 use error::*;
 
 #[derive(Debug)]
 pub struct ChannelCompact {
-    max: [u16; 4],
-    decompacted: [Vec<u16>; 4],
+    max: [i16; 4],
+    decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
     pub fn new<R: Read, T: ?Sized + Transformation>(
@@ -48,23 +48,23 @@ impl ChannelCompact {
 }
 
 impl Transformation for ChannelCompact {
-    fn snap(&self, channel: u8, values: u16, pixel: u16) -> u16 {
+    fn snap(&self, _channel: u8, _values: i16, _pixel: i16) -> i16 {
         unimplemented!()
     }
 
-    fn min(&self, channel: u8) -> u16 {
+    fn min(&self, _channel: u8) -> i16 {
         0
     }
 
-    fn max(&self, channel: u8) -> u16 {
+    fn max(&self, channel: u8) -> i16 {
         self.max[channel as usize]
     }
 
-    fn cmin(&self, channel: u8, values: u16) -> u16 {
-        unimplemented!()
+    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
+        0
     }
 
-    fn cmax(&self, channel: u8, values: u16) -> u16 {
-        unimplemented!()
+    fn cmax(&self, channel: u8, _values: i16) -> i16 {
+        self.max[channel as usize]
     }
 }
