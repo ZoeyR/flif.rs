@@ -1,8 +1,8 @@
 use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
+use numbers::symbol::UniformSymbolCoder;
 use numbers::rac::Rac;
-use numbers::symbol;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -115,37 +115,37 @@ impl SecondHeader {
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
                 BytesPerChannel::Two => Ok(16),
-                BytesPerChannel::Custom => symbol::read_val(rac, 1, 16),
+                BytesPerChannel::Custom => rac.read_val(1, 16),
             })
             .collect::<Result<Vec<_>>>()?;
 
         let alpha_zero = if main_header.channels == Channels::RGBA {
-            symbol::read_bool(rac)?
+            rac.read_bool()?
         } else {
             false
         };
 
         let loops = if main_header.animated {
-            Some(symbol::read_val(rac, 0, 100)?)
+            Some(rac.read_val(0, 100)?)
         } else {
             None
         };
 
         let frame_delay = if main_header.animated {
             Some((0..main_header.num_frames)
-                .map(|_| symbol::read_val(rac, 0, 60_000))
+                .map(|_| rac.read_val(0, 60_000))
                 .collect::<Result<Vec<_>>>()?)
         } else {
             None
         };
 
-        let custom_cutoff = symbol::read_bool(rac)?;
+        let custom_cutoff = rac.read_bool()?;
 
         let (cutoff, alpha_divisor, custom_bitchance) = if custom_cutoff {
             (
-                symbol::read_val(rac, 1, 128)?,
-                symbol::read_val(rac, 2, 128)?,
-                symbol::read_bool(rac)?,
+                rac.read_val(1, 128)?,
+                rac.read_val(2, 128)?,
+                rac.read_bool()?,
             )
         } else {
             (2, 19, false)
