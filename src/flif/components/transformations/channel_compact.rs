@@ -8,9 +8,8 @@ use error::*;
 
 #[derive(Debug)]
 pub struct ChannelCompact {
-    min: [u16; 4],
     max: [u16; 4],
-    decompacted: Vec<u16>,
+    decompacted: [Vec<u16>; 4],
 }
 impl ChannelCompact {
     pub fn new<R: Read, T: ?Sized + Transformation>(
@@ -20,9 +19,8 @@ impl ChannelCompact {
     ) -> Result<ChannelCompact> {
         let mut context = ChanceTable::new(second.alpha_divisor, second.cutoff);
         let mut t = ChannelCompact {
-            min: [0; 4],
             max: [0; 4],
-            decompacted: Vec::new(),
+            decompacted: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         };
 
         for c in 0..header.channels as usize {
@@ -31,17 +29,17 @@ impl ChannelCompact {
                 transformation.max(c as u8) - transformation.min(c as u8),
                 &mut context,
             )?;
-            t.min[c] = transformation.min(c as u8);
+            let mut min = transformation.min(c as u8);
             for i in 0..t.max[c] {
-                t.decompacted.push(
-                    t.min[c]
+                t.decompacted[c].push(
+                    min
                         + rac.read_near_zero(
                             0,
-                            transformation.max(c as u8) - t.min[c] + t.max[c] - i,
+                            transformation.max(c as u8) - (min + (t.max[c] - i)),
                             &mut context,
                         )?,
                 );
-                t.min[c] = t.decompacted[i as usize];
+                min = t.decompacted[c][i as usize];
             }
         }
 
@@ -55,7 +53,7 @@ impl Transformation for ChannelCompact {
     }
 
     fn min(&self, channel: u8) -> u16 {
-        self.min[channel as usize]
+        0
     }
 
     fn max(&self, channel: u8) -> u16 {
