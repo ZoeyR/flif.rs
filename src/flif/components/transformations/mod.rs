@@ -1,15 +1,14 @@
-use numbers::rac::Rac;
 use std::io::Read;
-use numbers::symbol::UniformSymbolCoder;
 use components::header::{Header, SecondHeader};
-use self::channel_compact::ChannelCompact;
 use error::*;
+use numbers::rac::Rac;
+use numbers::symbol::UniformSymbolCoder;
+use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
 
 mod bounds;
 mod channel_compact;
-mod permute_planes;
 mod ycocg;
 
 pub trait Transformation: ::std::fmt::Debug {

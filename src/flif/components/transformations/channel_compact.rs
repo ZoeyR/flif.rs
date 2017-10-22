@@ -1,10 +1,10 @@
-use super::Transformation;
-use numbers::rac::Rac;
 use std::io::Read;
-use numbers::near_zero::NearZeroCoder;
 use components::header::{Header, SecondHeader};
-use numbers::rac::ChanceTable;
 use error::*;
+use numbers::near_zero::NearZeroCoder;
+use numbers::rac::ChanceTable;
+use numbers::rac::Rac;
+use super::Transformation;
 
 #[derive(Debug)]
 pub struct ChannelCompact {

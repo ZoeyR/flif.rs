@@ -1,8 +1,8 @@
 use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
-use numbers::symbol::UniformSymbolCoder;
 use numbers::rac::Rac;
+use numbers::symbol::UniformSymbolCoder;
 use super::transformations;
 use super::transformations::Transformation;
 
