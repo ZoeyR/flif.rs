@@ -2,7 +2,9 @@ use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
 use numbers::rac::Rac;
-use numbers::symbol::UniformSymbolDecoder;
+use numbers::symbol::UniformSymbolCoder;
+use super::transformations;
+use super::transformations::Transformation;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -105,49 +107,47 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: Vec<()>, // Placeholder until transformations are implemented
-    pub invis_pixel_predictor: u8,
+    pub transformations: Vec<Box<Transformation>>, // Placeholder until transformations are implemented
+    pub invis_pixel_predictor: Option<u8>,
 }
 
 impl SecondHeader {
     pub fn from_rac<R: Read>(main_header: &Header, rac: &mut Rac<R>) -> Result<Self> {
-        let mut uni_decoder = UniformSymbolDecoder::new(rac);
-
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
                 BytesPerChannel::Two => Ok(16),
-                BytesPerChannel::Custom => uni_decoder.read_val(1, 16),
+                BytesPerChannel::Custom => rac.read_val(1, 16),
             })
             .collect::<Result<Vec<_>>>()?;
 
         let alpha_zero = if main_header.channels == Channels::RGBA {
-            uni_decoder.read_bool()?
+            rac.read_bool()?
         } else {
             false
         };
 
         let loops = if main_header.animated {
-            Some(uni_decoder.read_val(0, 100)?)
+            Some(rac.read_val(0, 100)?)
         } else {
             None
         };
 
         let frame_delay = if main_header.animated {
             Some((0..main_header.num_frames)
-                .map(|_| uni_decoder.read_val(0, 60_000))
+                .map(|_| rac.read_val(0, 60_000))
                 .collect::<Result<Vec<_>>>()?)
         } else {
             None
         };
 
-        let custom_cutoff = uni_decoder.read_bool()?;
+        let custom_cutoff = rac.read_bool()?;
 
         let (cutoff, alpha_divisor, custom_bitchance) = if custom_cutoff {
             (
-                uni_decoder.read_val(1, 128)?,
-                uni_decoder.read_val(2, 128)?,
-                uni_decoder.read_bool()?,
+                rac.read_val(1, 128)?,
+                rac.read_val(2, 128)?,
+                rac.read_bool()?,
             )
         } else {
             (2, 19, false)
@@ -160,14 +160,7 @@ impl SecondHeader {
             ));
         }
 
-        // TODO: read transformations
-        let invis_pixel_predictor = if uni_decoder.read_bool()? {
-            255 // placeholder
-        } else {
-            uni_decoder.read_val(0, 2)?
-        };
-
-        Ok(SecondHeader {
+        let mut second = SecondHeader {
             bits_per_pixel,
             alpha_zero,
             loops,
@@ -176,8 +169,23 @@ impl SecondHeader {
             cutoff,
             alpha_divisor,
             custom_bitchance,
-            transformations: vec![],
-            invis_pixel_predictor,
-        })
+            transformations: Vec::new(),
+            invis_pixel_predictor: None,
+        };
+
+        let transformations =
+            transformations::load_transformations(rac, (&main_header, &second))?;
+        
+        let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
+            Some(rac.read_val(0, 2)?)
+        } else {
+            // Garbage value
+            None
+        };
+
+        second.transformations = transformations;
+        second.invis_pixel_predictor = invis_pixel_predictor;
+
+        Ok(second)
     }
 }

@@ -1,7 +1,7 @@
-use std::io::Write;
 use std::collections::HashMap;
-use std::io::Read;
 use std::io;
+use std::io::Read;
+use std::io::Write;
 use error::*;
 use super::FlifReadExt;
 
