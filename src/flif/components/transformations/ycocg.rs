@@ -1,5 +1,6 @@
 use super::Transformation;
 
+#[derive(Debug)]
 pub struct YCoGg;
 
 impl YCoGg {
@@ -14,11 +15,11 @@ impl Transformation for YCoGg {
     }
 
     fn min(&self, channel: u8) -> u16 {
-        unimplemented!()
+        0
     }
 
     fn max(&self, channel: u8) -> u16 {
-        unimplemented!()
+        255
     }
 
     fn cmin(&self, channel: u8, values: u16) -> u16 {

@@ -3,6 +3,8 @@ use error::*;
 use numbers::FlifReadExt;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::rac::Rac;
+use super::transformations;
+use super::transformations::Transformation;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -105,7 +107,7 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: (), // Placeholder until transformations are implemented
+    pub transformations: Vec<Box<Transformation>>, // Placeholder until transformations are implemented
     pub invis_pixel_predictor: u8,
 }
 
@@ -158,10 +160,7 @@ impl SecondHeader {
             ));
         }
 
-        // TODO: read transformations
-        let invis_pixel_predictor = 255;
-
-        Ok(SecondHeader {
+        let mut second = SecondHeader {
             bits_per_pixel,
             alpha_zero,
             loops,
@@ -170,8 +169,18 @@ impl SecondHeader {
             cutoff,
             alpha_divisor,
             custom_bitchance,
-            transformations: (),
-            invis_pixel_predictor,
-        })
+            transformations: Vec::new(),
+            invis_pixel_predictor: 0,
+        };
+
+        let transformations =
+            transformations::load_transformations(rac, (&main_header, &second))?;
+        // TODO: read transformations
+        let invis_pixel_predictor = rac.read_val(0, 2)?;
+
+        second.transformations = transformations;
+        second.invis_pixel_predictor = invis_pixel_predictor;
+
+        Ok(second)
     }
 }
