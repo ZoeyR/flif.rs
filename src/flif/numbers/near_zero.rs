@@ -6,16 +6,21 @@ use numbers::rac::ChanceTableEntry;
 use numbers::rac::Rac;
 
 pub trait NearZeroCoder {
-    fn read_near_zero(&mut self, min: i32, max: i32, context: &mut ChanceTable) -> Result<i32>;
+    fn read_near_zero<I: PrimInt + Signed>(
+        &mut self,
+        min: I,
+        max: I,
+        context: &mut ChanceTable,
+    ) -> Result<I>;
 }
 
 impl<R: Read> NearZeroCoder for Rac<R> {
-    fn read_near_zero(
+    fn read_near_zero<I: PrimInt + Signed>(
         &mut self,
-        min: i32,
-        max: i32,
+        min: I,
+        max: I,
         context: &mut ChanceTable,
-    ) -> Result<i32> {
+    ) -> Result<I> {
         assert!(min < max);
 
         if min == max {
@@ -23,20 +28,18 @@ impl<R: Read> NearZeroCoder for Rac<R> {
         }
 
         if self.read(context, ChanceTableEntry::Zero)? {
-            return Ok(0);
+            return Ok(I::zero());
         }
 
-        let sign = if min < 0 && max > 0 {
+        let sign = if min < I::zero() && max > I::zero() {
             self.read(context, ChanceTableEntry::Sign)?
         } else {
-            {}
-            {}
-            min < 0
+            min < I::zero()
         };
 
         let absolute_max = ::std::cmp::max(max, -min);
         let largest_exponent =
-            (::std::mem::size_of::<i32>() * 8) - absolute_max.leading_zeros() as usize - 1;
+            (::std::mem::size_of::<I>() * 8) - absolute_max.leading_zeros() as usize - 1;
 
         let mut exponent = 0;
         loop {
@@ -63,7 +66,7 @@ impl<R: Read> NearZeroCoder for Rac<R> {
             let minabs1 = have | (1 << pos);
             // if the bit is 0, then the value will be at most maxabs0
             let maxabs0 = have | left;
-            if minabs1 > absolute_max {
+            if I::from(minabs1).unwrap() > absolute_max {
                 // 1-bit is impossible (would bump value above maximum),
                 // so assume the bit is 0 without reading it
             } else if maxabs0 >= 1 {
@@ -78,6 +81,7 @@ impl<R: Read> NearZeroCoder for Rac<R> {
                 have = minabs1;
             }
         }
+        let have = I::from(have).unwrap();
         Ok(if sign { have } else { -have })
     }
 }
