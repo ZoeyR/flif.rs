@@ -8,6 +8,7 @@ pub use decoder::Decoder;
 
 mod decoder;
 mod numbers;
+mod maniac;
 
 pub mod components;
 pub mod error;

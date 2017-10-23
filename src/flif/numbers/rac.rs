@@ -13,6 +13,7 @@ pub enum ChanceTableEntry {
     Mant(u8),
 }
 
+#[derive(Clone)]
 pub struct ChanceTable {
     table: HashMap<ChanceTableEntry, u16>,
     update_table: Vec<u16>,
