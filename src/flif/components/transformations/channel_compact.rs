@@ -1,3 +1,4 @@
+use components::transformations::ColorRange;
 use std::io::Read;
 use components::header::{Header, SecondHeader};
 use error::*;
@@ -8,7 +9,7 @@ use super::Transformation;
 
 #[derive(Debug)]
 pub struct ChannelCompact {
-    max: [i16; 4],
+    ranges: [ColorRange; 4],
     decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
@@ -19,23 +20,24 @@ impl ChannelCompact {
     ) -> Result<ChannelCompact> {
         let mut context = ChanceTable::new(second.alpha_divisor, second.cutoff);
         let mut t = ChannelCompact {
-            max: [0; 4],
+            ranges: [ColorRange{min: 0, max: 0}; 4],
             decompacted: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         };
 
         for c in 0..header.channels as usize {
-            t.max[c] = rac.read_near_zero(
+            let t_range = transformation.range(c as u8);
+            t.ranges[c].max = rac.read_near_zero(
                 0,
-                transformation.max(c as u8) - transformation.min(c as u8),
+                t_range.max - t_range.min,
                 &mut context,
             )?;
-            let mut min = transformation.min(c as u8);
-            for i in 0..t.max[c] {
+            let mut min = t_range.min;
+            for i in 0..t.ranges[c].max {
                 t.decompacted[c].push(
                     min
                         + rac.read_near_zero(
                             0,
-                            transformation.max(c as u8) - (min + (t.max[c] - i)),
+                            t_range.max - (min + (t.ranges[c].max - i)),
                             &mut context,
                         )?,
                 );
@@ -52,19 +54,11 @@ impl Transformation for ChannelCompact {
         unimplemented!()
     }
 
-    fn min(&self, _channel: u8) -> i16 {
-        0
+    fn range(&self, channel: u8) -> ColorRange {
+        self.ranges[channel as usize]
     }
 
-    fn max(&self, channel: u8) -> i16 {
-        self.max[channel as usize]
-    }
-
-    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
-        0
-    }
-
-    fn cmax(&self, channel: u8, _values: i16) -> i16 {
-        self.max[channel as usize]
+    fn crange(&self, channel: u8, _values: i16) -> ColorRange {
+        self.ranges[channel as usize]
     }
 }

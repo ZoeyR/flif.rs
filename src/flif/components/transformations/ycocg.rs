@@ -1,3 +1,4 @@
+use components::transformations::ColorRange;
 use super::Transformation;
 
 #[derive(Debug)]
@@ -8,9 +9,9 @@ pub struct YCoGg {
 impl YCoGg {
     pub fn new<T: ?Sized + Transformation>(transformation: &T) -> YCoGg {
         let max_iter = [
-            transformation.max(0),
-            transformation.max(1),
-            transformation.max(2),
+            transformation.range(0).max,
+            transformation.range(1).max,
+            transformation.range(2).max,
         ];
 
         let old_max = max_iter.iter().max().unwrap();
@@ -24,22 +25,16 @@ impl Transformation for YCoGg {
         unimplemented!()
     }
 
-    fn min(&self, channel: u8) -> i16 {
-        match channel {
+    fn range(&self, channel: u8) -> ColorRange {
+        let min = match channel {
             0 => 0,
-            _ => -self.max,
-        }
-    }
+            _ => -self.max
+        };
 
-    fn max(&self, _channel: u8) -> i16 {
-        self.max
+        ColorRange{min, max: self.max}
     }
-
-    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
-        unimplemented!()
-    }
-
-    fn cmax(&self, _channel: u8, _values: i16) -> i16 {
+    
+    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
         unimplemented!()
     }
 }

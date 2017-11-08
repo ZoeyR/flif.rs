@@ -14,13 +14,9 @@ mod ycocg;
 pub trait Transformation: ::std::fmt::Debug {
     fn snap(&self, channel: u8, values: i16, pixel: i16) -> i16;
 
-    fn min(&self, channel: u8) -> i16;
+    fn range(&self, channel: u8) -> ColorRange;
 
-    fn max(&self, channel: u8) -> i16;
-
-    fn cmin(&self, channel: u8, values: i16) -> i16;
-
-    fn cmax(&self, channel: u8, values: i16) -> i16;
+    fn crange(&self, channel: u8, values: i16) -> ColorRange;
 }
 
 #[derive(Debug)]
@@ -31,20 +27,12 @@ impl Transformation for Orig {
         pixel
     }
 
-    fn min(&self, _channel: u8) -> i16 {
-        0
+    fn range(&self, _channel: u8) -> ColorRange {
+        ColorRange{min: 0, max: 255}
     }
 
-    fn max(&self, _channel: u8) -> i16 {
-        255
-    }
-
-    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
-        0
-    }
-
-    fn cmax(&self, _channel: u8, _values: i16) -> i16 {
-        255
+    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
+        ColorRange{min: 0, max: 255}
     }
 }
 
@@ -77,4 +65,10 @@ pub fn load_transformations<R: Read>(
     }
 
     Ok(transforms)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ColorRange {
+    pub min: i16,
+    pub max: i16
 }

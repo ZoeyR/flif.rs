@@ -1,3 +1,4 @@
+use components::transformations::ColorRange;
 use std::io::Read;
 use components::header::{Header, SecondHeader};
 use error::*;
@@ -8,8 +9,7 @@ use super::Transformation;
 
 #[derive(Debug)]
 pub struct Bounds {
-    min: [i16; 4],
-    max: [i16; 4],
+    ranges: [ColorRange; 4]
 }
 
 impl Bounds {
@@ -19,19 +19,19 @@ impl Bounds {
         (ref header, ref second): (&Header, &SecondHeader),
     ) -> Result<Bounds> {
         let mut context = ChanceTable::new(second.alpha_divisor, second.cutoff);
-        let mut min = [0; 4];
-        let mut max = [0; 4];
+        let mut ranges = [ColorRange{min: 0, max: 0}; 4];
         for c in 0..header.channels as usize {
-            min[c] = rac.read_near_zero(0, trans.max(c as u8) - trans.min(c as u8), &mut context)?
-                + trans.min(c as u8);
-            max[c] = rac.read_near_zero(0, trans.max(c as u8) - min[c], &mut context)? + min[c];
+            let t_range = trans.range(c as u8);
+            ranges[c].min = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?
+                + t_range.min;
+            ranges[c].max = rac.read_near_zero(0, t_range.max - ranges[c].min, &mut context)? + ranges[c].min;
 
             // set real min and max
-            min[c] = ::std::cmp::max(min[c], trans.min(c as u8));
-            max[c] = ::std::cmp::min(max[c], trans.max(c as u8));
+            ranges[c].min = ::std::cmp::max(ranges[c].min, t_range.min);
+            ranges[c].max = ::std::cmp::min(ranges[c].max, t_range.max);
         }
 
-        Ok(Bounds { min, max })
+        Ok(Bounds { ranges })
     }
 }
 
@@ -40,19 +40,11 @@ impl Transformation for Bounds {
         unimplemented!()
     }
 
-    fn min(&self, channel: u8) -> i16 {
-        self.min[channel as usize]
+    fn range(&self, channel: u8) -> ColorRange {
+        self.ranges[channel as usize]
     }
 
-    fn max(&self, channel: u8) -> i16 {
-        self.max[channel as usize]
-    }
-
-    fn cmin(&self, _channel: u8, _values: i16) -> i16 {
-        unimplemented!()
-    }
-
-    fn cmax(&self, _channel: u8, _values: i16) -> i16 {
+    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
         unimplemented!()
     }
 }
