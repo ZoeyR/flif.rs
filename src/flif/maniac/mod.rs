@@ -1,16 +1,51 @@
+#![allow(unused)]
+
+use components::transformations::ColorRange;
+use ::FlifInfo;
 use numbers::rac::ChanceTable;
 use numbers::rac::Rac;
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
 
-pub struct ManiacTree {
+pub(crate) struct ManiacTree {
     root: ManiacNode
 }
 
 impl ManiacTree {
-    pub fn new<R: Read>(rac: &mut Rac<R>) -> ManiacTree {
+    pub fn new<R: Read>(rac: &mut Rac<R>, channel: u8, info: &FlifInfo) -> Result<ManiacTree> {
+        let context_a = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
+        let context_b = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
+        let context_c = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
+
+        let n_properties = Self::number_properties(channel, info);
+
         unimplemented!()
+    }
+
+    fn build_prange_vec(channel: u8, info: &FlifInfo) -> Result<Vec<ColorRange>> {
+        unimplemented!()
+    }
+
+    fn number_properties(channel: u8, info: &FlifInfo) -> Result<usize> {
+        if info.header.interlaced {
+            return Err(Error::Unimplemented("interlaced images are not currently supported"));
+        }
+
+        let mut base_count = 7;
+        if 0 < channel && channel < 3 {
+            base_count += 1;
+        }
+
+        if 1 < channel && channel < 3 {
+            base_count += 1;
+        }
+
+        if channel < 3 && 3 < info.header.channels as u8 {
+            base_count += 1;
+        }
+
+        Ok(base_count)
     }
 }
 
