@@ -9,7 +9,7 @@ use super::Transformation;
 
 #[derive(Debug)]
 pub struct Bounds {
-    ranges: [ColorRange; 4]
+    ranges: [ColorRange; 4],
 }
 
 impl Bounds {
@@ -19,12 +19,13 @@ impl Bounds {
         (ref header, ref second): (&Header, &SecondHeader),
     ) -> Result<Bounds> {
         let mut context = ChanceTable::new(second.alpha_divisor, second.cutoff);
-        let mut ranges = [ColorRange{min: 0, max: 0}; 4];
+        let mut ranges = [ColorRange { min: 0, max: 0 }; 4];
         for c in 0..header.channels as usize {
             let t_range = trans.range(c as u8);
-            ranges[c].min = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?
-                + t_range.min;
-            ranges[c].max = rac.read_near_zero(0, t_range.max - ranges[c].min, &mut context)? + ranges[c].min;
+            ranges[c].min =
+                rac.read_near_zero(0, t_range.max - t_range.min, &mut context)? + t_range.min;
+            ranges[c].max =
+                rac.read_near_zero(0, t_range.max - ranges[c].min, &mut context)? + ranges[c].min;
 
             // set real min and max
             ranges[c].min = ::std::cmp::max(ranges[c].min, t_range.min);
