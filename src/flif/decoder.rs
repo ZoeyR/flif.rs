@@ -1,3 +1,4 @@
+use FlifInfo;
 use std::io::Read;
 use components::header::{Header, SecondHeader};
 use error::*;
@@ -29,10 +30,22 @@ impl<R: Read> Decoder<R> {
         let mut rac: Rac<_> = Rac::from_reader(&mut self.reader)?;
 
         let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
+
+		let info = FlifInfo {
+			header: main_header,
+			metadata,
+			second_header
+		};
+
+		let mut maniac_vec = Vec::new();
+		for channel in 0..main_header.channels as u8 {
+			maniac_vec.push(::maniac::ManiacTree::new(&mut rac, channel, &info));
+		}
+
         Ok(Flif {
-            header: main_header,
-            metadata,
-            second_header,
+            header: info.header,
+            metadata: info.metadata,
+            second_header: info.second_header,
             _image_data: (),
         })
     }
