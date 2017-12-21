@@ -13,7 +13,7 @@ pub trait NearZeroCoder {
         context: &mut ChanceTable,
     ) -> Result<I>;
 
-	fn read_near_zero_2<I: PrimInt + Signed>(
+    fn read_near_zero_2<I: PrimInt + Signed>(
         &mut self,
         min: I,
         max: I,
@@ -21,21 +21,24 @@ pub trait NearZeroCoder {
     ) -> Result<I>;
 }
 
-impl<R> NearZeroCoder for R where R: IRac {
-	fn read_near_zero_2<I: PrimInt + Signed>(
+impl<R> NearZeroCoder for R
+where
+    R: IRac,
+{
+    fn read_near_zero_2<I: PrimInt + Signed>(
         &mut self,
         min: I,
         max: I,
         context: &mut ChanceTable,
     ) -> Result<I> {
-		if min > I::zero() {
-			Ok(self.read_near_zero(I::zero(), max - min, context)? + min)
-		} else if max < I::zero() {
-			Ok(self.read_near_zero(min - max, I::zero(), context)? + max)
-		} else {
-			self.read_near_zero(min, max, context)
-		}
-	}
+        if min > I::zero() {
+            Ok(self.read_near_zero(I::zero(), max - min, context)? + min)
+        } else if max < I::zero() {
+            Ok(self.read_near_zero(min - max, I::zero(), context)? + max)
+        } else {
+            self.read_near_zero(min, max, context)
+        }
+    }
 
     fn read_near_zero<I: PrimInt + Signed>(
         &mut self,

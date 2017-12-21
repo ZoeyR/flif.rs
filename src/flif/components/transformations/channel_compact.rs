@@ -20,17 +20,13 @@ impl ChannelCompact {
     ) -> Result<ChannelCompact> {
         let mut context = ChanceTable::new(second.alpha_divisor, second.cutoff);
         let mut t = ChannelCompact {
-            ranges: [ColorRange{min: 0, max: 0}; 4],
+            ranges: [ColorRange { min: 0, max: 0 }; 4],
             decompacted: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         };
 
         for c in 0..header.channels as usize {
             let t_range = transformation.range(c as u8);
-            t.ranges[c].max = rac.read_near_zero(
-                0,
-                t_range.max - t_range.min,
-                &mut context,
-            )?;
+            t.ranges[c].max = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?;
             let mut min = t_range.min;
             for i in 0..t.ranges[c].max {
                 t.decompacted[c].push(

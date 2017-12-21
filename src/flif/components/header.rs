@@ -173,9 +173,8 @@ impl SecondHeader {
             invis_pixel_predictor: None,
         };
 
-        let transformations =
-            transformations::load_transformations(rac, (&main_header, &second))?;
-        
+        let transformations = transformations::load_transformations(rac, (&main_header, &second))?;
+
         let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
             Some(rac.read_val(0, 2)?)
         } else {

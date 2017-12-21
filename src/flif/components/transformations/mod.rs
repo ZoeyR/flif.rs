@@ -40,19 +40,19 @@ impl Transformation for Orig {
 
 #[derive(Debug)]
 pub struct Transformations {
-	transforms: Vec<Box<Transformation>>
+    transforms: Vec<Box<Transformation>>,
 }
 
 impl Transformations {
-	pub fn empty() -> Transformations {
-		Transformations {
-			transforms: Vec::new()
-		}
-	}
+    pub fn empty() -> Transformations {
+        Transformations {
+            transforms: Vec::new(),
+        }
+    }
 
-	pub fn range(&self, c: usize) -> ColorRange {
-		self.transforms[self.transforms.len() - 1].range(c as u8)
-	}
+    pub fn range(&self, c: usize) -> ColorRange {
+        self.transforms[self.transforms.len() - 1].range(c as u8)
+    }
 }
 
 pub fn load_transformations<R: Read>(
@@ -89,7 +89,7 @@ pub fn load_transformations<R: Read>(
         transforms.push(t);
     }
 
-    Ok(Transformations {transforms})
+    Ok(Transformations { transforms })
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

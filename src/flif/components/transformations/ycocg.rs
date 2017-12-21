@@ -4,7 +4,7 @@ use super::Transformation;
 #[derive(Debug)]
 pub struct YCoGg {
     max: i16,
-	alpha_range: ColorRange,
+    alpha_range: ColorRange,
 }
 
 impl YCoGg {
@@ -17,7 +17,10 @@ impl YCoGg {
 
         let old_max = max_iter.iter().max().unwrap();
         let new_max = (((old_max / 4) + 1) * 4) - 1;
-        YCoGg { max: new_max , alpha_range: transformation.range(3) }
+        YCoGg {
+            max: new_max,
+            alpha_range: transformation.range(3),
+        }
     }
 }
 
@@ -30,12 +33,12 @@ impl Transformation for YCoGg {
         let (min, max) = match channel {
             0 => (0, self.max),
             1 | 2 => (-self.max, self.max),
-			_ => (self.alpha_range.min, self.alpha_range.max),
+            _ => (self.alpha_range.min, self.alpha_range.max),
         };
 
-        ColorRange{min, max}
+        ColorRange { min, max }
     }
-    
+
     fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
         unimplemented!()
     }
