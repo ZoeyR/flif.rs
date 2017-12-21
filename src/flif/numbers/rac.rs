@@ -5,7 +5,7 @@ use std::io::Write;
 use error::*;
 use super::FlifReadExt;
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ChanceTableEntry {
     Zero,
     Sign,
@@ -13,6 +13,7 @@ pub enum ChanceTableEntry {
     Mant(u8),
 }
 
+#[derive(Debug, Clone)]
 pub struct ChanceTable {
     table: HashMap<ChanceTableEntry, u16>,
     update_table: Vec<u16>,
@@ -48,7 +49,7 @@ impl ChanceTable {
     pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
         let old_chance = *self.table.entry(entry).or_insert(2048);
         let new_chance = self.new_chance(bit, old_chance);
-        
+
         self.table.insert(entry, new_chance);
     }
 
@@ -139,6 +140,12 @@ impl ChanceTable {
     }
 }
 
+pub trait IRac {
+    fn read_bit(&mut self) -> Result<bool>;
+    fn read_chance(&mut self, chance: u32) -> Result<bool>;
+    fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool>;
+}
+
 #[derive(Debug)]
 pub struct Rac<RW> {
     reader: RW,
@@ -168,6 +175,28 @@ impl<RW> Rac<RW> {
         let lower_12bits = (((range & 0xFFF) * chance) + 2048) / 4096;
         let upper_bits = (range / 4096) * chance;
         upper_bits + lower_12bits
+    }
+}
+
+impl<R: Read> IRac for Rac<R> {
+    fn read_bit(&mut self) -> Result<bool> {
+        // creates a 50% chance
+        let chance = self.range >> 1;
+        self.get(chance)
+    }
+
+    fn read_chance(&mut self, chance: u32) -> Result<bool> {
+        let chance = Self::apply_chance(chance, self.range);
+        self.get(chance)
+    }
+
+    fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
+        let chance = context.get_chance(entry);
+        let transformed_chance = Self::apply_chance(chance as u32, self.range);
+        let bit = self.get(transformed_chance)?;
+        context.update_entry(bit, entry);
+
+        Ok(bit)
     }
 }
 
@@ -223,25 +252,6 @@ impl<R: Read> Rac<R> {
             self.input()?;
             Ok(false)
         }
-    }
-
-    pub fn read_bit(&mut self) -> Result<bool> {
-        // creates a 50% chance
-        let chance = self.range >> 1;
-        self.get(chance)
-    }
-
-    pub fn read_chance(&mut self, chance: u32) -> Result<bool> {
-        let chance = Self::apply_chance(chance, self.range);
-        self.get(chance)
-    }
-
-    pub fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
-        let chance = context.get_chance(entry);
-        let bit = self.get(chance as u32)?;
-        context.update_entry(bit, entry);
-
-        Ok(bit)
     }
 }
 
@@ -355,7 +365,7 @@ mod tests {
         3815, 3816, 3817, 3817, 3818, 3819, 3820, 3821, 3822, 3823, 3824, 3825, 3826, 3827, 3828, 3829, 3830, 3831, 3832, 3833, 3834, 3835, 3835, 3836, 3837, 3838, 3839, 3840, 3841, 3842, 3843, 3844, 3845, 3846, 3847, 3847, 3849, 3850, 3851, 3852, 3853, 3853, 3854, 3855, 3856, 3857, 3858, 3859, 3860, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3868, 3869, 3870, 3871, 3871, 3873, 3873, 3874, 3875, 3876, 3877, 3878, 3879, 3880, 3881, 3882, 3883, 3884, 3885, 3886, 3887, 3888, 3889, 3889, 3890, 3891, 3892, 3893, 3894, 3895, 3896, 3897, 3898, 3899, 3900, 3901, 3902, 3903, 3904, 3905, 3906, 3906, 3907, 3908, 
         3909, 3910, 3911, 3912, 3913, 3914, 3915, 3916, 3917, 3918, 3919, 3920, 3921, 3922, 3923, 3924, 3925, 3926, 3926, 3927, 3928, 3929, 3930, 3931, 3932, 3933, 3934, 3935, 3936, 3937, 3938, 3939, 3940, 3941, 3942, 3943, 3943, 3944, 3945, 3946, 3947, 3948, 3949, 3950, 3951, 3952, 3953, 3954, 3955, 3956, 3957, 3958, 3959, 3960, 3961, 3961, 3962, 3963, 3964, 3965, 3966, 3967, 3968, 3969, 3970, 3971, 3972, 3973, 3974, 3975, 3976, 3977, 3978, 3979, 3979, 3980, 3981, 3982, 3983, 3984, 3986, 3986, 3987, 3988, 3989, 3990, 3991, 3991, 3993, 3994, 3995, 3996, 3997, 3997, 3998, 3999, 4000, 4001, 4002, 4003, 
         4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012, 4013, 4014, 4015, 4015, 4016, 4017, 4018, 4019, 4020, 4021, 4022, 4023, 4024, 4025, 4026, 4027, 4028, 4029, 4030, 4031, 4032, 4033, 4033, 4034, 4035, 4036, 4037, 4038, 4039, 4040, 4041, 4042, 4043, 4044, 4045, 4046, 4047, 4048, 4049, 4049, 4051, 4052, 4052, 4053, 4054, 4055, 4056, 4057, 4059, 4059, 4060, 4060, 4062, 4063, 4064, 4065, 4066, 4067, 4067, 4069, 4069, 4070, 4072, 4072, 4073, 4074, 4075, 4076, 4077, 4078, 4079, 4080, 4081, 4082, 4083, 4084, 4085, 4086, 4087, 4088, 4089, 4090, 4091, 4092, 4093, 4094, 4094, 0, 
-    ]; 
+    ];
 
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -400,7 +410,7 @@ mod tests {
         3599, 3600, 3601, 3602, 3603, 3604, 3605, 3606, 3607, 3608, 3609, 3609, 3610, 3611, 3612, 3613, 3614, 3615, 3616, 3617, 3618, 3619, 3620, 3621, 3622, 3623, 3624, 3625, 3626, 3627, 3627, 3628, 3629, 3630, 3631, 3632, 3633, 3634, 3635, 3636, 3637, 3638, 3639, 3640, 3641, 3642, 3643, 3644, 3645, 3645, 3646, 3647, 3648, 3649, 3650, 3651, 3652, 3653, 3654, 3655, 3656, 3657, 3658, 3659, 3660, 3661, 3662, 3663, 3663, 3664, 3665, 3666, 3667, 3668, 3669, 3670, 3671, 3672, 3673, 3674, 3675, 3676, 3677, 3678, 3679, 3680, 3681, 3681, 3682, 3683, 3684, 3685, 3686, 3687, 3688, 3689, 3690, 3691, 3692, 3693, 
         3694, 3695, 3696, 3697, 3698, 3699, 3699, 3700, 3701, 3702, 3703, 3704, 3705, 3706, 3707, 3708, 3709, 3710, 3711, 3712, 3713, 3714, 3715, 3716, 3717, 3717, 3718, 3719, 3720, 3721, 3722, 3723, 3724, 3725, 3726, 3727, 3728, 3729, 3730, 3731, 3732, 3733, 3734, 3735, 3735, 3736, 3737, 3738, 3739, 3740, 3741, 3742, 3743, 3744, 3745, 3746, 3747, 3748, 3749, 3750, 3751, 3752, 3753, 3753, 3754, 3755, 3756, 3757, 3758, 3759, 3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767, 3768, 3769, 3770, 3771, 3771, 3772, 3773, 3774, 3775, 3776, 3777, 3778, 3779, 3780, 3781, 3782, 3783, 3784, 3785, 3786, 3787, 3788, 
         3789, 3789, 3790, 3791, 3792, 3793, 3794, 3795, 3796, 3797, 3798, 3799, 3800, 3801, 3802, 3803, 3804, 3805, 3806, 3807, 3807, 3808, 3809, 3810, 3811, 3812, 3813, 3814, 3815, 3816, 3817, 3818, 3819, 3820, 3821, 3822, 3823, 3824, 3825, 3825, 3826, 3827, 3828, 3829, 3830, 3831, 3832, 3833, 3834, 3835, 3836, 3837, 3838, 3839, 3840, 3841, 3842, 3843, 3843, 3844, 3845, 3846, 3847, 3848, 3849, 3850, 3851, 3852, 3853, 3854, 3855, 3856, 3857, 3858, 3859, 3860, 3861, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3868, 3869, 3870, 3871, 3872, 3873, 3874, 3875, 3876, 3877, 3878, 3879, 4096,
-    ]; 
+    ];
 
     #[test]
     fn test_update_table_true() {
@@ -421,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_chance() {
-        use numbers::rac::Rac;
+        use numbers::rac::{IRac, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -441,7 +451,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_bits() {
-        use numbers::rac::Rac;
+        use numbers::rac::{IRac, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -457,5 +467,78 @@ mod tests {
         for &(_, bit) in BITS.iter() {
             assert_eq!(bit, reader_rac.read_bit().unwrap());
         }
+    }
+
+    #[test]
+    fn test_near_zero_read() {
+        use super::{ChanceTable, ChanceTableEntry, IRac};
+        use numbers::near_zero::NearZeroCoder;
+        use error::*;
+
+        struct MockRac;
+        impl IRac for MockRac {
+            fn read_bit(&mut self) -> Result<bool> {
+                unimplemented!()
+            }
+
+            fn read_chance(&mut self, chance: u32) -> Result<bool> {
+                unimplemented!()
+            }
+
+            fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
+                let chance = context.get_chance(entry);
+                let bit = self.get(entry);
+                context.update_entry(bit, entry);
+
+                Ok(bit)
+            }
+        }
+
+        impl MockRac {
+            fn get(&self, entry: ChanceTableEntry) -> bool {
+                match entry {
+                    ChanceTableEntry::Zero => false,
+                    ChanceTableEntry::Sign => true,
+                    ChanceTableEntry::Exp(_, _) => false,
+                    ChanceTableEntry::Mant(_) => true,
+                }
+            }
+        }
+
+        let mut table = ChanceTable::new(19, 2);
+        table.table.insert(ChanceTableEntry::Zero, 4094);
+        table.table.insert(ChanceTableEntry::Sign, 2048);
+        table.table.insert(ChanceTableEntry::Exp(0, false), 1000);
+        table.table.insert(ChanceTableEntry::Exp(0, true), 1000);
+        table.table.insert(ChanceTableEntry::Exp(1, false), 1200);
+        table.table.insert(ChanceTableEntry::Exp(1, true), 1200);
+        table.table.insert(ChanceTableEntry::Exp(2, false), 1500);
+        table.table.insert(ChanceTableEntry::Exp(2, true), 1500);
+        table.table.insert(ChanceTableEntry::Exp(3, false), 1750);
+        table.table.insert(ChanceTableEntry::Exp(3, true), 1750);
+        table.table.insert(ChanceTableEntry::Exp(4, false), 2000);
+        table.table.insert(ChanceTableEntry::Exp(4, true), 2000);
+        table.table.insert(ChanceTableEntry::Exp(5, false), 2300);
+        table.table.insert(ChanceTableEntry::Exp(5, true), 2300);
+        table.table.insert(ChanceTableEntry::Exp(6, false), 2800);
+        table.table.insert(ChanceTableEntry::Exp(6, true), 2800);
+        table.table.insert(ChanceTableEntry::Exp(7, false), 2400);
+        table.table.insert(ChanceTableEntry::Exp(7, true), 2400);
+        table.table.insert(ChanceTableEntry::Exp(8, false), 2300);
+        table.table.insert(ChanceTableEntry::Exp(8, true), 2300);
+
+        table.table.insert(ChanceTableEntry::Mant(0), 1900);
+        table.table.insert(ChanceTableEntry::Mant(1), 1850);
+        table.table.insert(ChanceTableEntry::Mant(2), 1800);
+        table.table.insert(ChanceTableEntry::Mant(3), 1750);
+        table.table.insert(ChanceTableEntry::Mant(4), 1650);
+        table.table.insert(ChanceTableEntry::Mant(5), 1600);
+        table.table.insert(ChanceTableEntry::Mant(6), 1600);
+        table.table.insert(ChanceTableEntry::Mant(7), 2048);
+        table.table.insert(ChanceTableEntry::Mant(8), 2048);
+        table.table.insert(ChanceTableEntry::Mant(9), 2048);
+
+        let r = MockRac.read_near_zero(0, 255, &mut table).unwrap();
+        assert_eq!(r, 255);
     }
 }
