@@ -1,15 +1,17 @@
 use std::io::Read;
 use components::header::{Header, SecondHeader};
 use error::*;
-use numbers::rac::Rac;
+use numbers::rac::{IRac, Rac};
 use numbers::symbol::UniformSymbolCoder;
 use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
+use self::permute_planes::PermutePlanes;
 
 mod bounds;
 mod channel_compact;
 mod ycocg;
+mod permute_planes;
 
 pub trait Transformation: ::std::fmt::Debug {
     fn snap(&self, channel: u8, values: i16, pixel: i16) -> i16;
@@ -28,11 +30,11 @@ impl Transformation for Orig {
     }
 
     fn range(&self, _channel: u8) -> ColorRange {
-        ColorRange{min: 0, max: 255}
+        ColorRange { min: 0, max: 255 }
     }
 
     fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
-        ColorRange{min: 0, max: 255}
+        ColorRange { min: 0, max: 255 }
     }
 }
 
@@ -52,13 +54,19 @@ pub fn load_transformations<R: Read>(
             )?),
             1 => Box::new(YCoGg::new(transforms[transforms.len() - 1].as_ref()))
                 as Box<Transformation>,
+            3 => Box::new(PermutePlanes::new(
+                transforms[transforms.len() - 1].as_ref(),
+            )) as Box<Transformation>,
             4 => Box::new(Bounds::new(
                 rac,
                 transforms[transforms.len() - 1].as_ref(),
                 (header, second),
             )?),
-            _ => {
-                break;
+            n => {
+                println!("found transform: {}", n);
+                return Err(Error::Unimplemented(
+                    "found unimplemented transformation type",
+                ));
             }
         };
         transforms.push(t);
@@ -70,5 +78,5 @@ pub fn load_transformations<R: Read>(
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ColorRange {
     pub min: i16,
-    pub max: i16
+    pub max: i16,
 }

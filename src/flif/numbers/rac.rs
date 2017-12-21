@@ -5,7 +5,7 @@ use std::io::Write;
 use error::*;
 use super::FlifReadExt;
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ChanceTableEntry {
     Zero,
     Sign,
@@ -13,7 +13,7 @@ pub enum ChanceTableEntry {
     Mant(u8),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ChanceTable {
     table: HashMap<ChanceTableEntry, u16>,
     update_table: Vec<u16>,
@@ -140,6 +140,12 @@ impl ChanceTable {
     }
 }
 
+pub trait IRac {
+	fn read_bit(&mut self) -> Result<bool>;
+	fn read_chance(&mut self, chance: u32) -> Result<bool>;
+	fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool>;
+
+}
 #[derive(Debug)]
 pub struct Rac<RW> {
     reader: RW,
@@ -172,6 +178,27 @@ impl<RW> Rac<RW> {
     }
 }
 
+impl<R: Read> IRac for Rac<R> {
+	fn read_bit(&mut self) -> Result<bool> {
+        // creates a 50% chance
+        let chance = self.range >> 1;
+        self.get(chance)
+    }
+
+    fn read_chance(&mut self, chance: u32) -> Result<bool> {
+        let chance = Self::apply_chance(chance, self.range);
+        self.get(chance)
+    }
+
+    fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
+        let chance = context.get_chance(entry);
+		let transformed_chance = Self::apply_chance(chance as u32, self.range);
+        let bit = self.get(transformed_chance)?;
+        context.update_entry(bit, entry);
+
+        Ok(bit)
+    }
+}
 impl<R: Read> Rac<R> {
     pub fn from_reader(mut reader: R) -> Result<Rac<R>> {
         // calculate the number of iterations needed to calculate low. The number of iterations
@@ -224,25 +251,6 @@ impl<R: Read> Rac<R> {
             self.input()?;
             Ok(false)
         }
-    }
-
-    pub fn read_bit(&mut self) -> Result<bool> {
-        // creates a 50% chance
-        let chance = self.range >> 1;
-        self.get(chance)
-    }
-
-    pub fn read_chance(&mut self, chance: u32) -> Result<bool> {
-        let chance = Self::apply_chance(chance, self.range);
-        self.get(chance)
-    }
-
-    pub fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
-        let chance = context.get_chance(entry);
-        let bit = self.get(chance as u32)?;
-        context.update_entry(bit, entry);
-
-        Ok(bit)
     }
 }
 
@@ -422,7 +430,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_chance() {
-        use numbers::rac::Rac;
+        use numbers::rac::{IRac, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -442,7 +450,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_bits() {
-        use numbers::rac::Rac;
+        use numbers::rac::{IRac, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -459,4 +467,77 @@ mod tests {
             assert_eq!(bit, reader_rac.read_bit().unwrap());
         }
     }
+
+	#[test]
+	fn test_near_zero_read() {
+		use super::{IRac, ChanceTableEntry, ChanceTable};
+		use ::numbers::near_zero::NearZeroCoder;
+		use ::error::*;
+
+		struct MockRac;
+		impl IRac for MockRac {
+			fn read_bit(&mut self) -> Result<bool> {
+				unimplemented!()
+			}
+
+			fn read_chance(&mut self, chance: u32) -> Result<bool> {
+				unimplemented!()
+			}
+
+			fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
+				let chance = context.get_chance(entry);
+				let bit = self.get(entry);
+				context.update_entry(bit, entry);
+
+				Ok(bit)
+			}
+		}
+
+		impl MockRac {
+			fn get(&self, entry: ChanceTableEntry) -> bool {
+				match entry {
+					ChanceTableEntry::Zero => false,
+					ChanceTableEntry::Sign => true,
+					ChanceTableEntry::Exp(_, _) => false,
+					ChanceTableEntry::Mant(_) => true,
+				}
+			}
+		}
+
+		let mut table = ChanceTable::new(19, 2);
+		table.table.insert(ChanceTableEntry::Zero, 4094);
+		table.table.insert(ChanceTableEntry::Sign, 2048);
+		table.table.insert(ChanceTableEntry::Exp(0, false), 1000);
+		table.table.insert(ChanceTableEntry::Exp(0, true), 1000);
+		table.table.insert(ChanceTableEntry::Exp(1, false), 1200);
+		table.table.insert(ChanceTableEntry::Exp(1, true), 1200);
+		table.table.insert(ChanceTableEntry::Exp(2, false), 1500);
+		table.table.insert(ChanceTableEntry::Exp(2, true), 1500);
+		table.table.insert(ChanceTableEntry::Exp(3, false), 1750);
+		table.table.insert(ChanceTableEntry::Exp(3, true), 1750);
+		table.table.insert(ChanceTableEntry::Exp(4, false), 2000);
+		table.table.insert(ChanceTableEntry::Exp(4, true), 2000);
+		table.table.insert(ChanceTableEntry::Exp(5, false), 2300);
+		table.table.insert(ChanceTableEntry::Exp(5, true), 2300);
+		table.table.insert(ChanceTableEntry::Exp(6, false), 2800);
+		table.table.insert(ChanceTableEntry::Exp(6, true), 2800);
+		table.table.insert(ChanceTableEntry::Exp(7, false), 2400);
+		table.table.insert(ChanceTableEntry::Exp(7, true), 2400);
+		table.table.insert(ChanceTableEntry::Exp(8, false), 2300);
+		table.table.insert(ChanceTableEntry::Exp(8, true), 2300);
+
+		table.table.insert(ChanceTableEntry::Mant(0), 1900);
+		table.table.insert(ChanceTableEntry::Mant(1), 1850);
+		table.table.insert(ChanceTableEntry::Mant(2), 1800);
+		table.table.insert(ChanceTableEntry::Mant(3), 1750);
+		table.table.insert(ChanceTableEntry::Mant(4), 1650);
+		table.table.insert(ChanceTableEntry::Mant(5), 1600);
+		table.table.insert(ChanceTableEntry::Mant(6), 1600);
+		table.table.insert(ChanceTableEntry::Mant(7), 2048);
+		table.table.insert(ChanceTableEntry::Mant(8), 2048);
+		table.table.insert(ChanceTableEntry::Mant(9), 2048);
+
+		let r = MockRac.read_near_zero(0, 255, &mut table).unwrap();
+		assert_eq!(r, 255);
+	}
 }

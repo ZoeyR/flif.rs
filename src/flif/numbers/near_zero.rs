@@ -3,7 +3,7 @@ use error::*;
 use num_traits::{PrimInt, Signed};
 use numbers::rac::ChanceTable;
 use numbers::rac::ChanceTableEntry;
-use numbers::rac::Rac;
+use numbers::rac::IRac;
 
 pub trait NearZeroCoder {
     fn read_near_zero<I: PrimInt + Signed>(
@@ -21,7 +21,7 @@ pub trait NearZeroCoder {
     ) -> Result<I>;
 }
 
-impl<R: Read> NearZeroCoder for Rac<R> {
+impl<R> NearZeroCoder for R where R: IRac {
 	fn read_near_zero_2<I: PrimInt + Signed>(
         &mut self,
         min: I,

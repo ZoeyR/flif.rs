@@ -23,9 +23,9 @@ impl Bounds {
         for c in 0..header.channels as usize {
             let t_range = trans.range(c as u8);
             ranges[c].min =
-                rac.read_near_zero(0, t_range.max - t_range.min, &mut context)? + t_range.min;
+                rac.read_near_zero_2(t_range.min, t_range.max, &mut context)?;
             ranges[c].max =
-                rac.read_near_zero(0, t_range.max - ranges[c].min, &mut context)? + ranges[c].min;
+                rac.read_near_zero_2(ranges[c].min,t_range.max, &mut context)?;
 
             // set real min and max
             ranges[c].min = ::std::cmp::max(ranges[c].min, t_range.min);

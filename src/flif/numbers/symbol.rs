@@ -2,6 +2,7 @@ use std::io::Read;
 use error::*;
 use num_traits::PrimInt;
 use super::rac::Rac;
+use super::rac::IRac;
 
 pub trait UniformSymbolCoder {
     fn read_val<T: PrimInt>(&mut self, min: T, max: T) -> Result<T>;

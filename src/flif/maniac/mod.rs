@@ -3,7 +3,7 @@
 use components::transformations::ColorRange;
 use ::FlifInfo;
 use numbers::rac::ChanceTable;
-use numbers::rac::Rac;
+use numbers::rac::{IRac, Rac};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
@@ -41,38 +41,38 @@ impl ManiacTree {
 		let mut left_prange = Vec::new();
 		left_prange.extend_from_slice(prange);
 		left_prange[property as usize].min = test_value + 1;
-		let left = Self::get_inactive_node(rac, context, &left_prange, info)?;
+		let left = Self::get_inactive_node(rac, context, left_prange, info)?;
 
 		let mut right_prange = Vec::new();
 		right_prange.extend_from_slice(prange);
-		right_prange[property as usize].min = test_value + 1;
-		let right = Self::get_inactive_node(rac, context, &right_prange, info)?;
+		right_prange[property as usize].max = test_value;
+		let right = Self::get_inactive_node(rac, context, right_prange, info)?;
 
 		Ok(ManiacNode::Property{id: 0, value: 0, counter: counter as u32, table: chance_table, left: Box::new(left), right: Box::new(right)})
 	}
 
-	fn get_inactive_node<R: Read>(rac: &mut Rac<R>, context: &mut [ChanceTable; 3], prange: &[ColorRange], info: &FlifInfo) -> Result<InactiveManiacNode> {
-		let mut property = rac.read_near_zero_2(0, prange.len() as isize, &mut context[0])?;
+	fn get_inactive_node<R: Read>(rac: &mut Rac<R>, context: &mut [ChanceTable; 3], prange: Vec<ColorRange>, info: &FlifInfo) -> Result<InactiveManiacNode> {
+			let mut property = rac.read_near_zero_2(0, prange.len() as isize, &mut context[0])?;
 
-		if property == 0 {
-			return Ok(InactiveManiacNode::InactiveLeaf);
-		}
-		property -= 1;
+			if property == 0 {
+				return Ok(InactiveManiacNode::InactiveLeaf);
+			}
+			property -= 1;
 
-		let counter = rac.read_near_zero_2(1 as i32, 512 as i32, &mut context[1])?;
-		let test_value = rac.read_near_zero_2(prange[property as usize].min, prange[property as usize].max - 1, &mut context[2])?;
+			let counter = rac.read_near_zero_2(1 as i32, 512 as i32, &mut context[1])?;
+			let test_value = rac.read_near_zero_2(prange[property as usize].min, prange[property as usize].max - 1, &mut context[2])?;
 		
-		let mut left_prange = Vec::new();
-		left_prange.extend_from_slice(prange);
-		left_prange[property as usize].min = test_value + 1;
-		let left = Self::get_inactive_node(rac, context, &left_prange, info)?;
+			let mut left_prange = Vec::new();
+			left_prange.extend_from_slice(&prange);
+			left_prange[property as usize].min = test_value + 1;
+			let left = Self::get_inactive_node(rac, context, left_prange, info)?;
 
-		let mut right_prange = Vec::new();
-		right_prange.extend_from_slice(prange);
-		right_prange[property as usize].min = test_value + 1;
-		let right = Self::get_inactive_node(rac, context, &right_prange, info)?;
+			let mut right_prange = Vec::new();
+			right_prange.extend_from_slice(&prange);
+			right_prange[property as usize].max = test_value;
+			let right = Self::get_inactive_node(rac, context, right_prange, info)?;
 
-		Ok(InactiveManiacNode::InactiveProperty{id: property, value: test_value, counter: counter as u32, left: Box::new(left), right: Box::new(right)})
+			Ok(InactiveManiacNode::InactiveProperty{id: 0, value: 0, counter: counter as u32, left: Box::new(left), right: Box::new(right)})
 	}
 
     fn build_prange_vec(channel: u8, info: &FlifInfo) -> Vec<ColorRange> {
