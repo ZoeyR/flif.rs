@@ -38,10 +38,27 @@ impl Transformation for Orig {
     }
 }
 
+#[derive(Debug)]
+pub struct Transformations {
+	transforms: Vec<Box<Transformation>>
+}
+
+impl Transformations {
+	pub fn empty() -> Transformations {
+		Transformations {
+			transforms: Vec::new()
+		}
+	}
+
+	pub fn range(&self, c: usize) -> ColorRange {
+		self.transforms[self.transforms.len() - 1].range(c as u8)
+	}
+}
+
 pub fn load_transformations<R: Read>(
     rac: &mut Rac<R>,
     (ref header, ref second): (&Header, &SecondHeader),
-) -> Result<Vec<Box<Transformation>>> {
+) -> Result<Transformations> {
     let mut transforms: Vec<Box<Transformation>> = Vec::new();
     transforms.push(Box::new(Orig));
     while rac.read_bit()? {
@@ -72,7 +89,7 @@ pub fn load_transformations<R: Read>(
         transforms.push(t);
     }
 
-    Ok(transforms)
+    Ok(Transformations {transforms})
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -4,7 +4,7 @@ use numbers::FlifReadExt;
 use numbers::rac::Rac;
 use numbers::symbol::UniformSymbolCoder;
 use super::transformations;
-use super::transformations::Transformation;
+use super::transformations::Transformations;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -107,7 +107,7 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: Vec<Box<Transformation>>, // Placeholder until transformations are implemented
+    pub transformations: Transformations, // Placeholder until transformations are implemented
     pub invis_pixel_predictor: Option<u8>,
 }
 
@@ -169,7 +169,7 @@ impl SecondHeader {
             cutoff,
             alpha_divisor,
             custom_bitchance,
-            transformations: Vec::new(),
+            transformations: Transformations::empty(),
             invis_pixel_predictor: None,
         };
 

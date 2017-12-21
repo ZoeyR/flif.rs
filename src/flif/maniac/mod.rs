@@ -13,7 +13,7 @@ pub(crate) struct ManiacTree {
 }
 
 impl ManiacTree {
-    pub fn new<R: Read>(rac: &mut Rac<R>, channel: u8, info: &FlifInfo) -> Result<ManiacTree> {
+    pub fn new<R: Read>(rac: &mut Rac<R>, channel: usize, info: &FlifInfo) -> Result<ManiacTree> {
         let context_a = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
         let context_b = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
         let context_c = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
@@ -75,10 +75,10 @@ impl ManiacTree {
 			Ok(InactiveManiacNode::InactiveProperty{id: 0, value: 0, counter: counter as u32, left: Box::new(left), right: Box::new(right)})
 	}
 
-    fn build_prange_vec(channel: u8, info: &FlifInfo) -> Vec<ColorRange> {
+    fn build_prange_vec(channel: usize, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
 
-		let transform = &info.second_header.transformations[0];
+		let transform = &info.second_header.transformations;
 
 		if channel > 0 && channel < 3 {
 			prange.push(transform.range(0));
