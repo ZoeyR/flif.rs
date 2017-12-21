@@ -3,7 +3,7 @@ extern crate flif;
 use flif::Decoder;
 
 fn main() {
-    let file = std::fs::File::open("C:/Users/micro/Documents/flif.rs/examples/flif_small.flif").unwrap();
+    let file = std::fs::File::open("examples/flif_small.flif").unwrap();
 
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
@@ -12,7 +12,7 @@ fn main() {
     println!("├───{:?}", flif.metadata);
     println!("└───{:?}", flif.second_header);
 
-    let file = std::fs::File::open("C:/Users/micro/Documents/flif.rs/examples/flif_large.flif").unwrap();
+    let file = std::fs::File::open("examples/flif_large.flif").unwrap();
 
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
