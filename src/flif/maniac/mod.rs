@@ -19,9 +19,11 @@ impl ManiacTree {
         let context_c = ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
 
 		let prange = Self::build_prange_vec(channel, info);
-		let root = Self::get_node(rac, &mut [context_a, context_b, context_c], &prange, info);
+		let root = Self::get_node(rac, &mut [context_a, context_b, context_c], &prange, info)?;
 
-        unimplemented!()
+        Ok(ManiacTree {
+			root
+		})
     }
 
 	fn get_node<R: Read>(rac: &mut Rac<R>, context: &mut [ChanceTable; 3], prange: &[ColorRange], info: &FlifInfo) -> Result<ManiacNode> {
