@@ -22,6 +22,10 @@ impl PermutePlanes {
 }
 
 impl Transformation for PermutePlanes {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+
+    }
+
     fn range(&self, channel: usize) -> ColorRange {
         let min = match channel {
             0 => 0,

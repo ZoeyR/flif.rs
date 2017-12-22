@@ -38,6 +38,10 @@ impl Bounds {
 }
 
 impl Transformation for Bounds {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+        self.previous_transformation.undo(pixel);
+    }
+
     fn range(&self, channel: usize) -> ColorRange {
         self.ranges[channel]
     }

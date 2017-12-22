@@ -26,8 +26,8 @@ pub struct Header {
     pub animated: bool,
     pub channels: Channels,
     pub bytes_per_channel: BytesPerChannel,
-    pub width: u32,
-    pub height: u32,
+    pub width: usize,
+    pub height: usize,
     pub num_frames: u32,
 }
 
@@ -76,8 +76,8 @@ impl Header {
                 })
             }
         };
-        let width = 1 + reader.read_varint::<u32>()?;
-        let height = 1 + reader.read_varint::<u32>()?;
+        let width = 1 + reader.read_varint::<usize>()?;
+        let height = 1 + reader.read_varint::<usize>()?;
 
         let num_frames = if animated {
             2 + reader.read_varint::<u32>()?

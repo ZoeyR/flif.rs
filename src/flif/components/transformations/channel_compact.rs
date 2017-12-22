@@ -48,6 +48,10 @@ impl ChannelCompact {
 }
 
 impl Transformation for ChannelCompact {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+
+    }
+
     fn range(&self, channel: usize) -> ColorRange {
         self.ranges[channel]
     }

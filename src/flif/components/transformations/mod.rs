@@ -26,6 +26,8 @@ pub trait Transformation: ::std::fmt::Debug {
         }
     }
 
+    fn undo(&self, pixel: &mut [ColorValue]);
+
     fn range(&self, channel: usize) -> ColorRange;
 
     fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange;
@@ -35,6 +37,10 @@ pub trait Transformation: ::std::fmt::Debug {
 struct Orig;
 
 impl Transformation for Orig {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+
+    }
+
     fn range(&self, _channel: usize) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }

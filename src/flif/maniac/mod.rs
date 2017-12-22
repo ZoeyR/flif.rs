@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use ColorValue;
+use DecodingImage;
 use components::transformations::ColorRange;
 use FlifInfo;
 use numbers::rac::ChanceTable;
@@ -9,13 +10,65 @@ use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
 use components::transformations::Transformation;
+use components::header::Channels;
 
 pub(crate) struct ManiacTree {
-    root: ManiacNode,
+    root: Option<ManiacNode>,
 }
 
-pub fn build_pvec(prediction: ColorValue, channel: usize, pixels: &[[ColorValue; 4]]) -> Vec<ColorValue> {
-    unimplemented!();
+pub(crate) fn build_pvec(prediction: ColorValue, x: usize, y: usize, channel: usize, image: &DecodingImage) -> Vec<ColorValue> {
+    let mut pvec = Vec::new();
+    if channel > 0 && channel < 3 {
+        pvec.push(image.get_val(y, x, 0));
+    }
+
+    if channel > 1 && channel < 3 {
+        pvec.push(image.get_val(y, x, 1));
+    }
+
+    if channel < 3 && image.channels == Channels::RGBA {
+        pvec.push(image.get_val(y, x, 3));
+    }
+
+    pvec.push(prediction);
+    
+    let left = if x == 0 {0} else {image.get_val(y, x - 1, channel)};
+    let top = if y == 0 {0} else {image.get_val(y - 1, x, channel)};
+    let top_left = if x == 0 || y == 0 {0} else {image.get_val(y - 1, x - 1, channel)};
+    let left_left = if x > 1 {image.get_val(y, x - 2, channel)} else {0};
+    let top_top = if y > 1 {image.get_val(y - 2, x, channel)} else {0};
+    let top_right = if y > 0 && x < image.width - 1 {image.get_val(y - 1, x + 1, channel)} else {0};
+
+    let median_index = if prediction == left + top - top_left {
+        0
+    } else if prediction == left {
+        1
+    } else if prediction == top {
+        2
+    } else {
+        0
+    };
+
+    pvec.push(median_index);
+
+    if x > 0 && y > 0 {
+        pvec.push(left - top_left);
+        pvec.push(top_left - top);
+    }
+
+    if x < image.width - 1 && y > 0 {
+        pvec.push(top - top_right);
+    }
+
+    if y > 1 {
+        pvec.push(top_top - top);
+    }
+
+    if x > 1 {
+        pvec.push(left_left - left);
+    }
+
+    pvec
 }
 
 impl ManiacTree {
@@ -30,19 +83,25 @@ impl ManiacTree {
         let prange = Self::build_prange_vec(channel, info);
         let root = Self::get_node(rac, &mut [context_a, context_b, context_c], &prange, info)?;
 
-        Ok(ManiacTree { root })
+        Ok(ManiacTree { root: Some(root) })
     }
 
     pub fn size(&self) -> usize {
-        self.root.size()
+        self.root.as_ref().unwrap().size()
     }
 
     pub fn depth(&self) -> usize {
-        self.root.depth()
+        self.root.as_ref().unwrap().depth()
     }
 
-    pub fn process(&mut self, pvec: &[ColorValue], guess: ColorValue) -> ColorValue {
-        unimplemented!();
+    pub fn process<R: Read>(&mut self, rac: &mut Rac<R>, pvec: &[ColorValue], guess: ColorValue, min: ColorValue, max: ColorValue) -> Result<ColorValue> {
+        let mut root = None;
+        ::std::mem::swap(&mut self.root, &mut root);
+        let root = root.unwrap();
+        let (root, val) = root.apply(rac, pvec, min - guess, max - guess)?;
+        self.root = Some(root);
+
+        Ok(val)
     }
 
     fn get_node<R: Read>(
@@ -197,10 +256,10 @@ impl ManiacNode {
     pub fn apply<R: Read>(
         self,
         rac: &mut Rac<R>,
-        pvec: Vec<i16>,
-        min: i32,
-        max: i32,
-    ) -> Result<(Self, i32)> {
+        pvec: &[ColorValue],
+        min: ColorValue,
+        max: ColorValue,
+    ) -> Result<(Self, ColorValue)> {
         use self::ManiacNode::*;
         match self {
             Property {

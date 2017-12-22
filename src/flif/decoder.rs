@@ -1,4 +1,5 @@
 use ColorValue;
+use DecodingImage;
 use FlifInfo;
 use std::io::Read;
 use components::header::{Header, SecondHeader};
@@ -45,17 +46,15 @@ impl<R: Read> Decoder<R> {
             maniac_vec.push(tree);
         }
 
-        let image_data = non_interlaced_pixels(&info, &mut maniac_vec)?;
+        let image_data = non_interlaced_pixels(&mut rac, &info, &mut maniac_vec)?;
         Ok(Flif {
-            header: info.header,
-            metadata: info.metadata,
-            second_header: info.second_header,
+            info,
             image_data,
         })
     }
 }
 
-fn non_interlaced_pixels(info: &FlifInfo, maniac: &mut [ManiacTree]) -> Result<Vec<[ColorValue; 4]>> {
+fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mut [ManiacTree]) -> Result<DecodingImage> {
     if info.header.channels != ::components::header::Channels::RGBA {
         Err(Error::Unimplemented(
             "currently decoding only works with RGBA images",
@@ -63,36 +62,43 @@ fn non_interlaced_pixels(info: &FlifInfo, maniac: &mut [ManiacTree]) -> Result<V
     }
 
     let channel_order = [3, 0, 1, 2];
-    let mut pixels = vec![[0; 4]; (info.header.width * info.header.height) as usize];
+    let mut image = DecodingImage::new(info);
     for c in channel_order.iter() {
         for y in 0..info.header.height {
             for x in 0..info.header.width {
-                let guess = make_guess(info, &pixels, x, y, *c);
-                let snap = info.second_header.transformations.snap(*c, &mut pixels[((info.header.width * y) + x) as usize], guess);
-                let pvec = ::maniac::build_pvec(snap, *c, &pixels);
-                let value = maniac[*c].process(&pvec, snap);
-                pixels[((info.header.width * y) + x) as usize][*c] = value;
+                let guess = make_guess(info, &image, x, y, *c);
+                let range = info.second_header.transformations.crange(*c, image.get_vals(y, x));
+                let snap = info.second_header.transformations.snap(*c, image.get_vals(y, x), guess);
+                let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
+                let value = maniac[*c].process(rac, &pvec, snap, range.min, range.max)?;
+                image.set_val(y, x, *c, value);
             }
         }
     }
 
-    Ok(pixels)
+    for y in 0..info.header.height {
+        for x in 0..info.header.width {
+            info.second_header.transformations.undo(image.get_vals_mut(y, x));
+        }
+    }
+
+    Ok(image)
 }
 
-fn make_guess(info: &FlifInfo, pixel_data: &[[ColorValue; 4]], x: u32, y: u32, channel: usize) -> i16 {
+fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: usize) -> i16 {
     let transformation = &info.second_header.transformations;
     let left = if channel < 3 && info.second_header.alpha_zero && x == 0 {
         (transformation.range(channel).min + transformation.range(channel).max) / 2
     } else if x == 0 {
         transformation.range(channel).min
     } else {
-        pixel_data[((info.header.width * y) + (x - 1)) as usize][channel] as i16
+        image.get_val(y, x - 1, channel)
     };
 
     let top = if y == 0 {
         left
     } else {
-        pixel_data[((info.header.width * (y - 1)) + x) as usize][channel] as i16
+        image.get_val(y - 1, x, channel)
     };
 
     let top_left = if y == 0 {
@@ -100,7 +106,7 @@ fn make_guess(info: &FlifInfo, pixel_data: &[[ColorValue; 4]], x: u32, y: u32, c
     } else if x == 0 && y > 0 {
         top
     } else {
-        pixel_data[((info.header.width * (y - 1)) + (x - 1)) as usize][channel] as i16
+        image.get_val(y - 1, x - 1, channel)
     };
 
     ((left + top - top_left) + left + top) / 3

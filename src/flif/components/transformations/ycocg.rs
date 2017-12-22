@@ -26,6 +26,16 @@ impl YCoGg {
 }
 
 impl Transformation for YCoGg {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+        let red = pixel[1] + pixel[0] + ((1 - pixel[2]) >> 1) - (pixel[1] >> 1);
+        let green = pixel[0] - ((-pixel[2])>>1);
+        let blue = pixel[0] + ((1 - pixel[2]) >> 1) - (pixel[1] >> 1);
+
+        pixel[0] = red;
+        pixel[1] = green;
+        pixel[2] = blue;
+    }
+
     fn range(&self, channel: usize) -> ColorRange {
         let (min, max) = match channel {
             0 => (0, self.max),
