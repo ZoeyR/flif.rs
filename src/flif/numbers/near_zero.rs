@@ -45,8 +45,9 @@ where
         max: I,
         context: &mut ChanceTable,
     ) -> Result<I> {
+
         if min > max {
-            return Err(Error::Unimplemented("something"));
+            return Err(Error::Unimplemented("oh no"));
         }
 
         if min == max {
@@ -63,7 +64,12 @@ where
             min >= I::zero()
         };
 
-        let absolute_max = ::std::cmp::max(max, -min);
+        let absolute_max = if sign {
+            max
+        } else {
+            -min
+        };
+
         let largest_exponent =
             (::std::mem::size_of::<I>() * 8) - absolute_max.leading_zeros() as usize - 1;
 
