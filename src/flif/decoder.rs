@@ -42,8 +42,13 @@ impl<R: Read> Decoder<R> {
 
         let mut maniac_vec = Vec::new();
         for channel in 0..main_header.channels as usize {
-            let tree = ManiacTree::new(&mut rac, channel, &info)?;
-            maniac_vec.push(tree);
+            let range = info.second_header.transformations.range(channel);
+            if range.min == range.max {
+                maniac_vec.push(None);
+            } else {
+                let tree = ManiacTree::new(&mut rac, channel, &info)?;
+                maniac_vec.push(Some(tree));
+            }
         }
 
         let image_data = non_interlaced_pixels(&mut rac, &info, &mut maniac_vec)?;
@@ -54,7 +59,7 @@ impl<R: Read> Decoder<R> {
     }
 }
 
-fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mut [ManiacTree]) -> Result<DecodingImage> {
+fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mut [Option<ManiacTree>]) -> Result<DecodingImage> {
     if info.header.channels != ::components::header::Channels::RGBA {
         Err(Error::Unimplemented(
             "currently decoding only works with RGBA images",
@@ -70,7 +75,13 @@ fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mu
                 let range = info.second_header.transformations.crange(*c, image.get_vals(y, x));
                 let snap = info.second_header.transformations.snap(*c, image.get_vals(y, x), guess);
                 let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
-                let value = maniac[*c].process(rac, &pvec, snap, range.min, range.max)?;
+
+                let value = if let Some(ref mut maniac) = maniac[*c] {
+                    maniac.process(rac, &pvec, snap, range.min, range.max)?
+                } else {
+                    range.min
+                };
+
                 image.set_val(y, x, *c, value);
             }
         }
@@ -109,5 +120,5 @@ fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channe
         image.get_val(y - 1, x - 1, channel)
     };
 
-    ((left + top - top_left) + left + top) / 3
+    ::numbers::median3((left + top - top_left), left, top)
 }

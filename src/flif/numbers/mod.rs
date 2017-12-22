@@ -23,3 +23,9 @@ impl<R: Read> FlifReadExt for R {
         varint::read_varint(self)
     }
 }
+
+pub fn median3<T: PrimInt>(first: T, second: T, third: T) -> T {
+    let mut slice = [first, second, third];
+    slice.sort();
+    slice[1]
+}

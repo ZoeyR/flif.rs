@@ -19,13 +19,16 @@ pub struct Flif {
 }
 
 impl Flif {
-    pub fn get_raw_pixels(&self) -> Vec<(u8, u8, u8, u8)> {
+    pub fn get_raw_pixels(&self) -> Vec<u8> {
         let mut data = Vec::new();
 
         for x in 0..self.image_data.width {
             for y in 0..self.image_data.height {
                 let vals = self.image_data.get_vals(y, x);
-                data.push((vals[0] as u8, vals[1] as u8, vals[2] as u8, vals[3] as u8));
+                data.push((vals[0] as u8));
+                data.push((vals[1] as u8));
+                data.push((vals[2] as u8));
+                data.push((vals[3] as u8));
             }
         }
         

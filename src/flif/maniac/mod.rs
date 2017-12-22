@@ -54,18 +54,27 @@ pub(crate) fn build_pvec(prediction: ColorValue, x: usize, y: usize, channel: us
     if x > 0 && y > 0 {
         pvec.push(left - top_left);
         pvec.push(top_left - top);
+    } else {
+        pvec.push(0);
+        pvec.push(0);
     }
 
     if x < image.width - 1 && y > 0 {
         pvec.push(top - top_right);
+    } else {
+        pvec.push(0);
     }
 
     if y > 1 {
         pvec.push(top_top - top);
+    } else {
+        pvec.push(0);
     }
 
     if x > 1 {
         pvec.push(left_left - left);
+    } else {
+        pvec.push(0);
     }
 
     pvec
@@ -101,7 +110,7 @@ impl ManiacTree {
         let (root, val) = root.apply(rac, pvec, min - guess, max - guess)?;
         self.root = Some(root);
 
-        Ok(val)
+        Ok(val + guess)
     }
 
     fn get_node<R: Read>(
