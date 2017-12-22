@@ -146,8 +146,8 @@ impl ManiacTree {
         let right = Self::get_inactive_node(rac, context, right_prange, info)?;
 
         Ok(ManiacNode::Property {
-            id: 0,
-            value: 0,
+            id: property,
+            value: test_value,
             counter: counter as u32,
             table: chance_table,
             left: Box::new(left),
@@ -186,8 +186,8 @@ impl ManiacTree {
         let right = Self::get_inactive_node(rac, context, right_prange, info)?;
 
         Ok(InactiveManiacNode::InactiveProperty {
-            id: 0,
-            value: 0,
+            id: property,
+            value: test_value,
             counter: counter as u32,
             left: Box::new(left),
             right: Box::new(right),
@@ -279,21 +279,9 @@ impl ManiacNode {
                 mut counter,
                 mut table,
             } => {
-                let val = rac.read_near_zero(min, max, &mut table)?;
-                counter -= 1;
-                if counter == 0 {
-                    let left = Box::new(left.activate(table.clone()));
-                    let right = Box::new(right.activate(table));
-                    Ok((
-                        Inner {
-                            id,
-                            value,
-                            left,
-                            right,
-                        },
-                        val,
-                    ))
-                } else {
+                if (counter > 0) {
+                    let val = rac.read_near_zero(min, max, &mut table)?;
+                    counter -= 1;
                     Ok((
                         Property {
                             id,
@@ -302,6 +290,27 @@ impl ManiacNode {
                             left,
                             right,
                             table,
+                        },
+                        val,
+                    ))
+                } else {
+                    let mut left_table = table.clone();
+                    let mut right_table = table;
+                    
+                    let val = if pvec[id as usize] > value {
+                        rac.read_near_zero(min, max, &mut left_table)?
+                    } else {
+                        rac.read_near_zero(min, max, &mut right_table)?
+                    };
+
+                    let mut left = Box::new(left.activate(left_table));
+                    let mut right = Box::new(right.activate(right_table));
+                    Ok((
+                        Inner {
+                            id,
+                            value,
+                            left,
+                            right,
                         },
                         val,
                     ))
@@ -314,9 +323,27 @@ impl ManiacNode {
                 right,
             } => {
                 if pvec[id as usize] > value {
-                    left.apply(rac, pvec, min, max)
+                    let (new_left, val) = left.apply(rac, pvec, min, max)?;
+                    Ok((
+                        Inner {
+                            id,
+                            value,
+                            left: Box::new(new_left),
+                            right,
+                        },
+                        val
+                    ))
                 } else {
-                    right.apply(rac, pvec, min, max)
+                    let (new_right, val) = right.apply(rac, pvec, min, max)?;
+                    Ok((
+                        Inner {
+                            id,
+                            value,
+                            left,
+                            right: Box::new(new_right),
+                        },
+                        val
+                    ))
                 }
             }
             Leaf(mut table) => {

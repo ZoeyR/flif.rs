@@ -55,6 +55,10 @@ impl Transformation for Bounds {
         range.min = range.min.max(self.ranges[channel].min);
         range.max = range.max.min(self.ranges[channel].max);
 
+        if range.min > range.max {
+            range.min = self.ranges[channel].min;
+            range.max = self.ranges[channel].max;
+        }
         range
     }
 }

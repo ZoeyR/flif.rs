@@ -60,29 +60,25 @@ impl<R: Read> Decoder<R> {
 }
 
 fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mut [Option<ManiacTree>]) -> Result<DecodingImage> {
-    if info.header.channels != ::components::header::Channels::RGBA {
-        Err(Error::Unimplemented(
-            "currently decoding only works with RGBA images",
-        ))?;
-    }
-
     let channel_order = [3, 0, 1, 2];
     let mut image = DecodingImage::new(info);
     for c in channel_order.iter() {
-        for y in 0..info.header.height {
-            for x in 0..info.header.width {
-                let guess = make_guess(info, &image, x, y, *c);
-                let range = info.second_header.transformations.crange(*c, image.get_vals(y, x));
-                let snap = info.second_header.transformations.snap(*c, image.get_vals(y, x), guess);
-                let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
+        if *c < info.header.channels as usize {
+            for y in 0..info.header.height {
+                for x in 0..info.header.width {
+                    let guess = make_guess(info, &image, x, y, *c);
+                    let range = info.second_header.transformations.crange(*c, image.get_vals(y, x));
+                    let snap = info.second_header.transformations.snap(*c, image.get_vals(y, x), guess);
+                    let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
 
-                let value = if let Some(ref mut maniac) = maniac[*c] {
-                    maniac.process(rac, &pvec, snap, range.min, range.max)?
-                } else {
-                    range.min
-                };
+                    let value = if let Some(ref mut maniac) = maniac[*c] {
+                        maniac.process(rac, &pvec, snap, range.min, range.max)?
+                    } else {
+                        range.min
+                    };
 
-                image.set_val(y, x, *c, value);
+                    image.set_val(y, x, *c, value);
+                }
             }
         }
     }

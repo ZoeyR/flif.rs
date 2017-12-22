@@ -28,7 +28,7 @@ impl Flif {
                 data.push((vals[0] as u8));
                 data.push((vals[1] as u8));
                 data.push((vals[2] as u8));
-                data.push((vals[3] as u8));
+                data.push(255);
             }
         }
         

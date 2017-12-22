@@ -8,7 +8,7 @@ use std::io::BufWriter;
 use png::HasParameters;
 
 fn main() {
-    let file = std::fs::File::open("examples/flif_large.flif").unwrap();
+    let file = std::fs::File::open("C:/Users/micro/Documents/flif.rs/examples/sea_snail.flif").unwrap();
 
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
@@ -19,7 +19,7 @@ fn main() {
 
     // To use encoder.set()
 
-    let path = Path::new("examples/out.png");
+    let path = Path::new("C:/Users/micro/Documents/flif.rs/examples/out.png");
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
 
