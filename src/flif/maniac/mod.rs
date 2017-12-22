@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use ColorValue;
 use components::transformations::ColorRange;
 use FlifInfo;
 use numbers::rac::ChanceTable;
@@ -7,9 +8,14 @@ use numbers::rac::{IRac, Rac};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
+use components::transformations::Transformation;
 
 pub(crate) struct ManiacTree {
     root: ManiacNode,
+}
+
+pub fn build_pvec(prediction: ColorValue, channel: usize, pixels: &[[ColorValue; 4]]) -> Vec<ColorValue> {
+    unimplemented!();
 }
 
 impl ManiacTree {
@@ -25,6 +31,18 @@ impl ManiacTree {
         let root = Self::get_node(rac, &mut [context_a, context_b, context_c], &prange, info)?;
 
         Ok(ManiacTree { root })
+    }
+
+    pub fn size(&self) -> usize {
+        self.root.size()
+    }
+
+    pub fn depth(&self) -> usize {
+        self.root.depth()
+    }
+
+    pub fn process(&mut self, pvec: &[ColorValue], guess: ColorValue) -> ColorValue {
+        unimplemented!();
     }
 
     fn get_node<R: Read>(
@@ -239,6 +257,24 @@ impl ManiacNode {
             }
         }
     }
+
+    pub fn size(&self) -> usize {
+        use self::ManiacNode::*;
+        match self {
+            &Property {ref left, ref right, ..} => 1 + left.size() + right.size(),
+            &Inner {ref left, ref right, ..} => 1 + left.size() + right.size(),
+            &Leaf(_) => 1
+        }
+    }
+
+    pub fn depth(&self) -> usize {
+        use self::ManiacNode::*;
+        match self {
+            &Property {ref left, ref right, ..} => 1 + left.size().max(right.size()),
+            &Inner {ref left, ref right, ..} => 1 + left.size().max(right.size()),
+            &Leaf(_) => 1
+        }
+    }
 }
 
 impl InactiveManiacNode {
@@ -261,6 +297,22 @@ impl InactiveManiacNode {
                 left,
                 right,
             },
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        use self::InactiveManiacNode::*;
+        match self {
+            &InactiveProperty {ref left, ref right, ..} => 1 + left.size() + right.size(),
+            &InactiveLeaf => 1
+        }
+    }
+
+    pub fn depth(&self) -> usize {
+        use self::InactiveManiacNode::*;
+        match self {
+            &InactiveProperty {ref left, ref right, ..} => 1 + left.size().max(right.size()),
+            &InactiveLeaf => 1
         }
     }
 }

@@ -1,3 +1,4 @@
+use ColorValue;
 use FlifInfo;
 use std::io::Read;
 use components::header::{Header, SecondHeader};
@@ -40,19 +41,21 @@ impl<R: Read> Decoder<R> {
 
         let mut maniac_vec = Vec::new();
         for channel in 0..main_header.channels as usize {
-            maniac_vec.push(ManiacTree::new(&mut rac, channel, &info));
+            let tree = ManiacTree::new(&mut rac, channel, &info)?;
+            maniac_vec.push(tree);
         }
 
+        let image_data = non_interlaced_pixels(&info, &mut maniac_vec)?;
         Ok(Flif {
             header: info.header,
             metadata: info.metadata,
             second_header: info.second_header,
-            _image_data: (),
+            image_data,
         })
     }
 }
 
-fn non_interlaced_pixels(info: &FlifInfo, maniac: &[ManiacTree]) -> Result<Vec<(u8, u8, u8, u8)>> {
+fn non_interlaced_pixels(info: &FlifInfo, maniac: &mut [ManiacTree]) -> Result<Vec<[ColorValue; 4]>> {
     if info.header.channels != ::components::header::Channels::RGBA {
         Err(Error::Unimplemented(
             "currently decoding only works with RGBA images",
@@ -65,15 +68,18 @@ fn non_interlaced_pixels(info: &FlifInfo, maniac: &[ManiacTree]) -> Result<Vec<(
         for y in 0..info.header.height {
             for x in 0..info.header.width {
                 let guess = make_guess(info, &pixels, x, y, *c);
-                pixels[((info.header.width * y) + x) as usize][*c] = 1;
+                let snap = info.second_header.transformations.snap(*c, &mut pixels[((info.header.width * y) + x) as usize], guess);
+                let pvec = ::maniac::build_pvec(snap, *c, &pixels);
+                let value = maniac[*c].process(&pvec, snap);
+                pixels[((info.header.width * y) + x) as usize][*c] = value;
             }
         }
     }
 
-    unimplemented!();
+    Ok(pixels)
 }
 
-fn make_guess(info: &FlifInfo, pixel_data: &[[u8; 4]], x: u32, y: u32, channel: usize) -> i16 {
+fn make_guess(info: &FlifInfo, pixel_data: &[[ColorValue; 4]], x: u32, y: u32, channel: usize) -> i16 {
     let transformation = &info.second_header.transformations;
     let left = if channel < 3 && info.second_header.alpha_zero && x == 0 {
         (transformation.range(channel).min + transformation.range(channel).max) / 2

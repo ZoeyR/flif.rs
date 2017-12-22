@@ -1,5 +1,6 @@
 use components::transformations::ColorRange;
 use super::Transformation;
+use ::ColorValue;
 
 #[derive(Debug)]
 pub struct YCoGg {
@@ -25,11 +26,7 @@ impl YCoGg {
 }
 
 impl Transformation for YCoGg {
-    fn snap(&self, _channel: u8, _values: i16, _pixel: i16) -> i16 {
-        unimplemented!()
-    }
-
-    fn range(&self, channel: u8) -> ColorRange {
+    fn range(&self, channel: usize) -> ColorRange {
         let (min, max) = match channel {
             0 => (0, self.max),
             1 | 2 => (-self.max, self.max),
@@ -39,7 +36,50 @@ impl Transformation for YCoGg {
         ColorRange { min, max }
     }
 
-    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
-        unimplemented!()
+    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
+        let origmax4 = (self.max + 1) / 4;
+
+        match channel {
+            0 => self.range(0),
+            1 => {
+                let min = if values[0] < origmax4 - 1 {
+                    -3 + (4 * values[0])
+                } else if values[0] > (3 * origmax4) - 1 {
+                    4 * (values[0] - self.max)
+                } else {
+                    -self.max
+                };
+
+                let max = if values[0] < origmax4 - 1 {
+                    3 + (4 * values[0])
+                } else if values[0] > (3 * origmax4) - 1 {
+                    4 * (self.max - values[0])
+                } else {
+                    self.max
+                };
+
+                ColorRange {min, max}
+            },
+            2 => {
+                let min = if values[0] < origmax4 - 1 {
+                    -2 - (2 * values[0])
+                } else if values[0] > (3 * origmax4) - 1 {
+                    -2 * (self.max - values[0]) + 2 * ((values[1].abs() + 1) / 2)
+                } else {
+                    ::std::cmp::min(2 * values[0] + 1, (2 * self.max) - (2 * values[0]) - (2 * values[1].abs()) + 1) / 2
+                };
+
+                let max = if values[0] < origmax4 - 1 {
+                    1 + (2 * values[0]) - (2 * (values[1].abs() / 2))
+                } else if values[0] > (3 * origmax4) - 1 {
+                    2 * (self.max - values[0])
+                } else {
+                    ::std::cmp::min(2 * (values[0] - self.max), (-2 * values[0]) - 1 + (2 * (values[1].abs() / 2)))
+                };
+
+                ColorRange {min, max}
+            },
+            n => self.crange(n, values)
+        }
     }
 }

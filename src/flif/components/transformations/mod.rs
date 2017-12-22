@@ -1,5 +1,4 @@
 use std::io::Read;
-use components::header::{Header, SecondHeader};
 use error::*;
 use numbers::rac::{IRac, Rac};
 use numbers::symbol::UniformSymbolCoder;
@@ -7,6 +6,7 @@ use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
 use self::permute_planes::PermutePlanes;
+use ColorValue;
 
 mod bounds;
 mod channel_compact;
@@ -14,70 +14,61 @@ mod ycocg;
 mod permute_planes;
 
 pub trait Transformation: ::std::fmt::Debug {
-    fn snap(&self, channel: u8, values: i16, pixel: i16) -> i16;
+    fn snap(&self, channel: usize, values: &[ColorValue], pixel: ColorValue) -> ColorValue {
+        let range = self.crange(channel, values);
 
-    fn range(&self, channel: u8) -> ColorRange;
+        if pixel > range.max {
+            range.max
+        } else if pixel < range.min {
+            range.min
+        } else {
+            pixel
+        }
+    }
 
-    fn crange(&self, channel: u8, values: i16) -> ColorRange;
+    fn range(&self, channel: usize) -> ColorRange;
+
+    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange;
 }
 
 #[derive(Debug)]
 struct Orig;
 
 impl Transformation for Orig {
-    fn snap(&self, _channel: u8, _values: i16, pixel: i16) -> i16 {
-        pixel
-    }
-
-    fn range(&self, _channel: u8) -> ColorRange {
+    fn range(&self, _channel: usize) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
 
-    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
+    fn crange(&self, _channel: usize, _values: &[ColorValue]) -> ColorRange {
         ColorRange { min: 0, max: 255 }
-    }
-}
-
-#[derive(Debug)]
-pub struct Transformations {
-    transforms: Vec<Box<Transformation>>,
-}
-
-impl Transformations {
-    pub fn empty() -> Transformations {
-        Transformations {
-            transforms: Vec::new(),
-        }
-    }
-
-    pub fn range(&self, c: usize) -> ColorRange {
-        self.transforms[self.transforms.len() - 1].range(c as u8)
     }
 }
 
 pub fn load_transformations<R: Read>(
     rac: &mut Rac<R>,
-    (ref header, ref second): (&Header, &SecondHeader),
-) -> Result<Transformations> {
-    let mut transforms: Vec<Box<Transformation>> = Vec::new();
-    transforms.push(Box::new(Orig));
+    channels: usize,
+    alpha_divisor: u8,
+    cutoff: u8,
+) -> Result<Box<Transformation>> {
+    let mut transformation: Box<Transformation> = Box::new(Orig);
     while rac.read_bit()? {
         let id = rac.read_val(0, 13)?;
         let t = match id {
             0 => Box::new(ChannelCompact::new(
                 rac,
-                transforms[transforms.len() - 1].as_ref(),
-                (header, second),
+                &*transformation,
+                channels,
+                alpha_divisor,
+                cutoff,
             )?),
-            1 => Box::new(YCoGg::new(transforms[transforms.len() - 1].as_ref()))
-                as Box<Transformation>,
-            3 => Box::new(PermutePlanes::new(
-                transforms[transforms.len() - 1].as_ref(),
-            )) as Box<Transformation>,
+            1 => Box::new(YCoGg::new(&*transformation)) as Box<Transformation>,
+            3 => Box::new(PermutePlanes::new(&*transformation)) as Box<Transformation>,
             4 => Box::new(Bounds::new(
                 rac,
-                transforms[transforms.len() - 1].as_ref(),
-                (header, second),
+                transformation,
+                channels,
+                alpha_divisor,
+                cutoff,
             )?),
             n => {
                 println!("found transform: {}", n);
@@ -86,14 +77,15 @@ pub fn load_transformations<R: Read>(
                 ));
             }
         };
-        transforms.push(t);
+
+        transformation = t;
     }
 
-    Ok(Transformations { transforms })
+    Ok(transformation)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ColorRange {
-    pub min: i16,
-    pub max: i16,
+    pub min: ColorValue,
+    pub max: ColorValue,
 }

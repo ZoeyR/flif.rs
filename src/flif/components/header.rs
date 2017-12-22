@@ -4,7 +4,7 @@ use numbers::FlifReadExt;
 use numbers::rac::Rac;
 use numbers::symbol::UniformSymbolCoder;
 use super::transformations;
-use super::transformations::Transformations;
+use super::transformations::Transformation;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -107,7 +107,7 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: Transformations, // Placeholder until transformations are implemented
+    pub transformations: Box<Transformation>, // Placeholder until transformations are implemented
     pub invis_pixel_predictor: Option<u8>,
 }
 
@@ -160,20 +160,7 @@ impl SecondHeader {
             ));
         }
 
-        let mut second = SecondHeader {
-            bits_per_pixel,
-            alpha_zero,
-            loops,
-            frame_delay,
-            custom_cutoff,
-            cutoff,
-            alpha_divisor,
-            custom_bitchance,
-            transformations: Transformations::empty(),
-            invis_pixel_predictor: None,
-        };
-
-        let transformations = transformations::load_transformations(rac, (&main_header, &second))?;
+        let transformations = transformations::load_transformations(rac, main_header.channels as usize, alpha_divisor, cutoff)?;
 
         let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
             Some(rac.read_val(0, 2)?)
@@ -182,9 +169,17 @@ impl SecondHeader {
             None
         };
 
-        second.transformations = transformations;
-        second.invis_pixel_predictor = invis_pixel_predictor;
-
-        Ok(second)
+        Ok(SecondHeader {
+            bits_per_pixel,
+            alpha_zero,
+            loops,
+            frame_delay,
+            custom_cutoff,
+            cutoff,
+            alpha_divisor,
+            custom_bitchance,
+            transformations,
+            invis_pixel_predictor,
+        })
     }
 }

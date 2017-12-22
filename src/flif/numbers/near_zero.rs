@@ -1,4 +1,3 @@
-use std::io::Read;
 use error::*;
 use num_traits::{PrimInt, Signed};
 use numbers::rac::ChanceTable;

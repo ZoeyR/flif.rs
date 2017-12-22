@@ -1,5 +1,6 @@
 use components::transformations::ColorRange;
 use super::Transformation;
+use ::ColorValue;
 
 #[derive(Debug)]
 pub struct PermutePlanes {
@@ -21,11 +22,7 @@ impl PermutePlanes {
 }
 
 impl Transformation for PermutePlanes {
-    fn snap(&self, _channel: u8, _values: i16, _pixel: i16) -> i16 {
-        unimplemented!()
-    }
-
-    fn range(&self, channel: u8) -> ColorRange {
+    fn range(&self, channel: usize) -> ColorRange {
         let min = match channel {
             0 => 0,
             _ => -self.max,
@@ -34,7 +31,7 @@ impl Transformation for PermutePlanes {
         ColorRange { min, max: self.max }
     }
 
-    fn crange(&self, _channel: u8, _values: i16) -> ColorRange {
+    fn crange(&self, _channel: usize, _values: &[ColorValue]) -> ColorRange {
         unimplemented!()
     }
 }

@@ -17,7 +17,7 @@ pub struct Flif {
     pub header: Header,
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader, //Just like second breakfast
-    _image_data: (),                 // TODO: decide on format of image data
+    pub image_data: Vec<[ColorValue; 4]>,                 // TODO: decide on format of image data
 }
 
 struct FlifInfo {
@@ -26,6 +26,4 @@ struct FlifInfo {
     pub second_header: SecondHeader,
 }
 
-mod private {
-    pub trait Sealed {}
-}
+type ColorValue = i16;
