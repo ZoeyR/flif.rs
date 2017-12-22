@@ -98,12 +98,12 @@ fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mu
 
 fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: usize) -> i16 {
     let transformation = &info.second_header.transformations;
-    let left = if channel < 3 && info.second_header.alpha_zero && x == 0 {
-        (transformation.range(channel).min + transformation.range(channel).max) / 2
-    } else if x == 0 {
-        transformation.range(channel).min
-    } else {
+    let left = if x > 0 {
         image.get_val(y, x - 1, channel)
+    } else if y > 0 {
+        image.get_val(y - 1, x, channel)
+    } else {
+        0
     };
 
     let top = if y == 0 {

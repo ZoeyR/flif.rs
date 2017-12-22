@@ -22,8 +22,8 @@ impl Flif {
     pub fn get_raw_pixels(&self) -> Vec<u8> {
         let mut data = Vec::new();
 
-        for x in 0..self.image_data.width {
-            for y in 0..self.image_data.height {
+        for y in 0..self.image_data.height {
+            for x in 0..self.image_data.width {
                 let vals = self.image_data.get_vals(y, x);
                 data.push((vals[0] as u8));
                 data.push((vals[1] as u8));
