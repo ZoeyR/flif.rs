@@ -2,6 +2,7 @@ use std::io::Read;
 use error::*;
 use numbers::rac::{IRac, Rac};
 use numbers::symbol::UniformSymbolCoder;
+use numbers::chances::UpdateTable;
 use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
@@ -37,9 +38,7 @@ pub trait Transformation: ::std::fmt::Debug {
 struct Orig;
 
 impl Transformation for Orig {
-    fn undo(&self, _pixel: &mut [ColorValue]) {
-
-    }
+    fn undo(&self, _pixel: &mut [ColorValue]) {}
 
     fn range(&self, _channel: usize) -> ColorRange {
         ColorRange { min: 0, max: 255 }
@@ -53,8 +52,7 @@ impl Transformation for Orig {
 pub(crate) fn load_transformations<R: Read>(
     rac: &mut Rac<R>,
     channels: usize,
-    alpha_divisor: u8,
-    cutoff: u8,
+    update_table: &UpdateTable,
 ) -> Result<Box<Transformation>> {
     let mut transformation: Box<Transformation> = Box::new(Orig);
     while rac.read_bit()? {
@@ -64,18 +62,11 @@ pub(crate) fn load_transformations<R: Read>(
                 rac,
                 &*transformation,
                 channels,
-                alpha_divisor,
-                cutoff,
+                update_table,
             )?),
             1 => Box::new(YCoGg::new(&*transformation)) as Box<Transformation>,
             3 => Box::new(PermutePlanes::new(&*transformation)) as Box<Transformation>,
-            4 => Box::new(Bounds::new(
-                rac,
-                transformation,
-                channels,
-                alpha_divisor,
-                cutoff,
-            )?),
+            4 => Box::new(Bounds::new(rac, transformation, channels, update_table)?),
             n => {
                 println!("found transform: {}", n);
                 return Err(Error::Unimplemented(

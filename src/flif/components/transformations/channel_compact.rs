@@ -2,10 +2,10 @@ use components::transformations::ColorRange;
 use std::io::Read;
 use error::*;
 use numbers::near_zero::NearZeroCoder;
-use numbers::rac::ChanceTable;
+use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::Rac;
 use super::Transformation;
-use ::ColorValue;
+use ColorValue;
 
 #[derive(Debug)]
 pub struct ChannelCompact {
@@ -17,10 +17,9 @@ impl ChannelCompact {
         rac: &mut Rac<R>,
         transformation: &T,
         channels: usize,
-        alpha_divisor: u8,
-        cutoff: u8,
+        update_table: &UpdateTable,
     ) -> Result<ChannelCompact> {
-        let mut context = ChanceTable::new(alpha_divisor, cutoff);
+        let mut context = ChanceTable::new(update_table);
         let mut t = ChannelCompact {
             ranges: [ColorRange { min: 0, max: 0 }; 4],
             decompacted: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
@@ -48,9 +47,7 @@ impl ChannelCompact {
 }
 
 impl Transformation for ChannelCompact {
-    fn undo(&self, _pixel: &mut [ColorValue]) {
-
-    }
+    fn undo(&self, _pixel: &mut [ColorValue]) {}
 
     fn range(&self, channel: usize) -> ColorRange {
         self.ranges[channel]

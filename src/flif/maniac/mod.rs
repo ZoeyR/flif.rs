@@ -4,7 +4,7 @@ use ColorValue;
 use DecodingImage;
 use components::transformations::ColorRange;
 use FlifInfo;
-use numbers::rac::ChanceTable;
+use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::{IRac, Rac};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
@@ -12,11 +12,18 @@ use error::*;
 use components::transformations::Transformation;
 use components::header::Channels;
 
-pub(crate) struct ManiacTree {
-    root: Option<ManiacNode>,
+pub(crate) struct ManiacTree<'a> {
+    update_table: &'a UpdateTable,
+    root: Option<ManiacNode<'a>>,
 }
 
-pub(crate) fn build_pvec(prediction: ColorValue, x: usize, y: usize, channel: usize, image: &DecodingImage) -> Vec<ColorValue> {
+pub(crate) fn build_pvec(
+    prediction: ColorValue,
+    x: usize,
+    y: usize,
+    channel: usize,
+    image: &DecodingImage,
+) -> Vec<ColorValue> {
     let mut pvec = Vec::new();
     if channel > 0 && channel < 3 {
         pvec.push(image.get_val(y, x, 0));
@@ -31,13 +38,37 @@ pub(crate) fn build_pvec(prediction: ColorValue, x: usize, y: usize, channel: us
     }
 
     pvec.push(prediction);
-    
-    let left = if x == 0 {0} else {image.get_val(y, x - 1, channel)};
-    let top = if y == 0 {0} else {image.get_val(y - 1, x, channel)};
-    let top_left = if x == 0 || y == 0 {0} else {image.get_val(y - 1, x - 1, channel)};
-    let left_left = if x > 1 {image.get_val(y, x - 2, channel)} else {0};
-    let top_top = if y > 1 {image.get_val(y - 2, x, channel)} else {0};
-    let top_right = if y > 0 && x < image.width - 1 {image.get_val(y - 1, x + 1, channel)} else {0};
+
+    let left = if x == 0 {
+        0
+    } else {
+        image.get_val(y, x - 1, channel)
+    };
+    let top = if y == 0 {
+        0
+    } else {
+        image.get_val(y - 1, x, channel)
+    };
+    let top_left = if x == 0 || y == 0 {
+        0
+    } else {
+        image.get_val(y - 1, x - 1, channel)
+    };
+    let left_left = if x > 1 {
+        image.get_val(y, x - 2, channel)
+    } else {
+        0
+    };
+    let top_top = if y > 1 {
+        image.get_val(y - 2, x, channel)
+    } else {
+        0
+    };
+    let top_right = if y > 0 && x < image.width - 1 {
+        image.get_val(y - 1, x + 1, channel)
+    } else {
+        0
+    };
 
     let median_index = if prediction == left + top - top_left {
         0
@@ -80,19 +111,24 @@ pub(crate) fn build_pvec(prediction: ColorValue, x: usize, y: usize, channel: us
     pvec
 }
 
-impl ManiacTree {
-    pub fn new<R: Read>(rac: &mut Rac<R>, channel: usize, info: &FlifInfo) -> Result<ManiacTree> {
-        let context_a =
-            ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
-        let context_b =
-            ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
-        let context_c =
-            ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
+impl<'a> ManiacTree<'a> {
+    pub fn new<R: Read>(
+        rac: &mut Rac<R>,
+        channel: usize,
+        info: &FlifInfo,
+        update_table: &'a UpdateTable,
+    ) -> Result<ManiacTree<'a>> {
+        let context_a = ChanceTable::new(update_table);
+        let context_b = ChanceTable::new(update_table);
+        let context_c = ChanceTable::new(update_table);
 
         let prange = Self::build_prange_vec(channel, info);
-        let root = Self::get_node(rac, &mut [context_a, context_b, context_c], &prange, info)?;
+        let root = Self::get_node(rac, &mut [context_a, context_b, context_c], update_table, &prange, info)?;
 
-        Ok(ManiacTree { root: Some(root) })
+        Ok(ManiacTree {
+            update_table,
+            root: Some(root),
+        })
     }
 
     pub fn size(&self) -> usize {
@@ -103,7 +139,14 @@ impl ManiacTree {
         self.root.as_ref().unwrap().depth()
     }
 
-    pub fn process<R: Read>(&mut self, rac: &mut Rac<R>, pvec: &[ColorValue], guess: ColorValue, min: ColorValue, max: ColorValue) -> Result<ColorValue> {
+    pub fn process<R: Read>(
+        &mut self,
+        rac: &mut Rac<R>,
+        pvec: &[ColorValue],
+        guess: ColorValue,
+        min: ColorValue,
+        max: ColorValue,
+    ) -> Result<ColorValue> {
         if min == max {
             return Ok(min);
         }
@@ -117,14 +160,14 @@ impl ManiacTree {
         Ok(val + guess)
     }
 
-    fn get_node<R: Read>(
+    fn get_node<'a, R: Read>(
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
+        update_table: &'a UpdateTable,
         prange: &[ColorRange],
         info: &FlifInfo,
-    ) -> Result<ManiacNode> {
-        let chance_table =
-            ChanceTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
+    ) -> Result<ManiacNode<'a>> {
+        let chance_table = ChanceTable::new(update_table);
         let mut property = rac.read_near_zero_2(0, prange.len() as isize, &mut context[0])?;
 
         if property == 0 {
@@ -232,12 +275,12 @@ impl ManiacTree {
     }
 }
 
-enum ManiacNode {
+enum ManiacNode<'a> {
     /// Denotes a property node, property nodes are nodes that currently act as leaf nodes but will become inner nodes when their counter reaches zero
     Property {
         id: isize,
         value: i16,
-        table: ChanceTable,
+        table: ChanceTable<'a>,
         counter: u32,
         left: Box<InactiveManiacNode>,
         right: Box<InactiveManiacNode>,
@@ -246,11 +289,11 @@ enum ManiacNode {
     Inner {
         id: isize,
         value: i16,
-        left: Box<ManiacNode>,
-        right: Box<ManiacNode>,
+        left: Box<ManiacNode<'a>>,
+        right: Box<ManiacNode<'a>>,
     },
     /// Leaf nodes are nodes that can never become inner nodes
-    Leaf(ChanceTable),
+    Leaf(ChanceTable<'a>),
 }
 
 enum InactiveManiacNode {
@@ -264,7 +307,7 @@ enum InactiveManiacNode {
     InactiveLeaf,
 }
 
-impl ManiacNode {
+impl<'a> ManiacNode<'a> {
     // return type is temporary, will be some reasonable pixel value
     pub fn apply<R: Read>(
         self,
@@ -300,7 +343,7 @@ impl ManiacNode {
                 } else {
                     let mut left_table = table.clone();
                     let mut right_table = table;
-                    
+
                     let val = if pvec[id as usize] > value {
                         rac.read_near_zero(min, max, &mut left_table)?
                     } else {
@@ -335,7 +378,7 @@ impl ManiacNode {
                             left: Box::new(new_left),
                             right,
                         },
-                        val
+                        val,
                     ))
                 } else {
                     let (new_right, val) = right.apply(rac, pvec, min, max)?;
@@ -346,7 +389,7 @@ impl ManiacNode {
                             left,
                             right: Box::new(new_right),
                         },
-                        val
+                        val,
                     ))
                 }
             }
@@ -360,18 +403,34 @@ impl ManiacNode {
     pub fn size(&self) -> usize {
         use self::ManiacNode::*;
         match self {
-            &Property {ref left, ref right, ..} => 1 + left.size() + right.size(),
-            &Inner {ref left, ref right, ..} => 1 + left.size() + right.size(),
-            &Leaf(_) => 1
+            &Property {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size() + right.size(),
+            &Inner {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size() + right.size(),
+            &Leaf(_) => 1,
         }
     }
 
     pub fn depth(&self) -> usize {
         use self::ManiacNode::*;
         match self {
-            &Property {ref left, ref right, ..} => 1 + left.size().max(right.size()),
-            &Inner {ref left, ref right, ..} => 1 + left.size().max(right.size()),
-            &Leaf(_) => 1
+            &Property {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size().max(right.size()),
+            &Inner {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size().max(right.size()),
+            &Leaf(_) => 1,
         }
     }
 }
@@ -388,32 +447,38 @@ impl InactiveManiacNode {
                 counter,
                 left,
                 right,
-            } => {
-                Property {
-                    id,
-                    value,
-                    counter,
-                    table,
-                    left,
-                    right,
-                }
-            }
+            } => Property {
+                id,
+                value,
+                counter,
+                table,
+                left,
+                right,
+            },
         }
     }
 
     pub fn size(&self) -> usize {
         use self::InactiveManiacNode::*;
         match self {
-            &InactiveProperty {ref left, ref right, ..} => 1 + left.size() + right.size(),
-            &InactiveLeaf => 1
+            &InactiveProperty {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size() + right.size(),
+            &InactiveLeaf => 1,
         }
     }
 
     pub fn depth(&self) -> usize {
         use self::InactiveManiacNode::*;
         match self {
-            &InactiveProperty {ref left, ref right, ..} => 1 + left.size().max(right.size()),
-            &InactiveLeaf => 1
+            &InactiveProperty {
+                ref left,
+                ref right,
+                ..
+            } => 1 + left.size().max(right.size()),
+            &InactiveLeaf => 1,
         }
     }
 }
