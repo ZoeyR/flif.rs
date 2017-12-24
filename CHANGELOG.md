@@ -6,7 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## 0.0.2 - 2017-10-14
+## [0.1.0] - 2017-12-23
+### Added
+- reading of maniac trees
+- reading certain transformations
+    - YCoCg
+    - Bounds
+    - Channel Compact
+- pixel data decoding
+
+### Fixed
+- Near zero decoding for negative numbers
+
+
+## [0.0.2] - 2017-10-14
 ### Added
 - reading of second header (minus transformations)
 - RAC chance decoding+encoding
@@ -28,4 +41,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - readme file
 - license
 
-[Unreleased]: https://github.com/dgriffen/flif.rs/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/dgriffen/flif.rs/compare/v0.1.0...HEAD
+[0.0.2]: https://github.com/dgriffen/flif.rs/compare/v0.0.1...v0.0.2
+[0.1.0]: https://github.com/dgriffen/flif.rs/compare/v0.0.2...v0.1.0
