@@ -8,7 +8,13 @@
 flif.rs is a Rust implementation of the [flif16](http://flif.info/spec.html) image format. This project was inspired by the work on [flif-rs](https://github.com/panicbit/flif-rs).
 ## Current Status
 
-Currently this project is pre-alpha. As of right now it is only capable of decoding header data, pixel decoding is not yet implemented. The project will enter alpha status once enough pixel decoding is implemented to successfully decode the reference image in the examples folder.
+Currently this project in alpha stage. As of right now pixel data can be decoded but only for a limited subset of valid flif images. The most significant limitations are:
+- Animations are not supported.
+- Interlaced images are not supported.
+- Grayscale color space is not supported.
+- Certain transformations are not supported.
+
+As this project progresses more and more missing features will end up being supported.
 
 ## Development
 ### Prerequisites
@@ -39,15 +45,14 @@ extern crate flif;
 ```rust
 extern crate flif;
 
+use std::fs::File;
 use flif::Decoder;
 
 fn main() {
     let file = std::fs::File::open("some_image.flif").unwrap();
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
-    println!("{:?}", flif.header);
-    println!("{:?}", flif.metadata);
-    println!("{:?}", flif.second_header);
+    let pixels = flif.get_raw_pixels();
 }
 ```
 

@@ -6,7 +6,7 @@ rust:
 script:
   - cargo build --verbose
   - cargo build --verbose --bins --features=binary
-  - cargo test --verbose
+  - cargo test --verbose --features=binary
 matrix:
   allow_failures:
     - rust: nightly

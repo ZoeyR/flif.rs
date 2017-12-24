@@ -1,6 +1,7 @@
 extern crate flif;
 extern crate png;
 
+use flif::components::header::Channels;
 use flif::Decoder;
 use std::path::Path;
 use std::fs::File;
@@ -8,7 +9,12 @@ use std::io::BufWriter;
 use png::HasParameters;
 
 fn main() {
-    let file = std::fs::File::open("C:/Users/micro/Documents/flif.rs/examples/sea_snail.flif").unwrap();
+    decode_and_write("resources/flif_logo.flif", "examples/flif_logo_out.png");
+    decode_and_write("resources/sea_snail.flif", "examples/sea_snail_out.png");
+}
+
+fn decode_and_write(input: &str, output: &str) {
+    let file = std::fs::File::open("resources/sea_snail.flif").unwrap();
 
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
@@ -17,16 +23,21 @@ fn main() {
     println!("├───{:?}", flif.info.metadata);
     println!("└───{:?}", flif.info.second_header);
 
-    // To use encoder.set()
-
-    let path = Path::new("C:/Users/micro/Documents/flif.rs/examples/out.png");
+    let path = Path::new("resources/out.png");
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32); // Width is 2 pixels and height is 1.
-    encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);
+    let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
+
+    let color_type = match flif.info.header.channels {
+        Channels::RGBA => png::ColorType::RGBA,
+        Channels::RGB => png::ColorType::RGB,
+        _ => panic!("unsupported color type"),
+    };
+
+    encoder.set(color_type).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
-    let data = flif.get_raw_pixels(); // An array containing a RGBA sequence. First pixel is red and second pixel is black.
+    let data = flif.get_raw_pixels(); // Get the raw pixel array of the FLIF image
     writer.write_image_data(&data).unwrap(); // Save
 }
