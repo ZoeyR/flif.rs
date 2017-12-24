@@ -284,9 +284,6 @@ impl ManiacNode {
                 mut table,
             } => {
                 if (counter > 0) {
-                    if counter == 37 {
-                        let dummy = counter;
-                    }
                     let val = rac.read_near_zero(min, max, &mut table)?;
                     counter -= 1;
                     Ok((
@@ -392,10 +389,6 @@ impl InactiveManiacNode {
                 left,
                 right,
             } => {
-                if counter == 88 {
-                    let dummy = counter;
-                
-                }
                 Property {
                     id,
                     value,

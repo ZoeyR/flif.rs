@@ -50,7 +50,7 @@ impl Transformation for Orig {
     }
 }
 
-pub fn load_transformations<R: Read>(
+pub(crate) fn load_transformations<R: Read>(
     rac: &mut Rac<R>,
     channels: usize,
     alpha_divisor: u8,

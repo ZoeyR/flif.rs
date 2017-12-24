@@ -164,8 +164,8 @@ impl<RW> Rac<RW> {
     /// chance_12bit_chance returns an integer ciel(y) such that y/range = x
     /// in otherwords, chance_12bit_chance(chance, range) = ciel((chance / 4096) * range)
     fn apply_chance(chance: u32, range: u32) -> u32 {
+        // this should never happen via a malicious file, the only callers of this get their chances from the chance table
         assert_eq!(chance >> 12, 0);
-        //assert_eq!(range >> 24, 0);
 
         // there is the possibility of integer overflow so we break up the calculation to prevent
         // overflow by applying the following tranformations to the formula
@@ -240,6 +240,7 @@ impl<R: Read> Rac<R> {
     }
 
     fn get(&mut self, chance: u32) -> Result<bool> {
+        // this should never happen via a malicious file, the chance here should be produced by our projection function and represents a programming error.
         assert!(chance < self.range);
 
         if self.low >= self.range - chance {

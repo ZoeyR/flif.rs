@@ -1,8 +1,7 @@
-use ColorValue;
 use DecodingImage;
 use FlifInfo;
 use std::io::Read;
-use components::header::{Header, SecondHeader};
+use components::header::{Header, SecondHeader, Channels, BytesPerChannel};
 use error::*;
 use {Flif, Metadata};
 use numbers::rac::Rac;
@@ -17,7 +16,52 @@ impl<R: Read> Decoder<R> {
         Decoder { reader }
     }
 
+    pub fn identify(&mut self) -> Result<FlifInfo> {
+        self.identify_internal().map(|tuple| tuple.0)
+    }
+
     pub fn decode(&mut self) -> Result<Flif> {
+        let (info, mut rac) = self.identify_internal()?;
+
+        if info.header.channels == Channels::Grayscale {
+            return Err(Error::Unimplemented("Grayscale colorspace is not supported for decoding yet."));
+        }
+
+        if info.header.interlaced {
+            return Err(Error::Unimplemented("Interlaced images are not yet supported."));
+        }
+
+        if info.header.animated {
+            return Err(Error::Unimplemented("Animated images are not yet supported."));
+        }
+
+        if info.header.bytes_per_channel != BytesPerChannel::One {
+            return Err(Error::Unimplemented("Only images with 8 bits per channel are supported"));
+        }
+
+        if info.second_header.custom_bitchance {
+            return Err(Error::Unimplemented("Custom bitchances are currently unimplemented in the FLIF standard.",));
+        }
+
+        let mut maniac_vec = Vec::new();
+        for channel in 0..info.header.channels as usize {
+            let range = info.second_header.transformations.range(channel);
+            if range.min == range.max {
+                maniac_vec.push(None);
+            } else {
+                let tree = ManiacTree::new(&mut rac, channel, &info)?;
+                maniac_vec.push(Some(tree));
+            }
+        }
+
+        let image_data = non_interlaced_pixels(&mut rac, &info, &mut maniac_vec)?;
+        Ok(Flif {
+            info,
+            image_data,
+        })
+    }
+
+    fn identify_internal(&mut self) -> Result<(FlifInfo, Rac<&mut R>)> {
         // read the first header
         let main_header = Header::from_reader(&mut self.reader)?;
 
@@ -34,28 +78,12 @@ impl<R: Read> Decoder<R> {
 
         let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
 
-        let info = FlifInfo {
+        Ok((FlifInfo {
             header: main_header,
             metadata,
             second_header,
-        };
-
-        let mut maniac_vec = Vec::new();
-        for channel in 0..main_header.channels as usize {
-            let range = info.second_header.transformations.range(channel);
-            if range.min == range.max {
-                maniac_vec.push(None);
-            } else {
-                let tree = ManiacTree::new(&mut rac, channel, &info)?;
-                maniac_vec.push(Some(tree));
-            }
-        }
-
-        let image_data = non_interlaced_pixels(&mut rac, &info, &mut maniac_vec)?;
-        Ok(Flif {
-            info,
-            image_data,
-        })
+        },
+        rac))
     }
 }
 

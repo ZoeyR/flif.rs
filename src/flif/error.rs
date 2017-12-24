@@ -13,6 +13,7 @@ pub enum Error {
     UnknownRequiredMetadata(u8),
     InvalidMetadata(String),
     InvalidVarint,
+    InvalidOperation(String),
     Unimplemented(&'static str),
 }
 
@@ -26,7 +27,8 @@ impl error::Error for Error {
             &Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
             &Error::InvalidVarint => {
                 "reader did not contain a varint, or varint was too large to store"
-            }
+            },
+            &Error::InvalidOperation(_) => "an invalid operation was hit, possibly due to a bug or a bad input file",
             &Error::Unimplemented(desc) => desc,
         }
     }
@@ -39,6 +41,7 @@ impl error::Error for Error {
             &Error::UnknownRequiredMetadata(_) => None,
             &Error::InvalidMetadata(_) => None,
             &Error::InvalidVarint => None,
+            &Error::InvalidOperation(_) => None,
             &Error::Unimplemented(_) => None,
         }
     }
@@ -72,6 +75,7 @@ impl fmt::Display for Error {
                 fmt,
                 "reader did not contain a varint, or varint was too large to store"
             ),
+            &Error::InvalidOperation(ref info) => write!(fmt, "{}", info), 
             &Error::Unimplemented(desc) => write!(fmt, "{}", desc),
         }
     }

@@ -48,7 +48,7 @@ impl ChannelCompact {
 }
 
 impl Transformation for ChannelCompact {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, _pixel: &mut [ColorValue]) {
 
     }
 

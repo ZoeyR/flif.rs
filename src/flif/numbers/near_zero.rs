@@ -47,7 +47,7 @@ where
     ) -> Result<I> {
 
         if min > max {
-            return Err(Error::Unimplemented("oh no"));
+            return Err(Error::InvalidOperation("near zero integer reading was passed a larger min than max".into()));
         }
 
         if min == max {

@@ -13,7 +13,7 @@ pub enum Channels {
     RGBA = 4,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum BytesPerChannel {
     Custom = 0,
     One = 1,
@@ -152,13 +152,6 @@ impl SecondHeader {
         } else {
             (2, 19, false)
         };
-
-        if custom_bitchance {
-            // this is currently unimplemented in the reference implementation
-            return Err(Error::Unimplemented(
-                "custom bitchances are currently unimplemented in the flif standard",
-            ));
-        }
 
         let transformations = transformations::load_transformations(rac, main_header.channels as usize, alpha_divisor, cutoff)?;
 

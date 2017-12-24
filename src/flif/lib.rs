@@ -25,10 +25,9 @@ impl Flif {
         for y in 0..self.image_data.height {
             for x in 0..self.image_data.width {
                 let vals = self.image_data.get_vals(y, x);
-                data.push((vals[0] as u8));
-                data.push((vals[1] as u8));
-                data.push((vals[2] as u8));
-                data.push(255);
+                for channel in 0..self.info.header.channels as usize {
+                    data.push(vals[channel] as u8)
+                }
             }
         }
         
@@ -42,7 +41,7 @@ pub struct FlifInfo {
     pub second_header: SecondHeader,
 }
 
-type ColorValue = i16;
+pub type ColorValue = i16;
 
 struct DecodingImage {
     pub height: usize,
