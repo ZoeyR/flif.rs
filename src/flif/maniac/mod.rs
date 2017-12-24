@@ -160,7 +160,7 @@ impl<'a> ManiacTree<'a> {
         Ok(val + guess)
     }
 
-    fn get_node<'a, R: Read>(
+    fn get_node<R: Read>(
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
         update_table: &'a UpdateTable,
