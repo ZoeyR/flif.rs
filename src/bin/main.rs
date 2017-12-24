@@ -1,12 +1,18 @@
 extern crate flif;
+extern crate png;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
+use std::io::BufWriter;
 
+use flif::components::header::Channels;
 use flif::error::*;
+use flif::Decoder;
+
+use png::HasParameters;
 
 use structopt::StructOpt;
 
@@ -53,29 +59,52 @@ fn main() {
     });
 }
 
-fn decode(identify: bool, input: &str, _output: Option<String>) -> Result<()> {
+fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
     let file = File::open(input)?;
+    let mut decoder = Decoder::new(file);
 
     if identify {
-        id_file(file)
+        id_file(decoder)
     } else {
-        Err(Error::Unimplemented(
-            "decoding pixel data is not supported at this time",
-        ))
+        let flif = decoder.decode()?;
+
+        if let Some(output) = output {
+            let output_file = File::create(output)?;
+            let ref mut w = BufWriter::new(output_file);
+
+            let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
+
+            let color_type = match flif.info.header.channels {
+                Channels::RGBA => png::ColorType::RGBA,
+                Channels::RGB => png::ColorType::RGB,
+                _ => panic!("unsupported color type"),
+            };
+
+            encoder.set(color_type).set(png::BitDepth::Eight);
+            let mut writer = encoder.write_header().unwrap();
+
+            let data = flif.get_raw_pixels(); // Get the raw pixel array of the FLIF image
+            writer.write_image_data(&data).unwrap(); // Save
+            Ok(())
+        } else {
+            std::io::stdout().write(&flif.get_raw_pixels())?;
+            Ok(())
+        }
+        
     }
 }
 
-fn id_file<R: Read>(reader: R) -> Result<()> {
-    let header = flif::components::header::Header::from_reader(reader)?;
+fn id_file<R: Read>(mut decoder: Decoder<R>) -> Result<()> {
+    let info = decoder.identify()?;
 
-    if header.interlaced {
+    if info.header.interlaced {
         println!("interlaced");
     }
-    if header.animated {
-        println!("animated, frames: {}", header.num_frames);
+    if info.header.animated {
+        println!("animated, frames: {}", info.header.num_frames);
     }
-    println!("channels: {:?}", header.channels);
-    println!("dimensions: {}W x {}H", header.width, header.height);
+    println!("channels: {:?}", info.header.channels);
+    println!("dimensions: {}W x {}H", info.header.width, info.header.height);
 
     Ok(())
 }

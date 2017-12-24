@@ -37,7 +37,7 @@ pub trait Transformation: ::std::fmt::Debug {
 struct Orig;
 
 impl Transformation for Orig {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, _pixel: &mut [ColorValue]) {
 
     }
 

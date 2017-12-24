@@ -22,7 +22,7 @@ impl PermutePlanes {
 }
 
 impl Transformation for PermutePlanes {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, _pixel: &mut [ColorValue]) {
 
     }
 

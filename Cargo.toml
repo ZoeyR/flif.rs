@@ -5,6 +5,10 @@ authors = ["Daniel Griffen <daniel@griffen.io>"]
 license = "MIT"
 description = "flif decoder written in pure Rust"
 
+exclude = [
+    "resources/*",
+]
+
 [lib]
 name = "flif"
 path = "src/flif/lib.rs"

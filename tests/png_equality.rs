@@ -3,9 +3,6 @@ extern crate flif;
 
 use std::fs::File;
 use flif::Decoder;
-use std::path::Path;
-use std::io::BufWriter;
-use png::HasParameters;
 
 #[test]
 fn sea_snail() {

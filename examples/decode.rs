@@ -3,7 +3,6 @@ extern crate png;
 
 use flif::components::header::Channels;
 use flif::Decoder;
-use std::path::Path;
 use std::fs::File;
 use std::io::BufWriter;
 use png::HasParameters;
@@ -14,7 +13,7 @@ fn main() {
 }
 
 fn decode_and_write(input: &str, output: &str) {
-    let file = std::fs::File::open("resources/sea_snail.flif").unwrap();
+    let file = std::fs::File::open(input).unwrap();
 
     let mut decoder = Decoder::new(file);
     let flif = decoder.decode().unwrap();
@@ -23,8 +22,7 @@ fn decode_and_write(input: &str, output: &str) {
     println!("├───{:?}", flif.info.metadata);
     println!("└───{:?}", flif.info.second_header);
 
-    let path = Path::new("resources/out.png");
-    let file = File::create(path).unwrap();
+    let file = File::create(output).unwrap();
     let ref mut w = BufWriter::new(file);
 
     let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);

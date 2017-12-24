@@ -1,4 +1,4 @@
 /target/
 **/*.rs.bk
 Cargo.lock
-/examples/out.png
+/examples/*out.png

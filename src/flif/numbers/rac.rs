@@ -482,12 +482,11 @@ mod tests {
                 unimplemented!()
             }
 
-            fn read_chance(&mut self, chance: u32) -> Result<bool> {
+            fn read_chance(&mut self, _chance: u32) -> Result<bool> {
                 unimplemented!()
             }
 
             fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
-                let chance = context.get_chance(entry);
                 let bit = self.get(entry);
                 context.update_entry(bit, entry);
 
