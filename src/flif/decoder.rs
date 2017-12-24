@@ -98,8 +98,10 @@ fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channe
         image.get_val(y, x - 1, channel)
     } else if y > 0 {
         image.get_val(y - 1, x, channel)
+    } else if info.second_header.alpha_zero && channel < 3 && image.get_val(y, x, 3) == 0 {
+        (transformation.range(channel).min + transformation.range(channel).max) / 2
     } else {
-        0
+        transformation.range(channel).min
     };
 
     let top = if y == 0 {

@@ -53,7 +53,7 @@ impl Transformation for YCoGg {
             0 => self.range(0),
             1 => {
                 let min = if values[0] < origmax4 - 1 {
-                    -3 + (4 * values[0])
+                    -3 - (4 * values[0])
                 } else if values[0] > (3 * origmax4) - 1 {
                     4 * (values[0] - self.max)
                 } else {
@@ -63,7 +63,7 @@ impl Transformation for YCoGg {
                 let max = if values[0] < origmax4 - 1 {
                     3 + (4 * values[0])
                 } else if values[0] > (3 * origmax4) - 1 {
-                    4 * (self.max - values[0])
+                    4*origmax4-4*(1+values[0]-3*origmax4)
                 } else {
                     self.max
                 };
@@ -71,20 +71,22 @@ impl Transformation for YCoGg {
                 ColorRange {min, max}
             },
             2 => {
+                let co = values[1];
+                let y = values[0];
                 let min = if values[0] < origmax4 - 1 {
-                    -2 - (2 * values[0])
+                    -(2*y+1)
                 } else if values[0] > (3 * origmax4) - 1 {
-                    -2 * (self.max - values[0]) + 2 * ((values[1].abs() + 1) / 2)
+                    -(2*(4*origmax4-1-y)-((1+co.abs())/2)*2)
                 } else {
-                    ::std::cmp::min(2 * values[0] + 1, (2 * self.max) - (2 * values[0]) - (2 * values[1].abs()) + 1) / 2
+                    -::std::cmp::min(2*origmax4-1+(y-origmax4+1)*2, 2*origmax4+(3*origmax4-1-y)*2-((1+co.abs())/2)*2)
                 };
 
                 let max = if values[0] < origmax4 - 1 {
-                    1 + (2 * values[0]) - (2 * (values[1].abs() / 2))
+                    1+2*y-(co.abs()/2)*2
                 } else if values[0] > (3 * origmax4) - 1 {
-                    2 * (self.max - values[0])
+                    2*(4*origmax4-1-y)
                 } else {
-                    ::std::cmp::min(2 * (values[0] - self.max), (-2 * values[0]) - 1 + (2 * (values[1].abs() / 2)))
+                    -::std::cmp::max(-4*origmax4 + (1+y-2*origmax4)*2, -2*origmax4-(y-origmax4)*2-1+(co.abs()/2)*2)
                 };
 
                 ColorRange {min, max}

@@ -104,6 +104,10 @@ impl ManiacTree {
     }
 
     pub fn process<R: Read>(&mut self, rac: &mut Rac<R>, pvec: &[ColorValue], guess: ColorValue, min: ColorValue, max: ColorValue) -> Result<ColorValue> {
+        if min == max {
+            return Ok(min);
+        }
+
         let mut root = None;
         ::std::mem::swap(&mut self.root, &mut root);
         let root = root.unwrap();
@@ -280,6 +284,9 @@ impl ManiacNode {
                 mut table,
             } => {
                 if (counter > 0) {
+                    if counter == 37 {
+                        let dummy = counter;
+                    }
                     let val = rac.read_near_zero(min, max, &mut table)?;
                     counter -= 1;
                     Ok((
@@ -384,14 +391,20 @@ impl InactiveManiacNode {
                 counter,
                 left,
                 right,
-            } => Property {
-                id,
-                value,
-                counter,
-                table,
-                left,
-                right,
-            },
+            } => {
+                if counter == 88 {
+                    let dummy = counter;
+                
+                }
+                Property {
+                    id,
+                    value,
+                    counter,
+                    table,
+                    left,
+                    right,
+                }
+            }
         }
     }
 
