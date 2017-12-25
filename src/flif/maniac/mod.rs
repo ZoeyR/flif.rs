@@ -5,7 +5,7 @@ use DecodingImage;
 use components::transformations::ColorRange;
 use FlifInfo;
 use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::{IRac, Rac};
+use numbers::rac::{RacRead, Rac};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;

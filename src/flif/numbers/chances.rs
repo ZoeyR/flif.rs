@@ -8,7 +8,6 @@ pub struct ChanceTable<'a> {
 
 impl<'a> ChanceTable<'a> {
     pub fn new(updates: &UpdateTable) -> ChanceTable {
-        //let update_table = Self::build_update_table(alpha_divisor, cutoff);
         let mut table = HashMap::new();
         table.insert(ChanceTableEntry::Zero, 1000);
         table.insert(ChanceTableEntry::Sign, 2048);
@@ -17,17 +16,6 @@ impl<'a> ChanceTable<'a> {
         Self::insert_mant(&mut table);
 
         ChanceTable { table, updates }
-    }
-
-    pub fn get_chance(&mut self, entry: ChanceTableEntry) -> u16 {
-        *self.table.entry(entry).or_insert(2048)
-    }
-
-    pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
-        let old_chance = *self.table.entry(entry).or_insert(2048);
-        let new_chance = self.updates.next_chance(bit, old_chance);
-
-        self.table.insert(entry, new_chance);
     }
 
     fn insert_exp(table: &mut HashMap<ChanceTableEntry, u16>, sign: bool) {
@@ -52,6 +40,19 @@ impl<'a> ChanceTable<'a> {
         table.insert(ChanceTableEntry::Mant(5), 1600);
         table.insert(ChanceTableEntry::Mant(6), 1600);
         table.insert(ChanceTableEntry::Mant(7), 2048);
+    }
+}
+
+impl<'a> ContextProvider for ChanceTable<'a> {
+    fn get_chance(&self, entry: &ChanceTableEntry) -> u16 {
+        self.table.get(entry).cloned().unwrap_or(2048)
+    }
+
+    fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
+        let old_chance = *self.table.entry(entry).or_insert(2048);
+        let new_chance = self.updates.next_chance(bit, old_chance);
+
+        self.table.insert(entry, new_chance);
     }
 }
 
@@ -256,12 +257,12 @@ mod tests {
     #[test]
     fn test_near_zero_read() {
         use numbers::chances::{ChanceTable, ChanceTableEntry, UpdateTable};
-        use numbers::rac::IRac;
+        use numbers::rac::RacRead;
         use numbers::near_zero::NearZeroCoder;
         use error::*;
 
         struct MockRac;
-        impl IRac for MockRac {
+        impl RacRead for MockRac {
             fn read_bit(&mut self) -> Result<bool> {
                 unimplemented!()
             }
@@ -289,7 +290,7 @@ mod tests {
             }
         }
 
-        let mut update_table = UpdateTable::new(19, 2);
+        let update_table = UpdateTable::new(19, 2);
         let mut table = ChanceTable::new(&update_table);
         table.table.insert(ChanceTableEntry::Zero, 4094);
         table.table.insert(ChanceTableEntry::Sign, 2048);

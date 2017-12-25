@@ -1,9 +1,8 @@
 use components::transformations::ColorRange;
-use std::io::Read;
 use error::*;
 use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::Rac;
+use numbers::rac::RacRead;
 use super::Transformation;
 use ColorValue;
 
@@ -13,8 +12,8 @@ pub struct ChannelCompact {
     decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
-    pub fn new<R: Read, T: ?Sized + Transformation>(
-        rac: &mut Rac<R>,
+    pub fn new<R: RacRead, T: ?Sized + Transformation>(
+        rac: &mut R,
         transformation: &T,
         channels: usize,
         update_table: &UpdateTable,

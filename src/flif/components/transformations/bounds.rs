@@ -1,9 +1,8 @@
 use components::transformations::ColorRange;
-use std::io::Read;
 use error::*;
 use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::Rac;
+use numbers::rac::RacRead;
 use super::Transformation;
 use ColorValue;
 
@@ -14,8 +13,8 @@ pub struct Bounds {
 }
 
 impl Bounds {
-    pub fn new<R: Read>(
-        rac: &mut Rac<R>,
+    pub fn new<R: RacRead>(
+        rac: &mut R,
         trans: Box<Transformation>,
         channels: usize,
         update_table: &UpdateTable,

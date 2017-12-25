@@ -5,7 +5,7 @@ use numbers::chances::{ChanceTable, ChanceTableEntry};
 use error::*;
 use super::FlifReadExt;
 
-pub trait IRac {
+pub trait RacRead {
     fn read_bit(&mut self) -> Result<bool>;
     fn read_chance(&mut self, chance: u32) -> Result<bool>;
     fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool>;
@@ -43,7 +43,7 @@ impl<RW> Rac<RW> {
     }
 }
 
-impl<R: Read> IRac for Rac<R> {
+impl<R: Read> RacRead for Rac<R> {
     fn read_bit(&mut self) -> Result<bool> {
         // creates a 50% chance
         let chance = self.range >> 1;
@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_chance() {
-        use numbers::rac::{IRac, Rac};
+        use numbers::rac::{RacRead, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_bits() {
-        use numbers::rac::{IRac, Rac};
+        use numbers::rac::{RacRead, Rac};
 
         let mut buf: Vec<u8> = vec![];
         {

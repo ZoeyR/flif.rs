@@ -1,6 +1,5 @@
-use std::io::Read;
 use error::*;
-use numbers::rac::{IRac, Rac};
+use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::chances::UpdateTable;
 use self::channel_compact::ChannelCompact;
@@ -49,8 +48,8 @@ impl Transformation for Orig {
     }
 }
 
-pub(crate) fn load_transformations<R: Read>(
-    rac: &mut Rac<R>,
+pub(crate) fn load_transformations<R: RacRead>(
+    rac: &mut R,
     channels: usize,
     update_table: &UpdateTable,
 ) -> Result<Box<Transformation>> {

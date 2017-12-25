@@ -1,7 +1,7 @@
 use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
-use numbers::rac::Rac;
+use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::chances::UpdateTable;
 use super::transformations;
@@ -113,7 +113,7 @@ pub struct SecondHeader {
 }
 
 impl SecondHeader {
-    pub fn from_rac<R: Read>(main_header: &Header, rac: &mut Rac<R>) -> Result<Self> {
+    pub fn from_rac<R: RacRead>(main_header: &Header, rac: &mut R) -> Result<Self> {
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
