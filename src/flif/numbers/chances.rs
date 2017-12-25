@@ -18,6 +18,17 @@ impl<'a> ChanceTable<'a> {
         ChanceTable { table, updates }
     }
 
+    pub fn get_chance(&self, entry: &ChanceTableEntry) -> u16 {
+        self.table.get(entry).cloned().unwrap_or(2048)
+    }
+
+    pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
+        let old_chance = *self.table.entry(entry).or_insert(2048);
+        let new_chance = self.updates.next_chance(bit, old_chance);
+
+        self.table.insert(entry, new_chance);
+    }
+
     fn insert_exp(table: &mut HashMap<ChanceTableEntry, u16>, sign: bool) {
         table.insert(ChanceTableEntry::Exp(0, sign), 1000);
         table.insert(ChanceTableEntry::Exp(1, sign), 1200);
@@ -40,19 +51,6 @@ impl<'a> ChanceTable<'a> {
         table.insert(ChanceTableEntry::Mant(5), 1600);
         table.insert(ChanceTableEntry::Mant(6), 1600);
         table.insert(ChanceTableEntry::Mant(7), 2048);
-    }
-}
-
-impl<'a> ContextProvider for ChanceTable<'a> {
-    fn get_chance(&self, entry: &ChanceTableEntry) -> u16 {
-        self.table.get(entry).cloned().unwrap_or(2048)
-    }
-
-    fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
-        let old_chance = *self.table.entry(entry).or_insert(2048);
-        let new_chance = self.updates.next_chance(bit, old_chance);
-
-        self.table.insert(entry, new_chance);
     }
 }
 

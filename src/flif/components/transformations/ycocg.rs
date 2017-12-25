@@ -1,5 +1,5 @@
 use components::transformations::ColorRange;
-use super::Transformation;
+use super::Transform;
 use ::ColorValue;
 
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub struct YCoGg {
 }
 
 impl YCoGg {
-    pub fn new<T: ?Sized + Transformation>(transformation: &T) -> YCoGg {
+    pub fn new<T: ?Sized + Transform>(transformation: &T) -> YCoGg {
         let max_iter = [
             transformation.range(0).max,
             transformation.range(1).max,
@@ -25,7 +25,7 @@ impl YCoGg {
     }
 }
 
-impl Transformation for YCoGg {
+impl Transform for YCoGg {
     fn undo(&self, pixel: &mut [ColorValue]) {
         let red = pixel[1] + pixel[0] + ((1 - pixel[2]) >> 1) - (pixel[1] >> 1);
         let green = pixel[0] - ((-pixel[2])>>1);

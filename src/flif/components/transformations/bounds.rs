@@ -3,19 +3,19 @@ use error::*;
 use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::RacRead;
-use super::Transformation;
+use super::Transform;
 use ColorValue;
 
 #[derive(Debug)]
 pub struct Bounds {
     ranges: [ColorRange; 4],
-    previous_transformation: Box<Transformation>,
+    previous_transformation: Box<Transform>,
 }
 
 impl Bounds {
     pub fn new<R: RacRead>(
         rac: &mut R,
-        trans: Box<Transformation>,
+        trans: Box<Transform>,
         channels: usize,
         update_table: &UpdateTable,
     ) -> Result<Bounds> {
@@ -38,7 +38,7 @@ impl Bounds {
     }
 }
 
-impl Transformation for Bounds {
+impl Transform for Bounds {
     fn undo(&self, pixel: &mut [ColorValue]) {
         self.previous_transformation.undo(pixel);
     }

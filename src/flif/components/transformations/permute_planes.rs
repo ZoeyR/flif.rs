@@ -1,5 +1,5 @@
 use components::transformations::ColorRange;
-use super::Transformation;
+use super::Transform;
 use ::ColorValue;
 
 #[derive(Debug)]
@@ -8,7 +8,7 @@ pub struct PermutePlanes {
 }
 
 impl PermutePlanes {
-    pub fn new<T: ?Sized + Transformation>(transformation: &T) -> PermutePlanes {
+    pub fn new<T: ?Sized + Transform>(transformation: &T) -> PermutePlanes {
         let max_iter = [
             transformation.range(0).max,
             transformation.range(1).max,
@@ -21,7 +21,7 @@ impl PermutePlanes {
     }
 }
 
-impl Transformation for PermutePlanes {
+impl Transform for PermutePlanes {
     fn undo(&self, _pixel: &mut [ColorValue]) {
 
     }

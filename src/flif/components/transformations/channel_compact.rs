@@ -3,7 +3,7 @@ use error::*;
 use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::RacRead;
-use super::Transformation;
+use super::Transform;
 use ColorValue;
 
 #[derive(Debug)]
@@ -12,7 +12,7 @@ pub struct ChannelCompact {
     decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
-    pub fn new<R: RacRead, T: ?Sized + Transformation>(
+    pub fn new<R: RacRead, T: ?Sized + Transform>(
         rac: &mut R,
         transformation: &T,
         channels: usize,
@@ -45,7 +45,7 @@ impl ChannelCompact {
     }
 }
 
-impl Transformation for ChannelCompact {
+impl Transform for ChannelCompact {
     fn undo(&self, _pixel: &mut [ColorValue]) {}
 
     fn range(&self, channel: usize) -> ColorRange {

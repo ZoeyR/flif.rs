@@ -9,10 +9,10 @@ use numbers::rac::{RacRead, Rac};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
-use components::transformations::Transformation;
+use components::transformations::Transform;
 use components::header::Channels;
 
-pub(crate) struct ManiacTree<'a> {
+pub struct ManiacTree<'a> {
     update_table: &'a UpdateTable,
     root: Option<ManiacNode<'a>>,
 }
@@ -244,7 +244,7 @@ impl<'a> ManiacTree<'a> {
     fn build_prange_vec(channel: usize, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
 
-        let transform = &info.second_header.transformations;
+        let transform = &info.transform;
 
         if channel > 0 && channel < 3 {
             prange.push(transform.range(0));
