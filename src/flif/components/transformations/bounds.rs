@@ -2,15 +2,15 @@ use components::transformations::ColorRange;
 use std::io::Read;
 use error::*;
 use numbers::near_zero::NearZeroCoder;
-use numbers::rac::ChanceTable;
+use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::Rac;
 use super::Transformation;
-use ::ColorValue;
+use ColorValue;
 
 #[derive(Debug)]
 pub struct Bounds {
     ranges: [ColorRange; 4],
-    previous_transformation: Box<Transformation>
+    previous_transformation: Box<Transformation>,
 }
 
 impl Bounds {
@@ -18,10 +18,9 @@ impl Bounds {
         rac: &mut Rac<R>,
         trans: Box<Transformation>,
         channels: usize,
-        alpha_divisor: u8,
-        cutoff: u8,
+        update_table: &UpdateTable,
     ) -> Result<Bounds> {
-        let mut context = ChanceTable::new(alpha_divisor, cutoff);
+        let mut context = ChanceTable::new(update_table);
         let mut ranges = [ColorRange { min: 0, max: 0 }; 4];
         for c in 0..channels as usize {
             let t_range = trans.range(c);
@@ -33,7 +32,10 @@ impl Bounds {
             ranges[c].max = ::std::cmp::min(ranges[c].max, t_range.max);
         }
 
-        Ok(Bounds { ranges, previous_transformation: trans})
+        Ok(Bounds {
+            ranges,
+            previous_transformation: trans,
+        })
     }
 }
 

@@ -3,6 +3,7 @@ use error::*;
 use numbers::FlifReadExt;
 use numbers::rac::Rac;
 use numbers::symbol::UniformSymbolCoder;
+use numbers::chances::UpdateTable;
 use super::transformations;
 use super::transformations::Transformation;
 
@@ -152,8 +153,13 @@ impl SecondHeader {
         } else {
             (2, 19, false)
         };
+        let update_table = UpdateTable::new(alpha_divisor, cutoff);
 
-        let transformations = transformations::load_transformations(rac, main_header.channels as usize, alpha_divisor, cutoff)?;
+        let transformations = transformations::load_transformations(
+            rac,
+            main_header.channels as usize,
+            &update_table,
+        )?;
 
         let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
             Some(rac.read_val(0, 2)?)

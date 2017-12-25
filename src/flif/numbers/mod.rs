@@ -2,10 +2,11 @@ use std::io::prelude::*;
 use error::*;
 use num_traits::{PrimInt, Unsigned};
 
-pub mod rac;
-pub mod varint;
-pub mod symbol;
+pub mod chances;
 pub mod near_zero;
+pub mod rac;
+pub mod symbol;
+pub mod varint;
 
 pub trait FlifReadExt {
     fn read_u8(&mut self) -> Result<u8>;

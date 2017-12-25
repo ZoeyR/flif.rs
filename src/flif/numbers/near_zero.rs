@@ -1,7 +1,6 @@
 use error::*;
 use num_traits::{PrimInt, Signed};
-use numbers::rac::ChanceTable;
-use numbers::rac::ChanceTableEntry;
+use numbers::chances::{ChanceTable, ChanceTableEntry};
 use numbers::rac::IRac;
 
 pub trait NearZeroCoder {
@@ -45,9 +44,10 @@ where
         max: I,
         context: &mut ChanceTable,
     ) -> Result<I> {
-
         if min > max {
-            return Err(Error::InvalidOperation("near zero integer reading was passed a larger min than max".into()));
+            return Err(Error::InvalidOperation(
+                "near zero integer reading was passed a larger min than max".into(),
+            ));
         }
 
         if min == max {
@@ -64,11 +64,7 @@ where
             min >= I::zero()
         };
 
-        let absolute_max = if sign {
-            max
-        } else {
-            -min
-        };
+        let absolute_max = if sign { max } else { -min };
 
         let largest_exponent =
             (::std::mem::size_of::<I>() * 8) - absolute_max.leading_zeros() as usize - 1;

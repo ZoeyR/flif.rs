@@ -1,7 +1,8 @@
 use DecodingImage;
 use FlifInfo;
 use std::io::Read;
-use components::header::{Header, SecondHeader, Channels, BytesPerChannel};
+use components::header::{BytesPerChannel, Channels, Header, SecondHeader};
+use numbers::chances::UpdateTable;
 use error::*;
 use {Flif, Metadata};
 use numbers::rac::Rac;
@@ -24,41 +25,50 @@ impl<R: Read> Decoder<R> {
         let (info, mut rac) = self.identify_internal()?;
 
         if info.header.channels == Channels::Grayscale {
-            return Err(Error::Unimplemented("Grayscale colorspace is not supported for decoding yet."));
+            return Err(Error::Unimplemented(
+                "Grayscale colorspace is not supported for decoding yet.",
+            ));
         }
 
         if info.header.interlaced {
-            return Err(Error::Unimplemented("Interlaced images are not yet supported."));
+            return Err(Error::Unimplemented(
+                "Interlaced images are not yet supported.",
+            ));
         }
 
         if info.header.animated {
-            return Err(Error::Unimplemented("Animated images are not yet supported."));
+            return Err(Error::Unimplemented(
+                "Animated images are not yet supported.",
+            ));
         }
 
         if info.header.bytes_per_channel != BytesPerChannel::One {
-            return Err(Error::Unimplemented("Only images with 8 bits per channel are supported"));
+            return Err(Error::Unimplemented(
+                "Only images with 8 bits per channel are supported",
+            ));
         }
 
         if info.second_header.custom_bitchance {
-            return Err(Error::Unimplemented("Custom bitchances are currently unimplemented in the FLIF standard.",));
+            return Err(Error::Unimplemented(
+                "Custom bitchances are currently unimplemented in the FLIF standard.",
+            ));
         }
 
+        let update_table =
+            UpdateTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
         let mut maniac_vec = Vec::new();
         for channel in 0..info.header.channels as usize {
             let range = info.second_header.transformations.range(channel);
             if range.min == range.max {
                 maniac_vec.push(None);
             } else {
-                let tree = ManiacTree::new(&mut rac, channel, &info)?;
+                let tree = ManiacTree::new(&mut rac, channel, &info, &update_table)?;
                 maniac_vec.push(Some(tree));
             }
         }
 
         let image_data = non_interlaced_pixels(&mut rac, &info, &mut maniac_vec)?;
-        Ok(Flif {
-            info,
-            image_data,
-        })
+        Ok(Flif { info, image_data })
     }
 
     fn identify_internal(&mut self) -> Result<(FlifInfo, Rac<&mut R>)> {
@@ -78,16 +88,22 @@ impl<R: Read> Decoder<R> {
 
         let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
 
-        Ok((FlifInfo {
-            header: main_header,
-            metadata,
-            second_header,
-        },
-        rac))
+        Ok((
+            FlifInfo {
+                header: main_header,
+                metadata,
+                second_header,
+            },
+            rac,
+        ))
     }
 }
 
-fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mut [Option<ManiacTree>]) -> Result<DecodingImage> {
+fn non_interlaced_pixels<R: Read>(
+    rac: &mut Rac<R>,
+    info: &FlifInfo,
+    maniac: &mut [Option<ManiacTree>],
+) -> Result<DecodingImage> {
     let channel_order = [3, 0, 1, 2];
     let mut image = DecodingImage::new(info);
     for c in channel_order.iter() {
@@ -95,8 +111,13 @@ fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mu
             for y in 0..info.header.height {
                 for x in 0..info.header.width {
                     let guess = make_guess(info, &image, x, y, *c);
-                    let range = info.second_header.transformations.crange(*c, image.get_vals(y, x));
-                    let snap = info.second_header.transformations.snap(*c, image.get_vals(y, x), guess);
+                    let range = info.second_header
+                        .transformations
+                        .crange(*c, image.get_vals(y, x));
+                    let snap =
+                        info.second_header
+                            .transformations
+                            .snap(*c, image.get_vals(y, x), guess);
                     let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
 
                     let value = if let Some(ref mut maniac) = maniac[*c] {
@@ -113,7 +134,9 @@ fn non_interlaced_pixels<R: Read>(rac: &mut Rac<R>, info: &FlifInfo, maniac: &mu
 
     for y in 0..info.header.height {
         for x in 0..info.header.width {
-            info.second_header.transformations.undo(image.get_vals_mut(y, x));
+            info.second_header
+                .transformations
+                .undo(image.get_vals_mut(y, x));
         }
     }
 
