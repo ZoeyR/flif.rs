@@ -326,7 +326,7 @@ impl<'a> ManiacNode<'a> {
                 mut counter,
                 mut table,
             } => {
-                if (counter > 0) {
+                if counter > 0 {
                     let val = rac.read_near_zero(min, max, &mut table)?;
                     counter -= 1;
                     Ok((
