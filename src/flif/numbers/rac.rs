@@ -134,7 +134,7 @@ impl<W: Write> Rac<W> {
         if self.range <= Self::MIN_RANGE {
             // write out the top 8 bits of low
             let byte = (self.low >> Self::MIN_RANGE_BITS) as u8;
-            self.reader.write(&[byte])?;
+            self.reader.write_all(&[byte])?;
             self.low <<= 8;
             self.range <<= 8;
         }
@@ -169,7 +169,7 @@ impl<W: Write> Rac<W> {
         // flush is only ever required if there is data in the top 8 bits (out of 24) of low.
         if self.low >> Self::MIN_RANGE_BITS > 0 {
             let byte = (self.low >> Self::MIN_RANGE_BITS) as u8;
-            self.reader.write(&[byte])?;
+            self.reader.write_all(&[byte])?;
         }
 
         Ok(())
