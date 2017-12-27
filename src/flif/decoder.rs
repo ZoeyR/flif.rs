@@ -107,7 +107,7 @@ fn non_interlaced_pixels<R: Read>(
 ) -> Result<DecodingImage> {
     let channel_order = [3, 0, 1, 2];
     let mut image = DecodingImage::new(info);
-    for c in channel_order.iter() {
+    for c in &channel_order {
         if *c < info.header.channels as usize {
             for y in 0..info.header.height {
                 for x in 0..info.header.width {
