@@ -8,7 +8,7 @@ use {Flif, Metadata};
 use numbers::rac::Rac;
 use maniac::ManiacTree;
 
-pub struct Decoder<R> {
+pub struct Decoder<R: Read> {
     reader: R,
 }
 
@@ -58,7 +58,7 @@ impl<R: Read> Decoder<R> {
             UpdateTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
         let mut maniac_vec = Vec::new();
         for channel in 0..info.header.channels as usize {
-            let range = info.second_header.transformations.range(channel);
+            let range = info.transform.range(channel);
             if range.min == range.max {
                 maniac_vec.push(None);
             } else {
@@ -86,13 +86,14 @@ impl<R: Read> Decoder<R> {
         // the Read object directly.
         let mut rac: Rac<_> = Rac::from_reader(&mut self.reader)?;
 
-        let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
+        let (second_header, transform) = SecondHeader::from_rac(&main_header, &mut rac)?;
 
         Ok((
             FlifInfo {
                 header: main_header,
                 metadata,
                 second_header,
+                transform,
             },
             rac,
         ))
@@ -111,13 +112,8 @@ fn non_interlaced_pixels<R: Read>(
             for y in 0..info.header.height {
                 for x in 0..info.header.width {
                     let guess = make_guess(info, &image, x, y, *c);
-                    let range = info.second_header
-                        .transformations
-                        .crange(*c, image.get_vals(y, x));
-                    let snap =
-                        info.second_header
-                            .transformations
-                            .snap(*c, image.get_vals(y, x), guess);
+                    let range = info.transform.crange(*c, image.get_vals(y, x));
+                    let snap = info.transform.snap(*c, image.get_vals(y, x), guess);
                     let pvec = ::maniac::build_pvec(snap, x, y, *c, &image);
 
                     let value = if let Some(ref mut maniac) = maniac[*c] {
@@ -134,9 +130,7 @@ fn non_interlaced_pixels<R: Read>(
 
     for y in 0..info.header.height {
         for x in 0..info.header.width {
-            info.second_header
-                .transformations
-                .undo(image.get_vals_mut(y, x));
+            info.transform.undo(image.get_vals_mut(y, x));
         }
     }
 
@@ -144,7 +138,7 @@ fn non_interlaced_pixels<R: Read>(
 }
 
 fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: usize) -> i16 {
-    let transformation = &info.second_header.transformations;
+    let transformation = &info.transform;
     let left = if x > 0 {
         image.get_val(y, x - 1, channel)
     } else if y > 0 {

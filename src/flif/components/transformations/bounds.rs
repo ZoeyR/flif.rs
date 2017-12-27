@@ -1,22 +1,21 @@
 use components::transformations::ColorRange;
-use std::io::Read;
 use error::*;
 use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::Rac;
-use super::Transformation;
+use numbers::rac::RacRead;
+use super::Transform;
 use ColorValue;
 
 #[derive(Debug)]
 pub struct Bounds {
     ranges: [ColorRange; 4],
-    previous_transformation: Box<Transformation>,
+    previous_transformation: Box<Transform>,
 }
 
 impl Bounds {
-    pub fn new<R: Read>(
-        rac: &mut Rac<R>,
-        trans: Box<Transformation>,
+    pub fn new<R: RacRead>(
+        rac: &mut R,
+        trans: Box<Transform>,
         channels: usize,
         update_table: &UpdateTable,
     ) -> Result<Bounds> {
@@ -39,7 +38,7 @@ impl Bounds {
     }
 }
 
-impl Transformation for Bounds {
+impl Transform for Bounds {
     fn undo(&self, pixel: &mut [ColorValue]) {
         self.previous_transformation.undo(pixel);
     }

@@ -1,15 +1,13 @@
-use std::io::Read;
 use error::*;
 use num_traits::PrimInt;
-use super::rac::Rac;
-use super::rac::IRac;
+use super::rac::RacRead;
 
 pub trait UniformSymbolCoder {
     fn read_val<T: PrimInt>(&mut self, min: T, max: T) -> Result<T>;
     fn read_bool(&mut self) -> Result<bool>;
 }
 
-impl<R: Read> UniformSymbolCoder for Rac<R> {
+impl<R: RacRead> UniformSymbolCoder for R {
     fn read_val<T: PrimInt>(&mut self, mut min: T, mut max: T) -> Result<T> {
         while max != min {
             let mid = min + ((max - min) >> 1);

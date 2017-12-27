@@ -1,8 +1,9 @@
 extern crate inflate;
 extern crate num_traits;
 
-use components::header::{Header, SecondHeader, Channels};
+use components::header::{Channels, Header, SecondHeader};
 use components::metadata::Metadata;
+use components::transformations::Transform;
 
 pub use decoder::Decoder;
 
@@ -39,9 +40,10 @@ pub struct FlifInfo {
     pub header: Header,
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader,
+    transform: Box<Transform>,
 }
 
-pub type ColorValue = i16;
+type ColorValue = i16;
 
 struct DecodingImage {
     pub height: usize,

@@ -1,11 +1,11 @@
 use std::io::Read;
 use error::*;
 use numbers::FlifReadExt;
-use numbers::rac::Rac;
+use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::chances::UpdateTable;
 use super::transformations;
-use super::transformations::Transformation;
+use super::transformations::{Transformation, Transform};
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Channels {
@@ -108,12 +108,12 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
-    pub transformations: Box<Transformation>, // Placeholder until transformations are implemented
+    pub transformations: Vec<Transformation>, // Placeholder until transformations are implemented
     pub invis_pixel_predictor: Option<u8>,
 }
 
 impl SecondHeader {
-    pub fn from_rac<R: Read>(main_header: &Header, rac: &mut Rac<R>) -> Result<Self> {
+    pub fn from_rac<R: RacRead>(main_header: &Header, rac: &mut R) -> Result<(Self, Box<Transform>)> {
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
@@ -155,7 +155,7 @@ impl SecondHeader {
         };
         let update_table = UpdateTable::new(alpha_divisor, cutoff);
 
-        let transformations = transformations::load_transformations(
+        let (transformations, transform) = transformations::load_transformations(
             rac,
             main_header.channels as usize,
             &update_table,
@@ -168,7 +168,7 @@ impl SecondHeader {
             None
         };
 
-        Ok(SecondHeader {
+        Ok((SecondHeader {
             bits_per_pixel,
             alpha_zero,
             loops,
@@ -179,6 +179,6 @@ impl SecondHeader {
             custom_bitchance,
             transformations,
             invis_pixel_predictor,
-        })
+        }, transform))
     }
 }

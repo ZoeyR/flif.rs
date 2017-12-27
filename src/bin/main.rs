@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::io::BufWriter;
 
-use flif::components::header::Channels;
+use flif::components::Channels;
 use flif::error::*;
 use flif::Decoder;
 
@@ -105,6 +105,16 @@ fn id_file<R: Read>(mut decoder: Decoder<R>) -> Result<()> {
     }
     println!("channels: {:?}", info.header.channels);
     println!("dimensions: {}W x {}H", info.header.width, info.header.height);
+
+    let len = info.second_header.transformations.len();
+    if len != 0 {
+        println!("transformations:");
+
+        for transformation in info.second_header.transformations[..len - 1].iter() {
+            println!("├── {}", transformation);
+        }
+        println!("└── {}", info.second_header.transformations[len - 1]);
+    }
 
     Ok(())
 }

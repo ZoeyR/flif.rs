@@ -1,7 +1,7 @@
 extern crate flif;
 extern crate png;
 
-use flif::components::header::Channels;
+use flif::components::Channels;
 use flif::Decoder;
 use std::fs::File;
 use std::io::BufWriter;
