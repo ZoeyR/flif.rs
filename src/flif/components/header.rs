@@ -67,10 +67,10 @@ impl Header {
             }
         };
 
-        let bytes_per_channel = match reader.read_u8()? - b'0' {
-            0 => BytesPerChannel::Custom,
-            1 => BytesPerChannel::One,
-            2 => BytesPerChannel::Two,
+        let bytes_per_channel = match reader.read_u8()?.checked_sub(b'0') {
+            Some(0) => BytesPerChannel::Custom,
+            Some(1) => BytesPerChannel::One,
+            Some(2) => BytesPerChannel::Two,
             _ => {
                 return Err(Error::InvalidHeader {
                     desc: "bytes per channel was not a valid value",
