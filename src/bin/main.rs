@@ -87,10 +87,10 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
             writer.write_image_data(&data).unwrap(); // Save
             Ok(())
         } else {
-            std::io::stdout().write(&flif.get_raw_pixels())?;
+            std::io::stdout().write_all(&flif.get_raw_pixels())?;
             Ok(())
         }
-        
+
     }
 }
 
