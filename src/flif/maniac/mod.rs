@@ -402,35 +402,35 @@ impl<'a> ManiacNode<'a> {
 
     pub fn size(&self) -> usize {
         use self::ManiacNode::*;
-        match self {
-            &Property {
+        match *self {
+            Property {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size() + right.size(),
-            &Inner {
+            Inner {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size() + right.size(),
-            &Leaf(_) => 1,
+            Leaf(_) => 1,
         }
     }
 
     pub fn depth(&self) -> usize {
         use self::ManiacNode::*;
-        match self {
-            &Property {
+        match *self {
+            Property {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size().max(right.size()),
-            &Inner {
+            Inner {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size().max(right.size()),
-            &Leaf(_) => 1,
+            Leaf(_) => 1,
         }
     }
 }
@@ -460,25 +460,25 @@ impl InactiveManiacNode {
 
     pub fn size(&self) -> usize {
         use self::InactiveManiacNode::*;
-        match self {
-            &InactiveProperty {
+        match *self {
+            InactiveProperty {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size() + right.size(),
-            &InactiveLeaf => 1,
+            InactiveLeaf => 1,
         }
     }
 
     pub fn depth(&self) -> usize {
         use self::InactiveManiacNode::*;
-        match self {
-            &InactiveProperty {
+        match *self {
+            InactiveProperty {
                 ref left,
                 ref right,
                 ..
             } => 1 + left.size().max(right.size()),
-            &InactiveLeaf => 1,
+            InactiveLeaf => 1,
         }
     }
 }

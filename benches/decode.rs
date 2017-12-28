@@ -15,5 +15,5 @@ fn cutout_full_decode() {
 
 #[bench]
 fn bench_cutout_full_decode(b: &mut Bencher) {
-    b.iter(|| cutout_full_decode());
+    b.iter(cutout_full_decode);
 }

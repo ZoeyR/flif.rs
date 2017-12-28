@@ -23,7 +23,7 @@ fn decode_and_write(input: &str, output: &str) {
     println!("└───{:?}", flif.info.second_header);
 
     let file = File::create(output).unwrap();
-    let ref mut w = BufWriter::new(file);
+    let w = &mut BufWriter::new(file);
 
     let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
 

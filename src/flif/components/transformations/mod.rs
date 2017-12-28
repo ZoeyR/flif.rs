@@ -49,17 +49,17 @@ impl Transformation {
 impl ::std::fmt::Display for Transformation {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         use self::Transformation::*;
-        match self {
-            &ChannelCompact => write!(f, "Channel Compact"),
-            &YCoGg => write!(f, "YCoCg"),
-            &PermutePlanes => write!(f, "Permute Planes"),
-            &Bounds => write!(f, "Bounds"),
-            &PaletteAlpha => write!(f, "Palette Alpha"),
-            &Palette => write!(f, "Palette"),
-            &ColorBuckets => write!(f, "Color Buckets"),
-            &DuplicateFrame => write!(f, "Duplicate Frame"),
-            &FrameShape => write!(f, "Frame Shape"),
-            &FrameLookback => write!(f, "Frame Lookback"),
+        match *self {
+            ChannelCompact => write!(f, "Channel Compact"),
+            YCoGg => write!(f, "YCoCg"),
+            PermutePlanes => write!(f, "Permute Planes"),
+            Bounds => write!(f, "Bounds"),
+            PaletteAlpha => write!(f, "Palette Alpha"),
+            Palette => write!(f, "Palette"),
+            ColorBuckets => write!(f, "Color Buckets"),
+            DuplicateFrame => write!(f, "Duplicate Frame"),
+            FrameShape => write!(f, "Frame Shape"),
+            FrameLookback => write!(f, "Frame Lookback"),
         }
     }
 }

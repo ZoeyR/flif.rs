@@ -70,7 +70,7 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
 
         if let Some(output) = output {
             let output_file = File::create(output)?;
-            let ref mut w = BufWriter::new(output_file);
+            let w = &mut BufWriter::new(output_file);
 
             let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
 
