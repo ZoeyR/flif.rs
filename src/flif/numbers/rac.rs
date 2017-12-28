@@ -57,7 +57,7 @@ impl<R: Read> RacRead for Rac<R> {
 
     fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
         let chance = context.get_chance(&entry);
-        let transformed_chance = Self::apply_chance(chance as u32, self.range);
+        let transformed_chance = Self::apply_chance(u32::from(chance), self.range);
         let bit = self.get(transformed_chance)?;
         context.update_entry(bit, entry);
 
@@ -78,7 +78,7 @@ impl<R: Read> Rac<R> {
                 Err(Error::Io(ref io)) if io.kind() == io::ErrorKind::UnexpectedEof => 0xFF,
                 err => err?,
             };
-            acc.map(|acc| (acc << 8) | or_val as u32)
+            acc.map(|acc| (acc << 8) | u32::from(or_val))
         })?;
 
         Ok(Rac {
@@ -94,11 +94,11 @@ impl<R: Read> Rac<R> {
                 self.low <<= 8;
                 self.range <<= 8;
 
-                self.low |= match self.reader.read_u8() {
+                self.low |= u32::from(match self.reader.read_u8() {
                     Ok(val) => val,
                     Err(Error::Io(ref io)) if io.kind() == io::ErrorKind::UnexpectedEof => 0xFF,
                     err => err?,
-                } as u32;
+                });
             }
         }
         Ok(())

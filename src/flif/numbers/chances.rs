@@ -71,7 +71,7 @@ impl UpdateTable {
     pub fn new(alpha_divisor: u8, cutoff: u8) -> UpdateTable {
         let mut updates = vec![0; 4096];
 
-        let max_chance: u16 = 4096 - cutoff as u16;
+        let max_chance: u16 = 4096 - u16::from(cutoff);
         let mut old_chance: u16 = 0;
 
         let mut chance_accumulator: u64 = 1 << 31;
@@ -99,22 +99,22 @@ impl UpdateTable {
         }
 
         //fill in the rest of the table
-        for old_chance in cutoff as u16..(max_chance + 1) {
+        for old_chance in u16::from(cutoff)..(max_chance + 1) {
             const MAX: u64 = 1 + ::std::u32::MAX as u64;
             if updates[old_chance as usize] != 0 {
                 continue;
             }
 
-            let mut new_chance = (old_chance as u64 * MAX + 2048) / 4096;
+            let mut new_chance = (u64::from(old_chance) * MAX + 2048) / 4096;
             new_chance += Self::update_chance_accumulator(new_chance, alpha_divisor);
             new_chance = (4096 * new_chance + (MAX / 2)) >> 32;
 
-            if new_chance <= old_chance as u64 {
-                new_chance = old_chance as u64 + 1;
+            if new_chance <= u64::from(old_chance) {
+                new_chance = u64::from(old_chance) + 1;
             }
 
-            if new_chance > max_chance as u64 {
-                new_chance = max_chance as u64;
+            if new_chance > u64::from(max_chance) {
+                new_chance = u64::from(max_chance);
             }
             updates[old_chance as usize] = new_chance as u16;
         }
@@ -133,7 +133,7 @@ impl UpdateTable {
     #[inline(always)]
     fn update_chance_accumulator(old: u64, alpha_divisor: u8) -> u64 {
         const MAX: u64 = ::std::u32::MAX as u64;
-        let v = (MAX - old as u64 + 1) * (MAX / alpha_divisor as u64);
+        let v = (MAX - old as u64 + 1) * (MAX / u64::from(alpha_divisor));
         if v & 0xFFFF_FFFF > 0 {
             ((v + 1) >> 32) as u64
         } else {
