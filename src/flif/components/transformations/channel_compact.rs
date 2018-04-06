@@ -12,9 +12,9 @@ pub struct ChannelCompact {
     decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
-    pub fn new<R: RacRead, T: ?Sized + Transform>(
+    pub fn new<R: RacRead, T: Transform>(
         rac: &mut R,
-        transformation: &T,
+        transformation: T,
         channels: usize,
         update_table: &UpdateTable,
     ) -> Result<ChannelCompact> {

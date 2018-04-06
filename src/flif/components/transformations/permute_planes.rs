@@ -8,7 +8,7 @@ pub struct PermutePlanes {
 }
 
 impl PermutePlanes {
-    pub fn new<T: ?Sized + Transform>(transformation: &T) -> PermutePlanes {
+    pub fn new<T: Transform>(transformation: T) -> PermutePlanes {
         let max_iter = [
             transformation.range(0).max,
             transformation.range(1).max,

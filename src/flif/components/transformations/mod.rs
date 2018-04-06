@@ -84,6 +84,20 @@ pub trait Transform: ::std::fmt::Debug {
     fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange;
 }
 
+impl Transform for Box<Transform> {
+    fn undo(&self, pixel: &mut [ColorValue]) {
+        (**self).undo(pixel)
+    }
+
+    fn range(&self, channel: usize) -> ColorRange {
+        (**self).range(channel)
+    }
+
+    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
+        (**self).crange(channel, values)
+    }
+}
+
 #[derive(Debug)]
 struct Orig;
 
@@ -105,32 +119,33 @@ pub fn load_transformations<R: RacRead>(
     update_table: &UpdateTable,
 ) -> Result<(Vec<Transformation>, Box<Transform>)> {
     let mut transform: Box<Transform> = Box::new(Orig);
-    let mut transformations =  Vec::new();
+    let mut transformations = Vec::new();
     while rac.read_bit()? {
-        let id = Transformation::from_id(rac.read_val(0, 13)?);
-        let t = match id {
-            Some(Transformation::ChannelCompact) => Box::new(ChannelCompact::new(
+        let id = Transformation::from_id(rac.read_val(0, 13)?).ok_or(Error::InvalidOperation(
+            "Invalid transformation identifier read, possibly corrupt file".into(),
+        ))?;
+        transform = match id {
+            Transformation::ChannelCompact => Box::new(ChannelCompact::new(
                 rac,
-                &*transform,
+                transform,
                 channels,
                 update_table,
             )?),
-            Some(Transformation::YCoGg) => Box::new(YCoGg::new(&*transform)) as Box<Transform>,
-            Some(Transformation::PermutePlanes) => Box::new(PermutePlanes::new(&*transform)) as Box<Transform>,
-            Some(Transformation::Bounds) => Box::new(Bounds::new(rac, transform, channels, update_table)?),
-            Some(_) => {
+            Transformation::YCoGg => Box::new(YCoGg::new(transform)) as Box<Transform>,
+            Transformation::PermutePlanes => {
+                Box::new(PermutePlanes::new(transform)) as Box<Transform>
+            }
+            Transformation::Bounds => {
+                Box::new(Bounds::new(rac, transform, channels, update_table)?)
+            }
+            _ => {
                 return Err(Error::Unimplemented(
                     "found unimplemented transformation type",
                 ));
-            },
-            None => {
-                return Err(Error::InvalidOperation("Invalid transformation identifier read, possibly corrupt file".into()));
             }
         };
 
-        // since a None value on the id causes an early return unwrap is safe here
-        transformations.push(id.unwrap());
-        transform = t;
+        transformations.push(id);
     }
 
     Ok((transformations, transform))

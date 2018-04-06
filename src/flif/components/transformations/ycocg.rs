@@ -9,7 +9,7 @@ pub struct YCoGg {
 }
 
 impl YCoGg {
-    pub fn new<T: ?Sized + Transform>(transformation: &T) -> YCoGg {
+    pub fn new<T: Transform>(transformation: T) -> YCoGg {
         let max_iter = [
             transformation.range(0).max,
             transformation.range(1).max,
