@@ -4,7 +4,7 @@ use numbers::chances::{ChanceTable, ChanceTableEntry};
 use numbers::rac::RacRead;
 
 pub trait NearZeroCoder {
-    fn read_near_zero<I: PrimInt + Signed>(
+    fn read_near_zero<I: PrimInt>(
         &mut self,
         min: I,
         max: I,
@@ -12,9 +12,8 @@ pub trait NearZeroCoder {
     ) -> Result<I>;
 }
 
-impl<R: RacRead> NearZeroCoder for R
-{
-    fn read_near_zero<I: PrimInt + Signed>(
+impl<R: RacRead> NearZeroCoder for R {
+    fn read_near_zero<I: PrimInt>(
         &mut self,
         min: I,
         max: I,
@@ -30,7 +29,7 @@ impl<R: RacRead> NearZeroCoder for R
     }
 }
 
-fn read_near_zero_inner<R: RacRead, I: PrimInt + Signed>(
+fn read_near_zero_inner<R: RacRead, I: PrimInt>(
     read: &mut R,
     min: I,
     max: I,
@@ -56,7 +55,9 @@ fn read_near_zero_inner<R: RacRead, I: PrimInt + Signed>(
         min >= I::zero()
     };
 
-    let absolute_max = if sign { max } else { -min };
+    // bitwise negation is done here since the methods exist for both unsigned and signed numbers,
+    // it is safe because the else clause can only be hit when I is signed.
+    let absolute_max = if sign { max } else { (!min) + I::one() };
 
     let largest_exponent =
         (::std::mem::size_of::<I>() * 8) - absolute_max.leading_zeros() as usize - 1;
@@ -102,5 +103,14 @@ fn read_near_zero_inner<R: RacRead, I: PrimInt + Signed>(
         }
     }
     let have = I::from(have).unwrap();
-    Ok(if sign { have } else { -have })
+    Ok(if sign { have } else { (!have) + I::one() })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_bitwise_negation() {
+        let n = -6;
+        assert_eq!(6, !n + 1);
+    }
 }
