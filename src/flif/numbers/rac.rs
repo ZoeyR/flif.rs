@@ -1,5 +1,6 @@
 use std::io;
 use std::io::Read;
+#[cfg(test)]
 use std::io::Write;
 use numbers::chances::{ChanceTable, ChanceTableEntry};
 use error::*;
@@ -121,6 +122,7 @@ impl<R: Read> Rac<R> {
     }
 }
 
+#[cfg(test)]
 impl<W: Write> Rac<W> {
     pub fn from_writer(writer: W) -> Rac<W> {
         Rac {
