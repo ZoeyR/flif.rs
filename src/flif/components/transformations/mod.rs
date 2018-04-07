@@ -6,7 +6,7 @@ use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
 use self::permute_planes::PermutePlanes;
-use ColorValue;
+use colors::ColorValue;
 
 mod bounds;
 mod channel_compact;

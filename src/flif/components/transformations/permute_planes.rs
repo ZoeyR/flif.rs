@@ -1,6 +1,6 @@
 use components::transformations::ColorRange;
 use super::Transform;
-use ::ColorValue;
+use colors::ColorValue;
 
 #[derive(Debug)]
 pub struct PermutePlanes {

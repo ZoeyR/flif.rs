@@ -4,12 +4,14 @@ extern crate num_traits;
 use components::header::{Channels, Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
+use colors::ColorValue;
 
 pub use decoder::Decoder;
 
 mod decoder;
 mod numbers;
 mod maniac;
+mod colors;
 
 pub mod components;
 pub mod error;
@@ -42,8 +44,6 @@ pub struct FlifInfo {
     pub second_header: SecondHeader,
     transform: Box<Transform>,
 }
-
-type ColorValue = i16;
 
 struct DecodingImage {
     pub height: usize,

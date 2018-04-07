@@ -4,7 +4,7 @@ use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::RacRead;
 use super::Transform;
-use ColorValue;
+use colors::ColorValue;
 
 #[derive(Debug)]
 pub struct ChannelCompact {

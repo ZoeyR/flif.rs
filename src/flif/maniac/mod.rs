@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use ColorValue;
+use colors::ColorValue;
 use DecodingImage;
 use components::transformations::ColorRange;
 use FlifInfo;
