@@ -1,17 +1,17 @@
 extern crate inflate;
 extern crate num_traits;
 
-use components::header::{Channels, Header, SecondHeader};
+use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
-use colors::ColorValue;
+use colors::{Channel, ColorSpace, ColorValue, Pixel};
 
 pub use decoder::Decoder;
 
 mod decoder;
 mod numbers;
 mod maniac;
-mod colors;
+pub mod colors;
 
 pub mod components;
 pub mod error;
@@ -28,12 +28,12 @@ impl Flif {
         for y in 0..self.image_data.height {
             for x in 0..self.image_data.width {
                 let vals = self.image_data.get_vals(y, x);
-                for channel in 0..self.info.header.channels as usize {
+                for channel in self.info.header.channels {
                     data.push(vals[channel] as u8)
                 }
             }
         }
-        
+
         data
     }
 }
@@ -48,8 +48,8 @@ pub struct FlifInfo {
 struct DecodingImage {
     pub height: usize,
     pub width: usize,
-    pub channels: Channels,
-    data: Vec<[ColorValue; 4]>,
+    pub channels: ColorSpace,
+    data: Vec<Pixel>,
 }
 
 impl DecodingImage {
@@ -58,23 +58,23 @@ impl DecodingImage {
             height: info.header.height,
             width: info.header.width,
             channels: info.header.channels,
-            data: vec![[0, 0, 0, 0]; info.header.height * info.header.width],
+            data: vec![Pixel::default(); info.header.height * info.header.width],
         }
     }
 
-    pub fn get_val(&self, row: usize, col: usize, channel: usize) -> ColorValue {
+    pub fn get_val(&self, row: usize, col: usize, channel: Channel) -> ColorValue {
         self.data[(self.width * row) + col][channel]
     }
 
-    pub fn set_val(&mut self, row: usize, col: usize, channel: usize, value: ColorValue) {
+    pub fn set_val(&mut self, row: usize, col: usize, channel: Channel, value: ColorValue) {
         self.data[(self.width * row) + col][channel] = value;
     }
 
-    pub fn get_vals(&self, row: usize, col: usize) -> &[ColorValue; 4] {
+    pub fn get_vals(&self, row: usize, col: usize) -> &Pixel {
         &self.data[(self.width * row) + col]
     }
 
-    pub fn get_vals_mut(&mut self, row: usize, col: usize) -> &mut [ColorValue; 4] {
+    pub fn get_vals_mut(&mut self, row: usize, col: usize) -> &mut Pixel {
         &mut self.data[(self.width * row) + col]
     }
 }

@@ -6,7 +6,7 @@ use self::channel_compact::ChannelCompact;
 use self::bounds::Bounds;
 use self::ycocg::YCoGg;
 use self::permute_planes::PermutePlanes;
-use colors::ColorValue;
+use colors::{Channel, ColorSpace, ColorValue, Pixel};
 
 mod bounds;
 mod channel_compact;
@@ -65,35 +65,35 @@ impl ::std::fmt::Display for Transformation {
 }
 
 pub trait Transform: ::std::fmt::Debug {
-    fn snap(&self, channel: usize, values: &[ColorValue], pixel: ColorValue) -> ColorValue {
-        let range = self.crange(channel, values);
+    fn snap(&self, channel: Channel, pixel: &Pixel, value: ColorValue) -> ColorValue {
+        let range = self.crange(channel, pixel);
 
-        if pixel > range.max {
+        if value > range.max {
             range.max
-        } else if pixel < range.min {
+        } else if value < range.min {
             range.min
         } else {
-            pixel
+            value
         }
     }
 
-    fn undo(&self, pixel: &mut [ColorValue]);
+    fn undo(&self, pixel: &mut Pixel);
 
-    fn range(&self, channel: usize) -> ColorRange;
+    fn range(&self, channel: Channel) -> ColorRange;
 
-    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange;
+    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange;
 }
 
 impl Transform for Box<Transform> {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, pixel: &mut Pixel) {
         (**self).undo(pixel)
     }
 
-    fn range(&self, channel: usize) -> ColorRange {
+    fn range(&self, channel: Channel) -> ColorRange {
         (**self).range(channel)
     }
 
-    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
+    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
         (**self).crange(channel, values)
     }
 }
@@ -102,20 +102,20 @@ impl Transform for Box<Transform> {
 struct Orig;
 
 impl Transform for Orig {
-    fn undo(&self, _pixel: &mut [ColorValue]) {}
+    fn undo(&self, _pixel: &mut Pixel) {}
 
-    fn range(&self, _channel: usize) -> ColorRange {
+    fn range(&self, _channel: Channel) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
 
-    fn crange(&self, _channel: usize, _values: &[ColorValue]) -> ColorRange {
+    fn crange(&self, _channel: Channel, _values: &Pixel) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
 }
 
 pub fn load_transformations<R: RacRead>(
     rac: &mut R,
-    channels: usize,
+    channels: ColorSpace,
     update_table: &UpdateTable,
 ) -> Result<(Vec<Transformation>, Box<Transform>)> {
     let mut transform: Box<Transform> = Box::new(Orig);
@@ -125,12 +125,9 @@ pub fn load_transformations<R: RacRead>(
             "Invalid transformation identifier read, possibly corrupt file".into(),
         ))?;
         transform = match id {
-            Transformation::ChannelCompact => Box::new(ChannelCompact::new(
-                rac,
-                transform,
-                channels,
-                update_table,
-            )?),
+            Transformation::ChannelCompact => {
+                Box::new(ChannelCompact::new(rac, transform, channels, update_table)?)
+            }
             Transformation::YCoGg => Box::new(YCoGg::new(transform)) as Box<Transform>,
             Transformation::PermutePlanes => {
                 Box::new(PermutePlanes::new(transform)) as Box<Transform>
@@ -151,7 +148,7 @@ pub fn load_transformations<R: RacRead>(
     Ok((transformations, transform))
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
 pub struct ColorRange {
     pub min: ColorValue,
     pub max: ColorValue,

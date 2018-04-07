@@ -1,6 +1,6 @@
 use components::transformations::ColorRange;
 use super::Transform;
-use colors::ColorValue;
+use colors::{Channel, ColorValue, Pixel};
 
 #[derive(Debug)]
 pub struct YCoGg {
@@ -11,87 +11,95 @@ pub struct YCoGg {
 impl YCoGg {
     pub fn new<T: Transform>(transformation: T) -> YCoGg {
         let max_iter = [
-            transformation.range(0).max,
-            transformation.range(1).max,
-            transformation.range(2).max,
+            transformation.range(Channel::Red).max,
+            transformation.range(Channel::Blue).max,
+            transformation.range(Channel::Green).max,
         ];
 
         let old_max = max_iter.iter().max().unwrap();
         let new_max = (((old_max / 4) + 1) * 4) - 1;
         YCoGg {
             max: new_max,
-            alpha_range: transformation.range(3),
+            alpha_range: transformation.range(Channel::Alpha),
         }
     }
 }
 
 impl Transform for YCoGg {
-    fn undo(&self, pixel: &mut [ColorValue]) {
-        let red = pixel[1] + pixel[0] + ((1 - pixel[2]) >> 1) - (pixel[1] >> 1);
-        let green = pixel[0] - ((-pixel[2])>>1);
-        let blue = pixel[0] + ((1 - pixel[2]) >> 1) - (pixel[1] >> 1);
+    fn undo(&self, pixel: &mut Pixel) {
+        let red = pixel[Channel::Green] + pixel[Channel::Red] + ((1 - pixel[Channel::Blue]) >> 1)
+            - (pixel[Channel::Green] >> 1);
+        let green = pixel[Channel::Red] - ((-pixel[Channel::Blue]) >> 1);
+        let blue =
+            pixel[Channel::Red] + ((1 - pixel[Channel::Blue]) >> 1) - (pixel[Channel::Green] >> 1);
 
-        pixel[0] = red;
-        pixel[1] = green;
-        pixel[2] = blue;
+        pixel[Channel::Red] = red;
+        pixel[Channel::Green] = green;
+        pixel[Channel::Blue] = blue;
     }
 
-    fn range(&self, channel: usize) -> ColorRange {
+    fn range(&self, channel: Channel) -> ColorRange {
         let (min, max) = match channel {
-            0 => (0, self.max),
-            1 | 2 => (-self.max, self.max),
+            Channel::Red => (0, self.max),
+            Channel::Green | Channel::Blue => (-self.max, self.max),
             _ => (self.alpha_range.min, self.alpha_range.max),
         };
 
         ColorRange { min, max }
     }
 
-    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
+    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
         let origmax4 = (self.max + 1) / 4;
 
         match channel {
-            0 => self.range(0),
-            1 => {
-                let min = if values[0] < origmax4 - 1 {
-                    -3 - (4 * values[0])
-                } else if values[0] > (3 * origmax4) - 1 {
-                    4 * (values[0] - self.max)
+            channel @ Channel::Red => self.range(channel),
+            Channel::Green => {
+                let min = if values[Channel::Red] < origmax4 - 1 {
+                    -3 - (4 * values[Channel::Red])
+                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                    4 * (values[Channel::Red] - self.max)
                 } else {
                     -self.max
                 };
 
-                let max = if values[0] < origmax4 - 1 {
-                    3 + (4 * values[0])
-                } else if values[0] > (3 * origmax4) - 1 {
-                    4*origmax4-4*(1+values[0]-3*origmax4)
+                let max = if values[Channel::Red] < origmax4 - 1 {
+                    3 + (4 * values[Channel::Red])
+                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                    4 * origmax4 - 4 * (1 + values[Channel::Red] - 3 * origmax4)
                 } else {
                     self.max
                 };
 
-                ColorRange {min, max}
-            },
-            2 => {
-                let co = values[1];
-                let y = values[0];
-                let min = if values[0] < origmax4 - 1 {
-                    -(2*y+1)
-                } else if values[0] > (3 * origmax4) - 1 {
-                    -(2*(4*origmax4-1-y)-((1+co.abs())/2)*2)
+                ColorRange { min, max }
+            }
+            Channel::Blue => {
+                let co = values[Channel::Green];
+                let y = values[Channel::Red];
+                let min = if values[Channel::Red] < origmax4 - 1 {
+                    -(2 * y + 1)
+                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                    -(2 * (4 * origmax4 - 1 - y) - ((1 + co.abs()) / 2) * 2)
                 } else {
-                    -::std::cmp::min(2*origmax4-1+(y-origmax4+1)*2, 2*origmax4+(3*origmax4-1-y)*2-((1+co.abs())/2)*2)
+                    -::std::cmp::min(
+                        2 * origmax4 - 1 + (y - origmax4 + 1) * 2,
+                        2 * origmax4 + (3 * origmax4 - 1 - y) * 2 - ((1 + co.abs()) / 2) * 2,
+                    )
                 };
 
-                let max = if values[0] < origmax4 - 1 {
-                    1+2*y-(co.abs()/2)*2
-                } else if values[0] > (3 * origmax4) - 1 {
-                    2*(4*origmax4-1-y)
+                let max = if values[Channel::Red] < origmax4 - 1 {
+                    1 + 2 * y - (co.abs() / 2) * 2
+                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                    2 * (4 * origmax4 - 1 - y)
                 } else {
-                    -::std::cmp::max(-4*origmax4 + (1+y-2*origmax4)*2, -2*origmax4-(y-origmax4)*2-1+(co.abs()/2)*2)
+                    -::std::cmp::max(
+                        -4 * origmax4 + (1 + y - 2 * origmax4) * 2,
+                        -2 * origmax4 - (y - origmax4) * 2 - 1 + (co.abs() / 2) * 2,
+                    )
                 };
 
-                ColorRange {min, max}
-            },
-            n => self.crange(n, values)
+                ColorRange { min, max }
+            }
+            n => self.crange(n, values),
         }
     }
 }
