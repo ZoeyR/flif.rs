@@ -6,7 +6,6 @@ use numbers::rac::RacRead;
 use super::Transform;
 use ColorValue;
 
-#[derive(Debug)]
 pub struct Bounds {
     ranges: [ColorRange; 4],
     previous_transformation: Box<Transform>,

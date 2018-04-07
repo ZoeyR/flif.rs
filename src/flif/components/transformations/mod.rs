@@ -1,17 +1,17 @@
+use self::bounds::Bounds;
+use self::channel_compact::ChannelCompact;
+use self::permute_planes::PermutePlanes;
+use self::ycocg::YCoGg;
+use ColorValue;
 use error::*;
+use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
-use numbers::chances::UpdateTable;
-use self::channel_compact::ChannelCompact;
-use self::bounds::Bounds;
-use self::ycocg::YCoGg;
-use self::permute_planes::PermutePlanes;
-use ColorValue;
 
 mod bounds;
 mod channel_compact;
-mod ycocg;
 mod permute_planes;
+mod ycocg;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Transformation {
@@ -64,7 +64,7 @@ impl ::std::fmt::Display for Transformation {
     }
 }
 
-pub trait Transform: ::std::fmt::Debug {
+pub trait Transform {
     fn snap(&self, channel: usize, values: &[ColorValue], pixel: ColorValue) -> ColorValue {
         let range = self.crange(channel, values);
 
@@ -125,15 +125,13 @@ pub fn load_transformations<R: RacRead>(
             "Invalid transformation identifier read, possibly corrupt file".into(),
         ))?;
         transform = match id {
-            Transformation::ChannelCompact => Box::new(ChannelCompact::new(
-                rac,
-                transform,
-                channels,
-                update_table,
-            )?),
+            Transformation::ChannelCompact => {
+                Box::new(ChannelCompact::new(rac, transform, channels, update_table)?)
+            }
             Transformation::YCoGg => Box::new(YCoGg::new(transform)) as Box<Transform>,
             Transformation::PermutePlanes => {
-                Box::new(PermutePlanes::new(transform)) as Box<Transform>
+                Box::new(PermutePlanes::new(rac, transform, channels, update_table)?)
+                    as Box<Transform>
             }
             Transformation::Bounds => {
                 Box::new(Bounds::new(rac, transform, channels, update_table)?)
