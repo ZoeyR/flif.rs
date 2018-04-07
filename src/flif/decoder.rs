@@ -163,5 +163,5 @@ fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channe
         image.get_val(y - 1, x - 1, channel)
     };
 
-    ::numbers::median3((left + top - top_left), left, top)
+    ::numbers::median3(left + top - top_left, left, top)
 }

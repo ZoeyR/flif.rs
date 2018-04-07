@@ -168,15 +168,15 @@ impl<'a> ManiacTree<'a> {
         info: &FlifInfo,
     ) -> Result<ManiacNode<'a>> {
         let chance_table = ChanceTable::new(update_table);
-        let mut property = rac.read_near_zero_2(0, prange.len() as isize, &mut context[0])?;
+        let mut property = rac.read_near_zero(0, prange.len() as isize, &mut context[0])?;
 
         if property == 0 {
             return Ok(ManiacNode::Leaf(chance_table));
         }
         property -= 1;
 
-        let counter = rac.read_near_zero_2(1 as i32, 512 as i32, &mut context[1])?;
-        let test_value = rac.read_near_zero_2(
+        let counter = rac.read_near_zero(1 as i32, 512 as i32, &mut context[1])?;
+        let test_value = rac.read_near_zero(
             prange[property as usize].min,
             prange[property as usize].max - 1,
             &mut context[2],
@@ -208,15 +208,15 @@ impl<'a> ManiacTree<'a> {
         prange: Vec<ColorRange>,
         info: &FlifInfo,
     ) -> Result<InactiveManiacNode> {
-        let mut property = rac.read_near_zero_2(0, prange.len() as isize, &mut context[0])?;
+        let mut property = rac.read_near_zero(0, prange.len() as isize, &mut context[0])?;
 
         if property == 0 {
             return Ok(InactiveManiacNode::InactiveLeaf);
         }
         property -= 1;
 
-        let counter = rac.read_near_zero_2(1 as i32, 512 as i32, &mut context[1])?;
-        let test_value = rac.read_near_zero_2(
+        let counter = rac.read_near_zero(1 as i32, 512 as i32, &mut context[1])?;
+        let test_value = rac.read_near_zero(
             prange[property as usize].min,
             prange[property as usize].max - 1,
             &mut context[2],

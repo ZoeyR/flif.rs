@@ -23,8 +23,8 @@ impl Bounds {
         let mut ranges = [ColorRange { min: 0, max: 0 }; 4];
         for c in 0..channels as usize {
             let t_range = trans.range(c);
-            ranges[c].min = rac.read_near_zero_2(t_range.min, t_range.max, &mut context)?;
-            ranges[c].max = rac.read_near_zero_2(ranges[c].min, t_range.max, &mut context)?;
+            ranges[c].min = rac.read_near_zero(t_range.min, t_range.max, &mut context)?;
+            ranges[c].max = rac.read_near_zero(ranges[c].min, t_range.max, &mut context)?;
 
             // set real min and max
             ranges[c].min = ::std::cmp::max(ranges[c].min, t_range.min);
