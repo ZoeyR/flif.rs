@@ -2,6 +2,8 @@ use self::bounds::Bounds;
 use self::channel_compact::ChannelCompact;
 use self::permute_planes::PermutePlanes;
 use self::ycocg::YCoGg;
+use self::palette::Palette;
+
 use ColorValue;
 use error::*;
 use numbers::chances::UpdateTable;
@@ -10,6 +12,9 @@ use numbers::symbol::UniformSymbolCoder;
 
 mod bounds;
 mod channel_compact;
+mod color_buckets;
+mod palette;
+mod palette_alpha;
 mod permute_planes;
 mod ycocg;
 
@@ -135,6 +140,9 @@ pub fn load_transformations<R: RacRead>(
             }
             Transformation::Bounds => {
                 Box::new(Bounds::new(rac, transform, channels, update_table)?)
+            }
+            Transformation::Palette => {
+                Box::new(Palette::new(rac, transform, channels, update_table)?)
             }
             _ => {
                 return Err(Error::Unimplemented(
