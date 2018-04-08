@@ -3,9 +3,8 @@ use numbers::rac::RacRead;
 use components::transformations::Transform;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
-use ColorValue;
 use numbers::near_zero::NearZeroCoder;
-
+use colors::{Channel, ColorSpace, ColorValue, Pixel};
 const MAX_PALETTE_SIZE: usize = 30000;
 
 pub struct Palette {
@@ -16,7 +15,7 @@ impl Palette {
     pub fn new<R: RacRead, T: Transform>(
         rac: &mut R,
         transformation: T,
-        channels: usize,
+        channels: ColorSpace,
         update_table: &UpdateTable,
     ) -> Result<Palette> {
         let mut context_a = ChanceTable::new(update_table);
@@ -31,15 +30,15 @@ impl Palette {
 }
 
 impl Transform for Palette {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, pixel: &mut Pixel) {
         unimplemented!()
     }
 
-    fn range(&self, channel: usize) -> ColorRange {
+    fn range(&self, channel: Channel) -> ColorRange {
         unimplemented!()
     }
 
-    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
+    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
         unimplemented!()
     }
 }

@@ -1,12 +1,13 @@
 use DecodingImage;
 use FlifInfo;
 use std::io::Read;
-use components::header::{BytesPerChannel, Channels, Header, SecondHeader};
+use components::header::{BytesPerChannel, Header, SecondHeader};
 use numbers::chances::UpdateTable;
 use error::*;
 use {Flif, Metadata};
 use numbers::rac::Rac;
 use maniac::ManiacTree;
+use colors::{Channel, ChannelSet, ColorSpace};
 
 pub struct Decoder<R: Read> {
     reader: R,
@@ -24,7 +25,7 @@ impl<R: Read> Decoder<R> {
     pub fn decode(&mut self) -> Result<Flif> {
         let (info, mut rac) = self.identify_internal()?;
 
-        if info.header.channels == Channels::Grayscale {
+        if info.header.channels == ColorSpace::Monochrome {
             return Err(Error::Unimplemented(
                 "Grayscale colorspace is not supported for decoding yet.",
             ));
@@ -56,14 +57,14 @@ impl<R: Read> Decoder<R> {
 
         let update_table =
             UpdateTable::new(info.second_header.alpha_divisor, info.second_header.cutoff);
-        let mut maniac_vec = Vec::new();
-        for channel in 0..info.header.channels as usize {
+        let mut maniac_vec: ChannelSet<Option<ManiacTree>> = Default::default();
+        for channel in info.header.channels {
             let range = info.transform.range(channel);
             if range.min == range.max {
-                maniac_vec.push(None);
+                maniac_vec[channel] = None;
             } else {
                 let tree = ManiacTree::new(&mut rac, channel, &info, &update_table)?;
-                maniac_vec.push(Some(tree));
+                maniac_vec[channel] = Some(tree);
             }
         }
 
@@ -103,12 +104,12 @@ impl<R: Read> Decoder<R> {
 fn non_interlaced_pixels<R: Read>(
     rac: &mut Rac<R>,
     info: &FlifInfo,
-    maniac: &mut [Option<ManiacTree>],
+    maniac: &mut ChannelSet<Option<ManiacTree>>,
 ) -> Result<DecodingImage> {
-    let channel_order = [3, 0, 1, 2];
+    let channel_order = [Channel::Alpha, Channel::Red, Channel::Green, Channel::Blue];
     let mut image = DecodingImage::new(info);
     for c in &channel_order {
-        if *c < info.header.channels as usize {
+        if info.header.channels.contains_channel(*c) {
             for y in 0..info.header.height {
                 for x in 0..info.header.width {
                     let guess = make_guess(info, &image, x, y, *c);
@@ -137,13 +138,15 @@ fn non_interlaced_pixels<R: Read>(
     Ok(image)
 }
 
-fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: usize) -> i16 {
+fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: Channel) -> i16 {
     let transformation = &info.transform;
     let left = if x > 0 {
         image.get_val(y, x - 1, channel)
     } else if y > 0 {
         image.get_val(y - 1, x, channel)
-    } else if info.second_header.alpha_zero && channel < 3 && image.get_val(y, x, 3) == 0 {
+    } else if info.second_header.alpha_zero && channel != Channel::Alpha
+        && image.get_val(y, x, Channel::Alpha) == 0
+    {
         (transformation.range(channel).min + transformation.range(channel).max) / 2
     } else {
         transformation.range(channel).min

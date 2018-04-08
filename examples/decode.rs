@@ -1,7 +1,7 @@
 extern crate flif;
 extern crate png;
 
-use flif::components::Channels;
+use flif::colors::ColorSpace;
 use flif::Decoder;
 use std::fs::File;
 use std::io::BufWriter;
@@ -28,8 +28,8 @@ fn decode_and_write(input: &str, output: &str) {
     let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
 
     let color_type = match flif.info.header.channels {
-        Channels::RGBA => png::ColorType::RGBA,
-        Channels::RGB => png::ColorType::RGB,
+        ColorSpace::RGBA => png::ColorType::RGBA,
+        ColorSpace::RGB => png::ColorType::RGB,
         _ => panic!("unsupported color type"),
     };
 
