@@ -6,20 +6,20 @@ use numbers::near_zero::NearZeroCoder;
 use numbers::rac::RacRead;
 use colors::{Channel, ChannelSet, ColorSpace, Pixel};
 
-pub struct PermutePlanes<T: Transform> {
+pub struct PermutePlanes {
+    channels: ColorSpace,
     channel_set: ChannelSet<Channel>,
-    previous_transform: T,
-    range_function: fn(&T, Channel, &ChannelSet<Channel>) -> ColorRange,
-    crange_function: fn(&T, Channel, &Pixel, &ChannelSet<Channel>) -> ColorRange,
+    ranges: ChannelSet<ColorRange>,
+    crange_function: fn(&PermutePlanes, Channel, &Pixel) -> ColorRange,
 }
 
-impl<T: Transform> PermutePlanes<T> {
-    pub fn new<R: RacRead>(
+impl PermutePlanes {
+    pub fn new<T: Transform, R: RacRead>(
         rac: &mut R,
         previous_transform: T,
         channels: ColorSpace,
         update_table: &UpdateTable,
-    ) -> Result<PermutePlanes<T>> {
+    ) -> Result<PermutePlanes> {
         let mut context = ChanceTable::new(update_table);
 
         let subtract = rac.read_near_zero(0, 1, &mut context)? == 1;
@@ -43,26 +43,37 @@ impl<T: Transform> PermutePlanes<T> {
             channel_set[channel] = mapped_channel;
         }
 
+        let mut ranges: ChannelSet<ColorRange> = Default::default();
+        for channel in channels {
+            ranges[channel] = (range_function)(&previous_transform, channel, &channel_set);
+        }
+
         Ok(PermutePlanes {
+            channels,
             channel_set,
-            previous_transform,
-            range_function,
+            ranges,
             crange_function,
         })
     }
 }
 
-impl<T: Transform> Transform for PermutePlanes<T> {
-    fn undo(&self, _pixel: &mut Pixel) {
-        unimplemented!()
+impl Transform for PermutePlanes {
+    fn undo(&self, pixel: &mut Pixel) {
+        let mut new_pixel = Pixel::default();
+        for channel in self.channels {
+            let permuted_channel = self.channel_set[channel];
+            new_pixel[permuted_channel] = pixel[channel];
+        }
+
+        *pixel = new_pixel;
     }
 
     fn range(&self, channel: Channel) -> ColorRange {
-        (self.range_function)(&self.previous_transform, channel, &self.channel_set)
+        self.ranges[channel]
     }
 
     fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
-        (self.crange_function)(&self.previous_transform, channel, values, &self.channel_set)
+        (self.crange_function)(self, channel, values)
     }
 }
 
@@ -83,13 +94,8 @@ fn subtract_range<T: Transform>(
     }
 }
 
-fn subtract_crange<T: Transform>(
-    transform: &T,
-    channel: Channel,
-    values: &Pixel,
-    permutation: &ChannelSet<Channel>,
-) -> ColorRange {
-    let mut range = subtract_range(transform, channel, permutation);
+fn subtract_crange(transform: &PermutePlanes, channel: Channel, values: &Pixel) -> ColorRange {
+    let mut range = transform.ranges[channel];
     range.min -= values[Channel::Red];
     range.max -= values[Channel::Red];
     range
@@ -103,11 +109,6 @@ fn normal_range<T: Transform>(
     transform.range(permutation[channel])
 }
 
-fn normal_crange<T: Transform>(
-    transform: &T,
-    channel: Channel,
-    _values: &Pixel,
-    permutation: &ChannelSet<Channel>,
-) -> ColorRange {
-    normal_range(transform, channel, permutation)
+fn normal_crange(transform: &PermutePlanes, channel: Channel, _values: &Pixel) -> ColorRange {
+    transform.ranges[channel]
 }
