@@ -1,5 +1,5 @@
 use error::*;
-use num_traits::{PrimInt, Signed};
+use num_traits::PrimInt;
 use numbers::chances::{ChanceTable, ChanceTableEntry};
 use numbers::rac::RacRead;
 

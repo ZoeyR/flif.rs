@@ -1,16 +1,15 @@
 #![allow(unused)]
 
-use ColorValue;
+use colors::{Channel, ColorSpace, ColorValue};
 use DecodingImage;
 use components::transformations::ColorRange;
 use FlifInfo;
 use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::{RacRead, Rac};
+use numbers::rac::{Rac, RacRead};
 use std::io::Read;
 use numbers::near_zero::NearZeroCoder;
 use error::*;
 use components::transformations::Transform;
-use components::header::Channels;
 
 pub struct ManiacTree<'a> {
     update_table: &'a UpdateTable,
@@ -21,20 +20,20 @@ pub(crate) fn build_pvec(
     prediction: ColorValue,
     x: usize,
     y: usize,
-    channel: usize,
+    channel: Channel,
     image: &DecodingImage,
 ) -> Vec<ColorValue> {
     let mut pvec = Vec::new();
-    if channel > 0 && channel < 3 {
-        pvec.push(image.get_val(y, x, 0));
+    if channel == Channel::Green || channel == Channel::Blue {
+        pvec.push(image.get_val(y, x, Channel::Red));
     }
 
-    if channel > 1 && channel < 3 {
-        pvec.push(image.get_val(y, x, 1));
+    if channel == Channel::Blue {
+        pvec.push(image.get_val(y, x, Channel::Green));
     }
 
-    if channel < 3 && image.channels == Channels::RGBA {
-        pvec.push(image.get_val(y, x, 3));
+    if channel != Channel::Alpha && image.channels == ColorSpace::RGBA {
+        pvec.push(image.get_val(y, x, Channel::Alpha));
     }
 
     pvec.push(prediction);
@@ -114,7 +113,7 @@ pub(crate) fn build_pvec(
 impl<'a> ManiacTree<'a> {
     pub fn new<R: Read>(
         rac: &mut Rac<R>,
-        channel: usize,
+        channel: Channel,
         info: &FlifInfo,
         update_table: &'a UpdateTable,
     ) -> Result<ManiacTree<'a>> {
@@ -123,7 +122,13 @@ impl<'a> ManiacTree<'a> {
         let context_c = ChanceTable::new(update_table);
 
         let prange = Self::build_prange_vec(channel, info);
-        let root = Self::get_node(rac, &mut [context_a, context_b, context_c], update_table, &prange, info)?;
+        let root = Self::get_node(
+            rac,
+            &mut [context_a, context_b, context_c],
+            update_table,
+            &prange,
+            info,
+        )?;
 
         Ok(ManiacTree {
             update_table,
@@ -241,21 +246,21 @@ impl<'a> ManiacTree<'a> {
         })
     }
 
-    fn build_prange_vec(channel: usize, info: &FlifInfo) -> Vec<ColorRange> {
+    fn build_prange_vec(channel: Channel, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
 
         let transform = &info.transform;
 
-        if channel > 0 && channel < 3 {
-            prange.push(transform.range(0));
+        if channel == Channel::Green || channel == Channel::Blue {
+            prange.push(transform.range(Channel::Red));
         }
 
-        if channel > 1 && channel < 3 {
-            prange.push(transform.range(1));
+        if channel == Channel::Blue {
+            prange.push(transform.range(Channel::Green));
         }
 
-        if channel < 3 && info.header.channels as u8 > 3 {
-            prange.push(transform.range(3));
+        if channel != Channel::Alpha && info.header.channels == ColorSpace::RGBA {
+            prange.push(transform.range(Channel::Alpha));
         }
 
         prange.push(transform.range(channel));

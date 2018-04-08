@@ -4,11 +4,11 @@ use numbers::near_zero::NearZeroCoder;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::rac::RacRead;
 use super::Transform;
-use ColorValue;
+use colors::{Channel, ChannelSet, ColorSpace, Pixel};
 
 #[derive(Debug)]
 pub struct Bounds {
-    ranges: [ColorRange; 4],
+    ranges: ChannelSet<ColorRange>,
     previous_transformation: Box<Transform>,
 }
 
@@ -16,12 +16,12 @@ impl Bounds {
     pub fn new<R: RacRead>(
         rac: &mut R,
         trans: Box<Transform>,
-        channels: usize,
+        channels: ColorSpace,
         update_table: &UpdateTable,
     ) -> Result<Bounds> {
         let mut context = ChanceTable::new(update_table);
-        let mut ranges = [ColorRange { min: 0, max: 0 }; 4];
-        for c in 0..channels as usize {
+        let mut ranges: ChannelSet<ColorRange> = Default::default();
+        for c in channels {
             let t_range = trans.range(c);
             ranges[c].min = rac.read_near_zero(t_range.min, t_range.max, &mut context)?;
             ranges[c].max = rac.read_near_zero(ranges[c].min, t_range.max, &mut context)?;
@@ -39,16 +39,16 @@ impl Bounds {
 }
 
 impl Transform for Bounds {
-    fn undo(&self, pixel: &mut [ColorValue]) {
+    fn undo(&self, pixel: &mut Pixel) {
         self.previous_transformation.undo(pixel);
     }
 
-    fn range(&self, channel: usize) -> ColorRange {
+    fn range(&self, channel: Channel) -> ColorRange {
         self.ranges[channel]
     }
 
-    fn crange(&self, channel: usize, values: &[ColorValue]) -> ColorRange {
-        if channel == 0 || channel == 3 {
+    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
+        if channel == Channel::Red || channel == Channel::Alpha {
             return self.ranges[channel];
         }
 

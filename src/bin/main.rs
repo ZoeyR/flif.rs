@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::io::BufWriter;
 
-use flif::components::Channels;
+use flif::colors::ColorSpace;
 use flif::error::*;
 use flif::Decoder;
 
@@ -19,8 +19,10 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "flif")]
 struct Args {
-    #[structopt(short = "v", long = "verbose")] verbose: bool,
-    #[structopt(subcommand)] cmd: Command,
+    #[structopt(short = "v", long = "verbose")]
+    verbose: bool,
+    #[structopt(subcommand)]
+    cmd: Command,
 }
 
 #[derive(StructOpt, Debug)]
@@ -30,12 +32,13 @@ enum Command {
         #[structopt(short = "i", long = "identify",
                     help = "don't decode, just identify the input FLIF")]
         identify: bool,
-        #[structopt(name = "INPUT", help = "Input file")] input: String,
+        #[structopt(name = "INPUT", help = "Input file")]
+        input: String,
         #[structopt(name = "OUTPUT", help = "Output file, stdout if not present")]
-        output:
-            Option<String>,
+        output: Option<String>,
     },
-    #[structopt(name = "encode")] Encode {},
+    #[structopt(name = "encode")]
+    Encode {},
 }
 
 fn main() {
@@ -72,11 +75,15 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
             let output_file = File::create(output)?;
             let w = &mut BufWriter::new(output_file);
 
-            let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
+            let mut encoder = png::Encoder::new(
+                w,
+                flif.info.header.width as u32,
+                flif.info.header.height as u32,
+            );
 
             let color_type = match flif.info.header.channels {
-                Channels::RGBA => png::ColorType::RGBA,
-                Channels::RGB => png::ColorType::RGB,
+                ColorSpace::RGBA => png::ColorType::RGBA,
+                ColorSpace::RGB => png::ColorType::RGB,
                 _ => panic!("unsupported color type"),
             };
 
@@ -90,7 +97,6 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
             std::io::stdout().write_all(&flif.get_raw_pixels())?;
             Ok(())
         }
-
     }
 }
 
@@ -104,7 +110,10 @@ fn id_file<R: Read>(mut decoder: Decoder<R>) -> Result<()> {
         println!("animated, frames: {}", info.header.num_frames);
     }
     println!("channels: {:?}", info.header.channels);
-    println!("dimensions: {}W x {}H", info.header.width, info.header.height);
+    println!(
+        "dimensions: {}W x {}H",
+        info.header.width, info.header.height
+    );
 
     let len = info.second_header.transformations.len();
     if len != 0 {

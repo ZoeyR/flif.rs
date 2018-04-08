@@ -5,14 +5,8 @@ use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::chances::UpdateTable;
 use super::transformations;
-use super::transformations::{Transformation, Transform};
-
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub enum Channels {
-    Grayscale = 1,
-    RGB = 3,
-    RGBA = 4,
-}
+use super::transformations::{Transform, Transformation};
+use colors::ColorSpace;
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum BytesPerChannel {
@@ -25,7 +19,7 @@ pub enum BytesPerChannel {
 pub struct Header {
     pub interlaced: bool,
     pub animated: bool,
-    pub channels: Channels,
+    pub channels: ColorSpace,
     pub bytes_per_channel: BytesPerChannel,
     pub width: usize,
     pub height: usize,
@@ -57,9 +51,9 @@ impl Header {
         };
 
         let channels = match flags & 0x0F {
-            1 => Channels::Grayscale,
-            3 => Channels::RGB,
-            4 => Channels::RGBA,
+            1 => ColorSpace::Monochrome,
+            3 => ColorSpace::RGB,
+            4 => ColorSpace::RGBA,
             _ => {
                 return Err(Error::InvalidHeader {
                     desc: "invalid number of channels",
@@ -113,7 +107,10 @@ pub struct SecondHeader {
 }
 
 impl SecondHeader {
-    pub fn from_rac<R: RacRead>(main_header: &Header, rac: &mut R) -> Result<(Self, Box<Transform>)> {
+    pub fn from_rac<R: RacRead>(
+        main_header: &Header,
+        rac: &mut R,
+    ) -> Result<(Self, Box<Transform>)> {
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
@@ -122,7 +119,7 @@ impl SecondHeader {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let alpha_zero = if main_header.channels == Channels::RGBA {
+        let alpha_zero = if main_header.channels == ColorSpace::RGBA {
             rac.read_bool()?
         } else {
             false
@@ -155,11 +152,8 @@ impl SecondHeader {
         };
         let update_table = UpdateTable::new(alpha_divisor, cutoff);
 
-        let (transformations, transform) = transformations::load_transformations(
-            rac,
-            main_header.channels as usize,
-            &update_table,
-        )?;
+        let (transformations, transform) =
+            transformations::load_transformations(rac, main_header.channels, &update_table)?;
 
         let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
             Some(rac.read_val(0, 2)?)
@@ -168,17 +162,20 @@ impl SecondHeader {
             None
         };
 
-        Ok((SecondHeader {
-            bits_per_pixel,
-            alpha_zero,
-            loops,
-            frame_delay,
-            custom_cutoff,
-            cutoff,
-            alpha_divisor,
-            custom_bitchance,
-            transformations,
-            invis_pixel_predictor,
-        }, transform))
+        Ok((
+            SecondHeader {
+                bits_per_pixel,
+                alpha_zero,
+                loops,
+                frame_delay,
+                custom_cutoff,
+                cutoff,
+                alpha_divisor,
+                custom_bitchance,
+                transformations,
+                invis_pixel_predictor,
+            },
+            transform,
+        ))
     }
 }
