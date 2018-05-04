@@ -8,12 +8,12 @@ pub enum ChunkType {
     Iccp,
     Exif,
     Exmp,
-    Unknown([u8; 4])
+    Unknown([u8; 4]),
 }
 
 enum MetadataType {
     Optional(Metadata),
-    Required(u8)
+    Required(u8),
 }
 
 #[derive(Debug)]
@@ -23,13 +23,12 @@ pub struct Metadata {
 }
 
 impl Metadata {
-
     pub fn all_from_reader<R: Read>(mut reader: R) -> Result<(Vec<Metadata>, u8)> {
         let mut ret = vec![];
         let required_type = loop {
             match Self::from_reader(&mut reader)? {
                 MetadataType::Optional(metadata) => ret.push(metadata),
-                MetadataType::Required(byte) => break byte
+                MetadataType::Required(byte) => break byte,
             }
         };
 
@@ -50,21 +49,23 @@ impl Metadata {
             _ => {}
         }
 
-
         reader.read_exact(&mut header_buf[1..])?;
         let chunk_type = match &header_buf {
             b"iCCP" => ChunkType::Iccp,
             b"eXif" => ChunkType::Exif,
             b"eXmp" => ChunkType::Exmp,
             header if header[0] >= b'a' && header[0] <= b'z' => ChunkType::Unknown(*header),
-            header => return Err(Error::UnknownCriticalMetadata(*header))
+            header => return Err(Error::UnknownCriticalMetadata(*header)),
         };
 
         let chunk_size = reader.read_varint()?;
         let mut deflated_chunk = vec![0; chunk_size];
         reader.read_exact(&mut deflated_chunk)?;
-        let inflated_chunk = inflate_bytes(&deflated_chunk).map_err(|s| Error::InvalidMetadata(s))?;
+        let inflated_chunk = inflate_bytes(&deflated_chunk).map_err(Error::InvalidMetadata)?;
 
-        Ok(MetadataType::Optional(Metadata { chunk_type, content: inflated_chunk}))
+        Ok(MetadataType::Optional(Metadata {
+            chunk_type,
+            content: inflated_chunk,
+        }))
     }
 }

@@ -190,12 +190,12 @@ impl<'a> ManiacTree<'a> {
         let mut left_prange = Vec::new();
         left_prange.extend_from_slice(prange);
         left_prange[property as usize].min = test_value + 1;
-        let left = Self::get_inactive_node(rac, context, left_prange, info)?;
+        let left = Self::get_inactive_node(rac, context, &left_prange, info)?;
 
         let mut right_prange = Vec::new();
         right_prange.extend_from_slice(prange);
         right_prange[property as usize].max = test_value;
-        let right = Self::get_inactive_node(rac, context, right_prange, info)?;
+        let right = Self::get_inactive_node(rac, context, &right_prange, info)?;
 
         Ok(ManiacNode::Property {
             id: property,
@@ -210,7 +210,7 @@ impl<'a> ManiacTree<'a> {
     fn get_inactive_node<R: Read>(
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
-        prange: Vec<ColorRange>,
+        prange: &[ColorRange],
         info: &FlifInfo,
     ) -> Result<InactiveManiacNode> {
         let mut property = rac.read_near_zero(0, prange.len() as isize, &mut context[0])?;
@@ -230,12 +230,12 @@ impl<'a> ManiacTree<'a> {
         let mut left_prange = Vec::new();
         left_prange.extend_from_slice(&prange);
         left_prange[property as usize].min = test_value + 1;
-        let left = Self::get_inactive_node(rac, context, left_prange, info)?;
+        let left = Self::get_inactive_node(rac, context, &left_prange, info)?;
 
         let mut right_prange = Vec::new();
         right_prange.extend_from_slice(&prange);
         right_prange[property as usize].max = test_value;
-        let right = Self::get_inactive_node(rac, context, right_prange, info)?;
+        let right = Self::get_inactive_node(rac, context, &right_prange, info)?;
 
         Ok(InactiveManiacNode::InactiveProperty {
             id: property,

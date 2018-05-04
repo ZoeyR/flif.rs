@@ -64,9 +64,9 @@ impl<T> IndexMut<Channel> for ChannelSet<T> {
 
 impl ColorSpace {
     pub fn contains_channel(&self, channel: Channel) -> bool {
-        match self {
-            &ColorSpace::Monochrome => channel == Channel::Red,
-            &ColorSpace::RGB => channel != Channel::Alpha,
+        match *self {
+            ColorSpace::Monochrome => channel == Channel::Red,
+            ColorSpace::RGB => channel != Channel::Alpha,
             _ => true,
         }
     }

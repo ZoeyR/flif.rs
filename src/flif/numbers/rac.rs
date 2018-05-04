@@ -83,7 +83,7 @@ impl<R: Read> Rac<R> {
         })?;
 
         Ok(Rac {
-            reader: reader,
+            reader,
             range: Self::MAX_RANGE,
             low,
         })
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_chance() {
-        use numbers::rac::{RacRead, Rac};
+        use numbers::rac::{Rac, RacRead};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_bits() {
-        use numbers::rac::{RacRead, Rac};
+        use numbers::rac::{Rac, RacRead};
 
         let mut buf: Vec<u8> = vec![];
         {
