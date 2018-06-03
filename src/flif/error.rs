@@ -15,6 +15,7 @@ pub enum Error {
     InvalidVarint,
     InvalidOperation(String),
     Unimplemented(&'static str),
+    UnimplementedTransformation(String),
 }
 
 impl error::Error for Error {
@@ -30,6 +31,7 @@ impl error::Error for Error {
             },
             Error::InvalidOperation(_) => "an invalid operation was hit, possibly due to a bug or a bad input file",
             Error::Unimplemented(desc) => desc,
+            Error::UnimplementedTransformation(_) => "a transformation was found which hasn't yet been implemented"
         }
     }
 
@@ -43,6 +45,7 @@ impl error::Error for Error {
             Error::InvalidVarint => None,
             Error::InvalidOperation(_) => None,
             Error::Unimplemented(_) => None,
+            Error::UnimplementedTransformation(_) => None,
         }
     }
 }
@@ -77,6 +80,7 @@ impl fmt::Display for Error {
             ),
             Error::InvalidOperation(ref info) => write!(fmt, "{}", info),
             Error::Unimplemented(desc) => write!(fmt, "{}", desc),
+            Error::UnimplementedTransformation(ref name) => write!(fmt, "found unimplemented transformation type: {}", name),
         }
     }
 }
