@@ -136,9 +136,7 @@ pub fn load_transformations<R: RacRead>(
                 Box::new(Bounds::new(rac, transform, channels, update_table)?)
             }
             _ => {
-                return Err(Error::Unimplemented(
-                    "found unimplemented transformation type",
-                ));
+                return Err(Error::UnimplementedTransformation(id.to_string()));
             }
         };
 
