@@ -1,0 +1,13 @@
+[package]
+name = "flif-cli"
+version = "0.1.0"
+authors = ["Daniel Griffen <daniel@griffen.io>"]
+license = "MIT"
+description = "FLIF decoder CLI tool"
+repository = "https://github.com/dgriffen/flif.rs"
+
+[dependencies]
+structopt = "0.1"
+structopt-derive = "0.1"
+png = "0.11"
+flif = { version = "0.2", path = ".." }

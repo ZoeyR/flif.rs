@@ -1,56 +1,58 @@
-use std::collections::HashMap;
+use fnv::FnvHashMap as HashMap;
+
+/// common values for ChanceTableEntry
+const DEFAULT_CHANCE_TABLE: [u16; 30] = [
+    // Zero, Sign
+    1000, 2048,
+    // [Exp(0, false) ... Exp(9, false)]
+    1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048,
+    // [Exp(0, true) ... Exp(9, true)]
+    1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048,
+    // [Mant(0) ... Mant(7)]
+    1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048,
+];
 
 #[derive(Debug, Clone)]
 pub struct ChanceTable<'a> {
-    table: HashMap<ChanceTableEntry, u16>,
+    table: [u16; 30],
+    ext_table: HashMap<ChanceTableEntry, u16>,
     updates: &'a UpdateTable,
 }
 
 impl<'a> ChanceTable<'a> {
     pub fn new(updates: &UpdateTable) -> ChanceTable {
-        let mut table = HashMap::new();
-        table.insert(ChanceTableEntry::Zero, 1000);
-        table.insert(ChanceTableEntry::Sign, 2048);
-        Self::insert_exp(&mut table, false);
-        Self::insert_exp(&mut table, true);
-        Self::insert_mant(&mut table);
+        let ext_table = HashMap::default();
 
-        ChanceTable { table, updates }
+        ChanceTable { table: DEFAULT_CHANCE_TABLE, ext_table, updates }
     }
 
-    pub fn get_chance(&self, entry: &ChanceTableEntry) -> u16 {
-        self.table.get(entry).cloned().unwrap_or(2048)
+    pub fn get_chance(&self, entry: ChanceTableEntry) -> u16 {
+        match entry {
+            ChanceTableEntry::Zero => self.table[0],
+            ChanceTableEntry::Sign => self.table[1],
+            ChanceTableEntry::Exp(v, false) if v <= 9 =>
+                self.table[usize::from(v) + 2],
+            ChanceTableEntry::Exp(v, true) if v <= 9 =>
+                self.table[usize::from(v) + 12],
+            ChanceTableEntry::Mant(v) if v <= 7 =>
+                self.table[usize::from(v) + 22],
+            entry => self.ext_table.get(&entry).cloned().unwrap_or(2048),
+        }
     }
 
     pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
-        let old_chance = *self.table.entry(entry).or_insert(2048);
-        let new_chance = self.updates.next_chance(bit, old_chance);
-
-        self.table.insert(entry, new_chance);
-    }
-
-    fn insert_exp(table: &mut HashMap<ChanceTableEntry, u16>, sign: bool) {
-        table.insert(ChanceTableEntry::Exp(0, sign), 1000);
-        table.insert(ChanceTableEntry::Exp(1, sign), 1200);
-        table.insert(ChanceTableEntry::Exp(2, sign), 1500);
-        table.insert(ChanceTableEntry::Exp(3, sign), 1750);
-        table.insert(ChanceTableEntry::Exp(4, sign), 2000);
-        table.insert(ChanceTableEntry::Exp(5, sign), 2300);
-        table.insert(ChanceTableEntry::Exp(6, sign), 2800);
-        table.insert(ChanceTableEntry::Exp(7, sign), 2400);
-        table.insert(ChanceTableEntry::Exp(8, sign), 2300);
-        table.insert(ChanceTableEntry::Exp(9, sign), 2048);
-    }
-
-    fn insert_mant(table: &mut HashMap<ChanceTableEntry, u16>) {
-        table.insert(ChanceTableEntry::Mant(0), 1900);
-        table.insert(ChanceTableEntry::Mant(1), 1850);
-        table.insert(ChanceTableEntry::Mant(2), 1800);
-        table.insert(ChanceTableEntry::Mant(3), 1750);
-        table.insert(ChanceTableEntry::Mant(4), 1650);
-        table.insert(ChanceTableEntry::Mant(5), 1600);
-        table.insert(ChanceTableEntry::Mant(6), 1600);
-        table.insert(ChanceTableEntry::Mant(7), 2048);
+        let old_chance = match entry {
+            ChanceTableEntry::Zero => &mut self.table[0],
+            ChanceTableEntry::Sign => &mut self.table[1],
+            ChanceTableEntry::Exp(v, false) if v <= 9 =>
+                &mut self.table[usize::from(v) + 2],
+            ChanceTableEntry::Exp(v, true) if v <= 9 =>
+                &mut self.table[usize::from(v) + 12],
+            ChanceTableEntry::Mant(v) if v <= 7 =>
+                &mut self.table[usize::from(v) + 22],
+            entry => self.ext_table.entry(entry).or_insert(2048),
+        };
+        *old_chance = self.updates.next_chance(bit, *old_chance);
     }
 }
 
@@ -290,37 +292,6 @@ mod tests {
 
         let update_table = UpdateTable::new(19, 2);
         let mut table = ChanceTable::new(&update_table);
-        table.table.insert(ChanceTableEntry::Zero, 4094);
-        table.table.insert(ChanceTableEntry::Sign, 2048);
-        table.table.insert(ChanceTableEntry::Exp(0, false), 1000);
-        table.table.insert(ChanceTableEntry::Exp(0, true), 1000);
-        table.table.insert(ChanceTableEntry::Exp(1, false), 1200);
-        table.table.insert(ChanceTableEntry::Exp(1, true), 1200);
-        table.table.insert(ChanceTableEntry::Exp(2, false), 1500);
-        table.table.insert(ChanceTableEntry::Exp(2, true), 1500);
-        table.table.insert(ChanceTableEntry::Exp(3, false), 1750);
-        table.table.insert(ChanceTableEntry::Exp(3, true), 1750);
-        table.table.insert(ChanceTableEntry::Exp(4, false), 2000);
-        table.table.insert(ChanceTableEntry::Exp(4, true), 2000);
-        table.table.insert(ChanceTableEntry::Exp(5, false), 2300);
-        table.table.insert(ChanceTableEntry::Exp(5, true), 2300);
-        table.table.insert(ChanceTableEntry::Exp(6, false), 2800);
-        table.table.insert(ChanceTableEntry::Exp(6, true), 2800);
-        table.table.insert(ChanceTableEntry::Exp(7, false), 2400);
-        table.table.insert(ChanceTableEntry::Exp(7, true), 2400);
-        table.table.insert(ChanceTableEntry::Exp(8, false), 2300);
-        table.table.insert(ChanceTableEntry::Exp(8, true), 2300);
-
-        table.table.insert(ChanceTableEntry::Mant(0), 1900);
-        table.table.insert(ChanceTableEntry::Mant(1), 1850);
-        table.table.insert(ChanceTableEntry::Mant(2), 1800);
-        table.table.insert(ChanceTableEntry::Mant(3), 1750);
-        table.table.insert(ChanceTableEntry::Mant(4), 1650);
-        table.table.insert(ChanceTableEntry::Mant(5), 1600);
-        table.table.insert(ChanceTableEntry::Mant(6), 1600);
-        table.table.insert(ChanceTableEntry::Mant(7), 2048);
-        table.table.insert(ChanceTableEntry::Mant(8), 2048);
-        table.table.insert(ChanceTableEntry::Mant(9), 2048);
 
         let r = MockRac.read_near_zero(0, 255, &mut table).unwrap();
         assert_eq!(r, 255);

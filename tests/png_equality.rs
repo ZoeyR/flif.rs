@@ -2,7 +2,8 @@ extern crate png;
 extern crate flif;
 
 use std::fs::File;
-use flif::Decoder;
+use flif::Flif;
+use std::io::BufReader;
 
 #[test]
 fn sea_snail() {
@@ -14,11 +15,9 @@ fn sea_snail() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = std::fs::File::open("resources/sea_snail.flif").unwrap();
-
-    let mut decoder = Decoder::new(file);
-    let flif = decoder.decode().unwrap();
-    let data = flif.get_raw_pixels();
+    let file = BufReader::new(File::open("resources/sea_snail.flif").unwrap());
+    let image = Flif::decode(file).unwrap();
+    let data = image.get_raw_pixels();
 
     assert_eq!(buf, data);
 }
@@ -33,11 +32,9 @@ fn sea_snail_cutout() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = std::fs::File::open("resources/sea_snail_cutout.flif").unwrap();
-
-    let mut decoder = Decoder::new(file);
-    let flif = decoder.decode().unwrap();
-    let data = flif.get_raw_pixels();
+    let file = BufReader::new(File::open("resources/sea_snail_cutout.flif").unwrap());
+    let image = Flif::decode(file).unwrap();
+    let data = image.get_raw_pixels();
 
     assert_eq!(buf, data);
 }
@@ -52,11 +49,9 @@ fn flif_logo() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = std::fs::File::open("resources/flif_logo.flif").unwrap();
-
-    let mut decoder = Decoder::new(file);
-    let flif = decoder.decode().unwrap();
-    let data = flif.get_raw_pixels();
+    let file = BufReader::new(File::open("resources/flif_logo.flif").unwrap());
+    let image = Flif::decode(file).unwrap();
+    let data = image.get_raw_pixels();
 
     assert_eq!(buf, data);
 }

@@ -1,10 +1,14 @@
 extern crate inflate;
 extern crate num_traits;
+extern crate fnv;
+
+use std::io::Read;
 
 use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
 use colors::{Channel, ColorSpace, ColorValue, Pixel};
+pub use error::Error;
 
 pub use decoder::Decoder;
 
@@ -14,19 +18,34 @@ mod maniac;
 pub mod colors;
 
 pub mod components;
-pub mod error;
+mod error;
 
 pub struct Flif {
-    pub info: FlifInfo,
+    info: FlifInfo,
     image_data: DecodingImage,
 }
 
 impl Flif {
-    pub fn get_raw_pixels(&self) -> Vec<u8> {
-        let mut data = Vec::new();
+    pub fn decode<R: Read>(reader: R) -> Result<Self, Error> {
+        Decoder::new(reader)?.decode_image()
+    }
 
-        for y in 0..self.image_data.height {
-            for x in 0..self.image_data.width {
+    pub fn info(&self) -> &FlifInfo {
+        &self.info
+    }
+
+    pub fn get_raw_pixels(&self) -> Vec<u8> {
+        let n = match self.info.header.channels {
+            ColorSpace::RGBA => 4,
+            ColorSpace::RGB => 3,
+            ColorSpace::Monochrome => 1,
+        };
+        let width = self.info.header.width;
+        let height = self.info.header.height;
+        let mut data = Vec::with_capacity(n * width * height);
+
+        for y in 0..height {
+            for x in 0..width {
                 let vals = self.image_data.get_vals(y, x);
                 for channel in self.info.header.channels {
                     data.push(vals[channel] as u8)
@@ -38,6 +57,7 @@ impl Flif {
     }
 }
 
+#[derive(Debug)]
 pub struct FlifInfo {
     pub header: Header,
     pub metadata: Vec<Metadata>,

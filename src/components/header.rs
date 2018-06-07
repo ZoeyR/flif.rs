@@ -18,7 +18,6 @@ pub enum BytesPerChannel {
 #[derive(Debug, Copy, Clone)]
 pub struct Header {
     pub interlaced: bool,
-    pub animated: bool,
     pub channels: ColorSpace,
     pub bytes_per_channel: BytesPerChannel,
     pub width: usize,
@@ -27,49 +26,45 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn from_reader<R: Read>(mut reader: R) -> Result<Self> {
+    pub(crate) fn from_reader<R: Read>(mut reader: R) -> Result<Self> {
         // first read in some magic
         let mut magic_buf = [0; 4];
         reader.read_exact(&mut magic_buf)?;
 
         if &magic_buf != b"FLIF" {
-            return Err(Error::InvalidHeader {
+            Err(Error::InvalidHeader {
                 desc: "file is corrupt or not a FLIF",
-            });
+            })?;
         }
 
         let flags = reader.read_u8()?;
 
-        let (interlaced, animated) = match flags >> 4 & 0x0F {
-            flag @ 3...4 => (flag == 4, false),
-            flag @ 5...6 => (flag == 6, true),
-            _ => {
-                return Err(Error::InvalidHeader {
-                    desc: "interlacing/animation bits not valid",
-                })
-            }
+        let (interlaced, animated) = match flags >> 4 {
+            3 => (false, false),
+            4 => (true, false),
+            5 => (false, true),
+            6 => (true, true),
+            _ => Err(Error::InvalidHeader {
+                desc: "interlacing/animation bits not valid"
+            })?,
         };
 
         let channels = match flags & 0x0F {
             1 => ColorSpace::Monochrome,
             3 => ColorSpace::RGB,
             4 => ColorSpace::RGBA,
-            _ => {
-                return Err(Error::InvalidHeader {
-                    desc: "invalid number of channels",
-                })
-            }
+            _ => Err(Error::InvalidHeader {
+                desc: "invalid number of channels"
+            })?,
         };
 
         let bytes_per_channel = match reader.read_u8()?.checked_sub(b'0') {
             Some(0) => BytesPerChannel::Custom,
             Some(1) => BytesPerChannel::One,
             Some(2) => BytesPerChannel::Two,
-            _ => {
-                return Err(Error::InvalidHeader {
-                    desc: "bytes per channel was not a valid value",
-                })
-            }
+            _ => Err(Error::InvalidHeader {
+                desc: "bytes per channel was not a valid value",
+            })?,
         };
         let width = 1 + reader.read_varint::<usize>()?;
         let height = 1 + reader.read_varint::<usize>()?;
@@ -81,7 +76,6 @@ impl Header {
         };
 
         Ok(Header {
-            animated,
             interlaced,
             channels,
             bytes_per_channel,
@@ -92,7 +86,7 @@ impl Header {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SecondHeader {
     pub bits_per_pixel: Vec<u8>,
     pub alpha_zero: bool,
@@ -107,7 +101,7 @@ pub struct SecondHeader {
 }
 
 impl SecondHeader {
-    pub fn from_rac<R: RacRead>(
+    pub(crate) fn from_rac<R: RacRead>(
         main_header: &Header,
         rac: &mut R,
     ) -> Result<(Self, Box<Transform>)> {
@@ -125,13 +119,14 @@ impl SecondHeader {
             false
         };
 
-        let loops = if main_header.animated {
+        let animated = main_header.num_frames != 1;
+        let loops = if animated {
             Some(rac.read_val(0, 100)?)
         } else {
             None
         };
 
-        let frame_delay = if main_header.animated {
+        let frame_delay = if animated {
             Some((0..main_header.num_frames)
                 .map(|_| rac.read_val(0, 60_000))
                 .collect::<Result<Vec<_>>>()?)

@@ -2,9 +2,9 @@ extern crate flif;
 extern crate png;
 
 use flif::colors::ColorSpace;
-use flif::Decoder;
+use flif::Flif;
 use std::fs::File;
-use std::io::BufWriter;
+use std::io::{BufReader, BufWriter};
 use png::HasParameters;
 
 fn main() {
@@ -14,28 +14,33 @@ fn main() {
 
 fn decode_and_write(input: &str, output: &str) {
     let file = std::fs::File::open(input).unwrap();
+    let reader = BufReader::new(file);
 
-    let mut decoder = Decoder::new(file);
-    let flif = decoder.decode().unwrap();
+    let t0 = std::time::Instant::now();
+    let image = Flif::decode(reader).unwrap();
+    println!("Decoding time: {:?}", t0.elapsed());
+
+    let info = image.info();
     println!("Large Flif Info:");
-    println!("├───{:?}", flif.info.header);
-    println!("├───{:?}", flif.info.metadata);
-    println!("└───{:?}", flif.info.second_header);
+    println!("├───{:?}", info.header);
+    println!("├───{:?}", info.metadata);
+    println!("└───{:?}", info.second_header);
 
     let file = File::create(output).unwrap();
     let w = &mut BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(w, flif.info.header.width as u32, flif.info.header.height as u32);
+    let mut encoder = png::Encoder::new(w, info.header.width as u32, info.header.height as u32);
 
-    let color_type = match flif.info.header.channels {
+    let color_type = match info.header.channels {
         ColorSpace::RGBA => png::ColorType::RGBA,
         ColorSpace::RGB => png::ColorType::RGB,
-        _ => panic!("unsupported color type"),
+        ColorSpace::Monochrome => png::ColorType::Grayscale,
     };
 
     encoder.set(color_type).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
-    let data = flif.get_raw_pixels(); // Get the raw pixel array of the FLIF image
+    // Get the raw pixel array of the FLIF image
+    let data = image.get_raw_pixels();
     writer.write_image_data(&data).unwrap(); // Save
 }

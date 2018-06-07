@@ -1,36 +1,20 @@
 [package]
 name = "flif"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Daniel Griffen <daniel@griffen.io>"]
 license = "MIT"
-description = "flif decoder written in pure Rust"
+description = "FLIF decoder written in pure Rust"
 repository = "https://github.com/dgriffen/flif.rs"
 
 exclude = [
     "resources/*",
+    "flif-cli",
 ]
 
-[lib]
-name = "flif"
-path = "src/flif/lib.rs"
-
-[[bin]]
-name = "flif"
-path = "src/bin/main.rs"
-doc = false
-required-features = ["binary"]
-
 [dependencies]
-inflate = "0.3.0"
-num-traits = "0.1.40"
-
-#binary only dependencies
-structopt = { version = "0.1.0", optional = true }
-structopt-derive = { version = "0.1.0", optional = true }
-png = { version = "0.11.0", optional = true }
+inflate = "0.4"
+num-traits = "0.2"
+fnv = "1"
 
 [dev-dependencies]
-png = "0.11.0"
-
-[features]
-binary = ["structopt", "structopt-derive", "png"]
+png = "0.12"

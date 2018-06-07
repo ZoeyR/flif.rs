@@ -3,7 +3,7 @@ use error::*;
 use inflate::inflate_bytes;
 use numbers::FlifReadExt;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ChunkType {
     Iccp,
     Exif,
@@ -16,14 +16,14 @@ enum MetadataType {
     Required(u8),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Metadata {
     pub chunk_type: ChunkType,
     pub content: Vec<u8>,
 }
 
 impl Metadata {
-    pub fn all_from_reader<R: Read>(mut reader: R) -> Result<(Vec<Metadata>, u8)> {
+    pub(crate) fn all_from_reader<R: Read>(mut reader: R) -> Result<(Vec<Metadata>, u8)> {
         let mut ret = vec![];
         let required_type = loop {
             match Self::from_reader(&mut reader)? {
