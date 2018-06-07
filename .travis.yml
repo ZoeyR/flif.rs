@@ -4,9 +4,7 @@ rust:
   - beta
   - nightly
 script:
-  - cargo build --verbose
-  - cargo build --verbose --bins --features=binary
-  - cargo test --verbose --features=binary
+  - cargo test --all --verbose
 matrix:
   allow_failures:
     - rust: nightly

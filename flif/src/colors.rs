@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 pub type ColorValue = i16;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
     Red = 0,
     Green = 1,
@@ -63,7 +63,7 @@ impl<T> IndexMut<Channel> for ChannelSet<T> {
 }
 
 impl ColorSpace {
-    pub fn contains_channel(&self, channel: Channel) -> bool {
+    pub(crate) fn contains_channel(&self, channel: Channel) -> bool {
         match *self {
             ColorSpace::Monochrome => channel == Channel::Red,
             ColorSpace::RGB => channel != Channel::Alpha,

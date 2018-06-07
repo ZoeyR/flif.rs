@@ -28,7 +28,7 @@ pub enum Transformation {
 }
 
 impl Transformation {
-    pub fn from_id(id: u8) -> Option<Transformation> {
+    pub(crate) fn from_id(id: u8) -> Option<Transformation> {
         use self::Transformation::*;
         match id {
             0 => Some(ChannelCompact),

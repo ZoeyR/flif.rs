@@ -57,7 +57,7 @@ impl<R: Read> RacRead for Rac<R> {
     }
 
     fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
-        let chance = context.get_chance(&entry);
+        let chance = context.get_chance(entry);
         let transformed_chance = Self::apply_chance(u32::from(chance), self.range);
         let bit = self.get(transformed_chance)?;
         context.update_entry(bit, entry);
@@ -106,7 +106,9 @@ impl<R: Read> Rac<R> {
     }
 
     fn get(&mut self, chance: u32) -> Result<bool> {
-        // this should never happen via a malicious file, the chance here should be produced by our projection function and represents a programming error.
+        // this should never happen via a malicious file,
+        // the chance here should be produced by our projection
+        // function and represents a programming error.
         assert!(chance < self.range);
 
         if self.low >= self.range - chance {

@@ -1,5 +1,5 @@
 #![allow(unused)]
-
+use super::PixelVicinity;
 use colors::{Channel, ColorSpace, ColorValue};
 use DecodingImage;
 use components::transformations::ColorRange;
@@ -16,98 +16,60 @@ pub struct ManiacTree<'a> {
     root: Option<ManiacNode<'a>>,
 }
 
-pub(crate) fn build_pvec(
-    prediction: ColorValue,
-    x: usize,
-    y: usize,
-    channel: Channel,
-    image: &DecodingImage,
-) -> Vec<ColorValue> {
-    let mut pvec = Vec::new();
-    if channel == Channel::Green || channel == Channel::Blue {
-        pvec.push(image.get_val(y, x, Channel::Red));
+pub(crate) fn build_pvec(prediction: ColorValue, pix_vic: &PixelVicinity)
+    -> [ColorValue; 10]
+{
+    let mut pvals = [0; 10];
+    let mut i = 0;
+
+    let chan = pix_vic.chan;
+    if chan == Channel::Green || chan == Channel::Blue {
+        pvals[i] = pix_vic.pixel[Channel::Red];
+        i += 1;
     }
 
-    if channel == Channel::Blue {
-        pvec.push(image.get_val(y, x, Channel::Green));
+    if chan == Channel::Blue {
+        pvals[i] = pix_vic.pixel[Channel::Green];
+        i += 1;
     }
 
-    if channel != Channel::Alpha && image.channels == ColorSpace::RGBA {
-        pvec.push(image.get_val(y, x, Channel::Alpha));
+    if chan != Channel::Alpha && pix_vic.is_rgba {
+        pvals[i] = pix_vic.pixel[Channel::Alpha];
+        i += 1;
     }
 
-    pvec.push(prediction);
+    pvals[i] = prediction;
 
-    let left = if x == 0 {
-        0
-    } else {
-        image.get_val(y, x - 1, channel)
-    };
-    let top = if y == 0 {
-        0
-    } else {
-        image.get_val(y - 1, x, channel)
-    };
-    let top_left = if x == 0 || y == 0 {
-        0
-    } else {
-        image.get_val(y - 1, x - 1, channel)
-    };
-    let left_left = if x > 1 {
-        image.get_val(y, x - 2, channel)
-    } else {
-        0
-    };
-    let top_top = if y > 1 {
-        image.get_val(y - 2, x, channel)
-    } else {
-        0
-    };
-    let top_right = if y > 0 && x < image.width - 1 {
-        image.get_val(y - 1, x + 1, channel)
-    } else {
-        0
+    let left = pix_vic.left.unwrap_or(0);
+    let top = pix_vic.top.unwrap_or(0);
+    let top_left = pix_vic.top_left.unwrap_or(0);
+
+    // median index
+    pvals[i+1] = match prediction {
+        pred if pred == left + top - top_left => 0,
+        pred if pred == left => 1,
+        pred if pred == top => 2,
+        _ => 0,
     };
 
-    let median_index = if prediction == left + top - top_left {
-        0
-    } else if prediction == left {
-        1
-    } else if prediction == top {
-        2
-    } else {
-        0
-    };
-
-    pvec.push(median_index);
-
-    if x > 0 && y > 0 {
-        pvec.push(left - top_left);
-        pvec.push(top_left - top);
-    } else {
-        pvec.push(0);
-        pvec.push(0);
+    if let Some(top_left) = pix_vic.top_left {
+        pvals[i+2] = left - top_left;
+        pvals[i+3] = top_left - top;
     }
 
-    if x < image.width - 1 && y > 0 {
-        pvec.push(top - top_right);
-    } else {
-        pvec.push(0);
+    if let Some(top_right) = pix_vic.top_right {
+        pvals[i+4] = top - top_right;
     }
 
-    if y > 1 {
-        pvec.push(top_top - top);
-    } else {
-        pvec.push(0);
+    if let Some(top2) = pix_vic.top2 {
+        pvals[i+5] = top2 - top;
     }
 
-    if x > 1 {
-        pvec.push(left_left - left);
-    } else {
-        pvec.push(0);
+    if let Some(left2) = pix_vic.left2 {
+        pvals[i+6] = left2 - left;
     }
 
-    pvec
+    pvals
 }
 
 impl<'a> ManiacTree<'a> {

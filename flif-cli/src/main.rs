@@ -1,16 +1,15 @@
 extern crate flif;
 extern crate png;
 extern crate structopt;
-#[macro_use]
-extern crate structopt_derive;
+#[macro_use] extern crate structopt_derive;
 
 use std::fs::File;
-use std::io::{Read, Write};
-use std::io::BufWriter;
+use std::io::Write;
+use std::io::{BufReader, BufWriter};
 
 use flif::colors::ColorSpace;
-use flif::error::*;
-use flif::Decoder;
+use flif::{Result, Error};
+use flif::{Decoder, FlifInfo};
 
 use png::HasParameters;
 
@@ -63,55 +62,56 @@ fn main() {
 }
 
 fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
-    let file = File::open(input)?;
-    let mut decoder = Decoder::new(file);
+    let reader = BufReader::new(File::open(input)?);
+    let decoder = Decoder::new(reader)?;
 
     if identify {
-        id_file(decoder)
+        id_file(decoder.info());
     } else {
-        let flif = decoder.decode()?;
+        let image = decoder.decode_image()?;
 
         if let Some(output) = output {
             let output_file = File::create(output)?;
             let w = &mut BufWriter::new(output_file);
 
+            let info = image.info();
+
             let mut encoder = png::Encoder::new(
                 w,
-                flif.info.header.width as u32,
-                flif.info.header.height as u32,
+                info.header.width as u32,
+                info.header.height as u32,
             );
 
-            let color_type = match flif.info.header.channels {
+            let color_type = match info.header.channels {
                 ColorSpace::RGBA => png::ColorType::RGBA,
                 ColorSpace::RGB => png::ColorType::RGB,
-                _ => panic!("unsupported color type"),
+                ColorSpace::Monochrome => png::ColorType::Grayscale,
             };
 
             encoder.set(color_type).set(png::BitDepth::Eight);
             let mut writer = encoder.write_header().unwrap();
 
-            let data = flif.get_raw_pixels(); // Get the raw pixel array of the FLIF image
-            writer.write_image_data(&data).unwrap(); // Save
-            Ok(())
+            // Get the raw pixel array of the FLIF image
+            let data = image.get_raw_pixels();
+            // Save as PNG
+            writer.write_image_data(&data).unwrap();
         } else {
-            std::io::stdout().write_all(&flif.get_raw_pixels())?;
-            Ok(())
+            std::io::stdout().write_all(&image.get_raw_pixels())?;
         }
     }
+    Ok(())
 }
 
-fn id_file<R: Read>(mut decoder: Decoder<R>) -> Result<()> {
-    let info = decoder.identify()?;
-
+fn id_file(info: &FlifInfo) {
     if info.header.interlaced {
         println!("interlaced");
     }
-    if info.header.animated {
+    if info.header.num_frames != 1 {
         println!("animated, frames: {}", info.header.num_frames);
     }
     println!("channels: {:?}", info.header.channels);
     println!(
-        "dimensions: {}W x {}H",
+        "dimensions: {} x {}",
         info.header.width, info.header.height
     );
 
@@ -124,8 +124,6 @@ fn id_file<R: Read>(mut decoder: Decoder<R>) -> Result<()> {
         }
         println!("└── {}", info.second_header.transformations[len - 1]);
     }
-
-    Ok(())
 }
 
 fn encode() -> Result<()> {
