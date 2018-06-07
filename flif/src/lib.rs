@@ -1,3 +1,21 @@
+//! # Example
+//! ```rust
+//! extern crate flif;
+//!
+//! use std::fs::File;
+//! use std::io::BufReader;
+//! use flif::Flif;
+//!
+//! fn main() {
+//!     let file = std::fs::File::open("../resources/flif_logo.flif").unwrap();
+//!     // use `BufReader` to improve performance
+//!     let reader = BufReader::new(file);
+//!     let image = Flif::decode(reader).unwrap();
+//!     println!("image info: {:?}", image.info());
+//!     let raw_pixels = image.get_raw_pixels();
+//! }
+//! ```
+
 extern crate inflate;
 extern crate num_traits;
 extern crate fnv;
