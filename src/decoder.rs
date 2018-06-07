@@ -104,7 +104,6 @@ fn non_interlaced_pixels<R: Read>(
     maniac: &mut ChannelSet<Option<ManiacTree>>,
 ) -> Result<DecodingImage> {
     let mut image = DecodingImage::new(info);
-    let mut pvec = Vec::with_capacity(10);
     for c in CHANNEL_ORDER.iter()
         .filter(|c| info.header.channels.contains_channel(**c)).cloned()
     {
@@ -112,10 +111,10 @@ fn non_interlaced_pixels<R: Read>(
             let guess = make_guess(info, &pix_vic);
             let range = info.transform.crange(c, &pix_vic.pixel);
             let snap = info.transform.snap(c, &pix_vic.pixel, guess);
-            build_pvec(&mut pvec, snap, &pix_vic);
+            let pvals = build_pvec(snap, &pix_vic);
 
             if let Some(ref mut maniac) = maniac[c] {
-                maniac.process(rac, &pvec, snap, range.min, range.max)
+                maniac.process(rac, &pvals, snap, range.min, range.max)
             } else {
                 Ok(range.min)
             }

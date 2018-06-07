@@ -16,63 +16,60 @@ pub struct ManiacTree<'a> {
     root: Option<ManiacNode<'a>>,
 }
 
-pub(crate) fn build_pvec(
-    pvec: &mut Vec<ColorValue>, prediction: ColorValue, pix_vic: &PixelVicinity
-) {
-    pvec.clear();
+pub(crate) fn build_pvec(prediction: ColorValue, pix_vic: &PixelVicinity)
+    -> [ColorValue; 10]
+{
+    let mut pvals = [0; 10];
+    let mut i = 0;
+
     let chan = pix_vic.chan;
     if chan == Channel::Green || chan == Channel::Blue {
-        pvec.push(pix_vic.pixel[Channel::Red]);
+        pvals[i] = pix_vic.pixel[Channel::Red];
+        i += 1;
     }
 
     if chan == Channel::Blue {
-        pvec.push(pix_vic.pixel[Channel::Green]);
+        pvals[i] = pix_vic.pixel[Channel::Green];
+        i += 1;
     }
 
     if chan != Channel::Alpha && pix_vic.is_rgba {
-        pvec.push(pix_vic.pixel[Channel::Alpha]);
+        pvals[i] = pix_vic.pixel[Channel::Alpha];
+        i += 1;
     }
 
-    pvec.push(prediction);
+    pvals[i] = prediction;
 
     let left = pix_vic.left.unwrap_or(0);
     let top = pix_vic.top.unwrap_or(0);
     let top_left = pix_vic.top_left.unwrap_or(0);
 
-    let median_index = match prediction {
+    // median index
+    pvals[i+1] = match prediction {
         pred if pred == left + top - top_left => 0,
         pred if pred == left => 1,
         pred if pred == top => 2,
         _ => 0,
     };
 
-    pvec.push(median_index);
-
     if let Some(top_left) = pix_vic.top_left {
-        pvec.push(left - top_left);
-        pvec.push(top_left - top);
-    } else {
-        pvec.push(0);
-        pvec.push(0);
+        pvals[i+2] = left - top_left;
+        pvals[i+3] = top_left - top;
     }
 
     if let Some(top_right) = pix_vic.top_right {
-        pvec.push(top - top_right);
-    } else {
-        pvec.push(0);
+        pvals[i+4] = top - top_right;
     }
 
     if let Some(top2) = pix_vic.top2 {
-        pvec.push(top2 - top);
-    } else {
-        pvec.push(0);
+        pvals[i+5] = top2 - top;
     }
 
     if let Some(left2) = pix_vic.left2 {
-        pvec.push(left2 - left);
-    } else {
-        pvec.push(0);
+        pvals[i+6] = left2 - left;
     }
+
+    pvals
 }
 
 impl<'a> ManiacTree<'a> {
