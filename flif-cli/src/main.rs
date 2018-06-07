@@ -8,7 +8,7 @@ use std::io::Write;
 use std::io::{BufReader, BufWriter};
 
 use flif::colors::ColorSpace;
-use flif::Error;
+use flif::{Result, Error};
 use flif::{Decoder, FlifInfo};
 
 use png::HasParameters;
@@ -61,7 +61,7 @@ fn main() {
     });
 }
 
-fn decode(identify: bool, input: &str, output: Option<String>) -> Result<(), Error> {
+fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
     let reader = BufReader::new(File::open(input)?);
     let decoder = Decoder::new(reader)?;
 
@@ -126,7 +126,7 @@ fn id_file(info: &FlifInfo) {
     }
 }
 
-fn encode() -> Result<(), Error> {
+fn encode() -> Result<()> {
     Err(Error::Unimplemented(
         "flif.rs does not currently support encoding",
     ))
