@@ -4,7 +4,7 @@ use components::header::{BytesPerChannel, Header, SecondHeader};
 use numbers::chances::UpdateTable;
 use error::*;
 use numbers::rac::Rac;
-use maniac::ManiacTree;
+use maniac::{ManiacTree, build_pvec};
 use colors::{Channel, ChannelSet};
 
 pub struct Decoder<R: Read> {
@@ -103,6 +103,7 @@ fn non_interlaced_pixels<R: Read>(
     maniac: &mut ChannelSet<Option<ManiacTree>>,
 ) -> Result<DecodingImage> {
     let mut image = DecodingImage::new(info);
+    let mut pvec = Vec::with_capacity(10);
     for c in CHANNEL_ORDER.iter().cloned() {
         if info.header.channels.contains_channel(c) {
             for y in 0..info.header.height {
@@ -110,7 +111,7 @@ fn non_interlaced_pixels<R: Read>(
                     let guess = make_guess(info, &image, x, y, c);
                     let range = info.transform.crange(c, image.get_vals(y, x));
                     let snap = info.transform.snap(c, image.get_vals(y, x), guess);
-                    let pvec = ::maniac::build_pvec(snap, x, y, c, &image);
+                    build_pvec(&mut pvec, snap, x, y, c, &image);
 
                     let value = if let Some(ref mut maniac) = maniac[c] {
                         maniac.process(rac, &pvec, snap, range.min, range.max)?

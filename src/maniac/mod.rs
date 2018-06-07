@@ -17,13 +17,10 @@ pub struct ManiacTree<'a> {
 }
 
 pub(crate) fn build_pvec(
-    prediction: ColorValue,
-    x: usize,
-    y: usize,
-    channel: Channel,
-    image: &DecodingImage,
-) -> Vec<ColorValue> {
-    let mut pvec = Vec::new();
+    pvec: &mut Vec<ColorValue>, prediction: ColorValue, x: usize, y: usize,
+    channel: Channel, image: &DecodingImage,
+) {
+    pvec.clear();
     if channel == Channel::Green || channel == Channel::Blue {
         pvec.push(image.get_val(y, x, Channel::Red));
     }
@@ -69,14 +66,11 @@ pub(crate) fn build_pvec(
         0
     };
 
-    let median_index = if prediction == left + top - top_left {
-        0
-    } else if prediction == left {
-        1
-    } else if prediction == top {
-        2
-    } else {
-        0
+    let median_index = match prediction {
+        pred if pred == left + top - top_left => 0,
+        pred if pred == left => 1,
+        pred if pred == top => 2,
+        _ => 0,
     };
 
     pvec.push(median_index);
@@ -89,25 +83,11 @@ pub(crate) fn build_pvec(
         pvec.push(0);
     }
 
-    if x < image.width - 1 && y > 0 {
-        pvec.push(top - top_right);
-    } else {
-        pvec.push(0);
-    }
+    pvec.push(if x < image.width - 1 && y > 0 { top - top_right } else { 0 });
 
-    if y > 1 {
-        pvec.push(top_top - top);
-    } else {
-        pvec.push(0);
-    }
+    pvec.push(if y > 1 { top_top - top } else { 0 });
 
-    if x > 1 {
-        pvec.push(left_left - left);
-    } else {
-        pvec.push(0);
-    }
-
-    pvec
+    pvec.push(if x > 1 { left_left - left } else { 0 });
 }
 
 impl<'a> ManiacTree<'a> {
