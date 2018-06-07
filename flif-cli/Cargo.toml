@@ -10,4 +10,4 @@ repository = "https://github.com/dgriffen/flif.rs"
 structopt = "0.1"
 structopt-derive = "0.1"
 png = "0.11"
-flif = { version = "0.2", path = ".." }
+flif = { version = "0.2", path = "../flif/" }

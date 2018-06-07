@@ -1,0 +1,16 @@
+[package]
+name = "flif"
+version = "0.2.0"
+authors = ["Daniel Griffen <daniel@griffen.io>"]
+license = "MIT"
+description = "FLIF decoder written in pure Rust"
+repository = "https://github.com/dgriffen/flif.rs"
+documentation = "https://docs.rs/flif"
+
+[dependencies]
+inflate = "0.4"
+num-traits = "0.2"
+fnv = "1"
+
+[dev-dependencies]
+png = "0.12"

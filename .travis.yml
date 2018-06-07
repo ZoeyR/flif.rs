@@ -4,8 +4,7 @@ rust:
   - beta
   - nightly
 script:
-  - cargo test --verbose
-  - cd flif-cli; cargo run --release --verbose -- decode -i ../resources/sea_snail.flif
+  - cargo test --all --verbose
 matrix:
   allow_failures:
     - rust: nightly

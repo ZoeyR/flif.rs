@@ -7,7 +7,7 @@ use std::io::BufReader;
 
 #[test]
 fn sea_snail() {
-    let decoder = png::Decoder::new(File::open("resources/sea_snail.png").unwrap());
+    let decoder = png::Decoder::new(File::open("../resources/sea_snail.png").unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     // Allocate the output buffer.
     let mut buf = vec![0; info.buffer_size()];
@@ -15,7 +15,7 @@ fn sea_snail() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = BufReader::new(File::open("resources/sea_snail.flif").unwrap());
+    let file = BufReader::new(File::open("../resources/sea_snail.flif").unwrap());
     let image = Flif::decode(file).unwrap();
     let data = image.get_raw_pixels();
 
@@ -24,7 +24,7 @@ fn sea_snail() {
 
 #[test]
 fn sea_snail_cutout() {
-    let decoder = png::Decoder::new(File::open("resources/sea_snail_cutout.png").unwrap());
+    let decoder = png::Decoder::new(File::open("../resources/sea_snail_cutout.png").unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     // Allocate the output buffer.
     let mut buf = vec![0; info.buffer_size()];
@@ -32,7 +32,7 @@ fn sea_snail_cutout() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = BufReader::new(File::open("resources/sea_snail_cutout.flif").unwrap());
+    let file = BufReader::new(File::open("../resources/sea_snail_cutout.flif").unwrap());
     let image = Flif::decode(file).unwrap();
     let data = image.get_raw_pixels();
 
@@ -41,7 +41,7 @@ fn sea_snail_cutout() {
 
 #[test]
 fn flif_logo() {
-    let decoder = png::Decoder::new(File::open("resources/flif_logo.png").unwrap());
+    let decoder = png::Decoder::new(File::open("../resources/flif_logo.png").unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     // Allocate the output buffer.
     let mut buf = vec![0; info.buffer_size()];
@@ -49,7 +49,7 @@ fn flif_logo() {
     // The default options
     reader.next_frame(&mut buf).unwrap();
 
-    let file = BufReader::new(File::open("resources/flif_logo.flif").unwrap());
+    let file = BufReader::new(File::open("../resources/flif_logo.flif").unwrap());
     let image = Flif::decode(file).unwrap();
     let data = image.get_raw_pixels();
 
