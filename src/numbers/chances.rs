@@ -1,20 +1,21 @@
 use fnv::FnvHashMap as HashMap;
 
-/// common values for ChanceTableEntry
-const DEFAULT_CHANCE_TABLE: [u16; 30] = [
-    // Zero, Sign
-    1000, 2048,
-    // [Exp(0, false) ... Exp(9, false)]
+const EXP_TABLE: [u16; 10] = [
     1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048,
-    // [Exp(0, true) ... Exp(9, true)]
-    1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048,
-    // [Mant(0) ... Mant(7)]
+];
+
+const MANT_TABLE: [u16; 8] = [
     1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048,
 ];
 
 #[derive(Debug, Clone)]
 pub struct ChanceTable<'a> {
-    table: [u16; 30],
+    zero: u16, // ChanceTableEntry::Zero
+    sign: u16, // ChanceTableEntry::Sign
+    exp_false: [u16; 10], // [Exp(0, false) ... Exp(9, false)]
+    exp_true: [u16; 10], // [Exp(0, true) ... Exp(9, true)]
+    mant: [u16; 8], // [Mant(0) ... Mant(7)]
+
     ext_table: HashMap<ChanceTableEntry, u16>,
     updates: &'a UpdateTable,
 }
@@ -23,33 +24,40 @@ impl<'a> ChanceTable<'a> {
     pub fn new(updates: &UpdateTable) -> ChanceTable {
         let ext_table = HashMap::default();
 
-        ChanceTable { table: DEFAULT_CHANCE_TABLE, ext_table, updates }
+        ChanceTable {
+            zero: 1000,
+            sign: 2048,
+            exp_false: EXP_TABLE,
+            exp_true: EXP_TABLE,
+            mant: MANT_TABLE,
+            ext_table, updates
+        }
     }
 
     pub fn get_chance(&self, entry: ChanceTableEntry) -> u16 {
         match entry {
-            ChanceTableEntry::Zero => self.table[0],
-            ChanceTableEntry::Sign => self.table[1],
-            ChanceTableEntry::Exp(v, false) if v <= 9 =>
-                self.table[usize::from(v) + 2],
-            ChanceTableEntry::Exp(v, true) if v <= 9 =>
-                self.table[usize::from(v) + 12],
-            ChanceTableEntry::Mant(v) if v <= 7 =>
-                self.table[usize::from(v) + 22],
+            ChanceTableEntry::Zero => self.zero,
+            ChanceTableEntry::Sign => self.sign,
+            ChanceTableEntry::Exp(v, false) if v < 10 =>
+                self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 10 =>
+                self.exp_true[usize::from(v)],
+            ChanceTableEntry::Mant(v) if v < 8 =>
+                self.mant[usize::from(v)],
             entry => self.ext_table.get(&entry).cloned().unwrap_or(2048),
         }
     }
 
     pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
         let old_chance = match entry {
-            ChanceTableEntry::Zero => &mut self.table[0],
-            ChanceTableEntry::Sign => &mut self.table[1],
-            ChanceTableEntry::Exp(v, false) if v <= 9 =>
-                &mut self.table[usize::from(v) + 2],
-            ChanceTableEntry::Exp(v, true) if v <= 9 =>
-                &mut self.table[usize::from(v) + 12],
-            ChanceTableEntry::Mant(v) if v <= 7 =>
-                &mut self.table[usize::from(v) + 22],
+            ChanceTableEntry::Zero => &mut self.zero,
+            ChanceTableEntry::Sign => &mut self.sign,
+            ChanceTableEntry::Exp(v, false) if v < 10 =>
+                &mut self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 10 =>
+                &mut self.exp_true[usize::from(v)],
+            ChanceTableEntry::Mant(v) if v < 8 =>
+                &mut self.mant[usize::from(v)],
             entry => self.ext_table.entry(entry).or_insert(2048),
         };
         *old_chance = self.updates.next_chance(bit, *old_chance);

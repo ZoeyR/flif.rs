@@ -16,9 +16,7 @@ fn decode_and_write(input: &str, output: &str) {
     let file = std::fs::File::open(input).unwrap();
     let reader = BufReader::new(file);
 
-    let t0 = std::time::Instant::now();
     let image = Flif::decode(reader).unwrap();
-    println!("Decoding time: {:?}", t0.elapsed());
 
     let info = image.info();
     println!("Large Flif Info:");

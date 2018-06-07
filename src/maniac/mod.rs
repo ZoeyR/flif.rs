@@ -83,11 +83,23 @@ pub(crate) fn build_pvec(
         pvec.push(0);
     }
 
-    pvec.push(if x < image.width - 1 && y > 0 { top - top_right } else { 0 });
+    if x < image.width - 1 && y > 0 {
+        pvec.push(top - top_right);
+    } else {
+        pvec.push(0);
+    }
 
-    pvec.push(if y > 1 { top_top - top } else { 0 });
+    if y > 1 {
+        pvec.push(top_top - top);
+    } else {
+        pvec.push(0);
+    }
 
-    pvec.push(if x > 1 { left_left - left } else { 0 });
+    if x > 1 {
+        pvec.push(left_left - left);
+    } else {
+        pvec.push(0);
+    }
 }
 
 impl<'a> ManiacTree<'a> {
