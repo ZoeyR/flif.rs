@@ -1,5 +1,5 @@
 #![allow(unused)]
-
+use super::PixelVicinity;
 use colors::{Channel, ColorSpace, ColorValue};
 use DecodingImage;
 use components::transformations::ColorRange;
@@ -17,54 +17,27 @@ pub struct ManiacTree<'a> {
 }
 
 pub(crate) fn build_pvec(
-    pvec: &mut Vec<ColorValue>, prediction: ColorValue, x: usize, y: usize,
-    channel: Channel, image: &DecodingImage,
+    pvec: &mut Vec<ColorValue>, prediction: ColorValue, pix_vic: &PixelVicinity
 ) {
     pvec.clear();
-    if channel == Channel::Green || channel == Channel::Blue {
-        pvec.push(image.get_val(y, x, Channel::Red));
+    let chan = pix_vic.chan;
+    if chan == Channel::Green || chan == Channel::Blue {
+        pvec.push(pix_vic.pixel[Channel::Red]);
     }
 
-    if channel == Channel::Blue {
-        pvec.push(image.get_val(y, x, Channel::Green));
+    if chan == Channel::Blue {
+        pvec.push(pix_vic.pixel[Channel::Green]);
     }
 
-    if channel != Channel::Alpha && image.channels == ColorSpace::RGBA {
-        pvec.push(image.get_val(y, x, Channel::Alpha));
+    if chan != Channel::Alpha && pix_vic.is_rgba {
+        pvec.push(pix_vic.pixel[Channel::Alpha]);
     }
 
     pvec.push(prediction);
 
-    let left = if x == 0 {
-        0
-    } else {
-        image.get_val(y, x - 1, channel)
-    };
-    let top = if y == 0 {
-        0
-    } else {
-        image.get_val(y - 1, x, channel)
-    };
-    let top_left = if x == 0 || y == 0 {
-        0
-    } else {
-        image.get_val(y - 1, x - 1, channel)
-    };
-    let left_left = if x > 1 {
-        image.get_val(y, x - 2, channel)
-    } else {
-        0
-    };
-    let top_top = if y > 1 {
-        image.get_val(y - 2, x, channel)
-    } else {
-        0
-    };
-    let top_right = if y > 0 && x < image.width - 1 {
-        image.get_val(y - 1, x + 1, channel)
-    } else {
-        0
-    };
+    let left = pix_vic.left.unwrap_or(0);
+    let top = pix_vic.top.unwrap_or(0);
+    let top_left = pix_vic.top_left.unwrap_or(0);
 
     let median_index = match prediction {
         pred if pred == left + top - top_left => 0,
@@ -75,7 +48,7 @@ pub(crate) fn build_pvec(
 
     pvec.push(median_index);
 
-    if x > 0 && y > 0 {
+    if let Some(top_left) = pix_vic.top_left {
         pvec.push(left - top_left);
         pvec.push(top_left - top);
     } else {
@@ -83,20 +56,20 @@ pub(crate) fn build_pvec(
         pvec.push(0);
     }
 
-    if x < image.width - 1 && y > 0 {
+    if let Some(top_right) = pix_vic.top_right {
         pvec.push(top - top_right);
     } else {
         pvec.push(0);
     }
 
-    if y > 1 {
-        pvec.push(top_top - top);
+    if let Some(top2) = pix_vic.top2 {
+        pvec.push(top2 - top);
     } else {
         pvec.push(0);
     }
 
-    if x > 1 {
-        pvec.push(left_left - left);
+    if let Some(left2) = pix_vic.left2 {
+        pvec.push(left2 - left);
     } else {
         pvec.push(0);
     }

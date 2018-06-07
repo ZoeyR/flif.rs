@@ -8,7 +8,7 @@ use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
 use colors::{Channel, ColorSpace, ColorValue, Pixel};
-pub use error::Error;
+pub use error::{Error, Result};
 
 pub use decoder::Decoder;
 
@@ -26,7 +26,7 @@ pub struct Flif {
 }
 
 impl Flif {
-    pub fn decode<R: Read>(reader: R) -> Result<Self, Error> {
+    pub fn decode<R: Read>(reader: R) -> Result<Self> {
         Decoder::new(reader)?.decode_image()
     }
 
@@ -44,12 +44,9 @@ impl Flif {
         let height = self.info.header.height;
         let mut data = Vec::with_capacity(n * width * height);
 
-        for y in 0..height {
-            for x in 0..width {
-                let vals = self.image_data.get_vals(y, x);
-                for channel in self.info.header.channels {
-                    data.push(vals[channel] as u8)
-                }
+        for vals in self.image_data.data.iter() {
+            for channel in self.info.header.channels {
+                data.push(vals[channel] as u8)
             }
         }
 
@@ -72,6 +69,22 @@ struct DecodingImage {
     data: Vec<Pixel>,
 }
 
+#[derive(Debug)]
+struct PixelVicinity {
+    pixel: Pixel,
+    chan: Channel,
+    is_rgba: bool,
+
+    left: Option<ColorValue>,
+    left2: Option<ColorValue>,
+    top: Option<ColorValue>,
+    top2: Option<ColorValue>,
+    top_left: Option<ColorValue>,
+    top_right: Option<ColorValue>,
+}
+
+// safety criteria for unsafe methods: `x < self.width` and `y < self.height`
+// and `self.data.len() == self.width*self.height` must be true
 impl DecodingImage {
     pub fn new(info: &FlifInfo) -> DecodingImage {
         DecodingImage {
@@ -82,19 +95,78 @@ impl DecodingImage {
         }
     }
 
-    pub fn get_val(&self, row: usize, col: usize, channel: Channel) -> ColorValue {
-        self.data[(self.width * row) + col][channel]
+    fn get_idx(&self, x: usize, y: usize) -> usize {
+        (self.width * y) + x
     }
 
-    pub fn set_val(&mut self, row: usize, col: usize, channel: Channel, value: ColorValue) {
-        self.data[(self.width * row) + col][channel] = value;
+    unsafe fn get_val(&self, x: usize, y: usize, chan: Channel) -> ColorValue {
+        self.data.get_unchecked(self.get_idx(x, y))[chan]
     }
 
-    pub fn get_vals(&self, row: usize, col: usize) -> &Pixel {
-        &self.data[(self.width * row) + col]
+    unsafe fn get_vicinity(&self, x: usize, y: usize, chan: Channel)
+        -> PixelVicinity
+    {
+        let pixel = *self.data.get_unchecked((self.width * y) + x);
+        let is_rgba = self.channels == ColorSpace::RGBA;
+        let top = if y != 0 {
+            Some(self.get_val(x, y - 1, chan))
+        } else {
+            None
+        };
+        let left = if x != 0 {
+            Some(self.get_val(x - 1, y, chan))
+        } else {
+            None
+        };
+        let left2 = if x > 1 {
+            Some(self.get_val(x - 2, y, chan))
+        } else {
+            None
+        };
+        let top2 = if y > 1 {
+            Some(self.get_val(x, y - 2, chan))
+        } else {
+            None
+        };
+        let top_left = if x != 0 && y != 0 {
+            Some(self.get_val(x - 1, y - 1, chan))
+        } else {
+            None
+        };
+        let top_right = if y != 0 && x + 1 < self.width {
+            Some(self.get_val(x + 1, y - 1, chan))
+        } else {
+            None
+        };
+        PixelVicinity {
+            pixel, chan, is_rgba, left, left2, top, top2, top_left, top_right,
+        }
     }
 
-    pub fn get_vals_mut(&mut self, row: usize, col: usize) -> &mut Pixel {
-        &mut self.data[(self.width * row) + col]
+    // iterate over all image pixels and call closure for them without any
+    // bound checks
+    pub fn channel_pass<F>(&mut self, chan: Channel, mut f: F) -> Result<()>
+        where F: FnMut(PixelVicinity) -> Result<ColorValue>
+    {
+        // strictly speaking it's redundant, but to be safe
+        assert_eq!(self.data.len(), self.height*self.width);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                // safe because we are sure that x and y inside the image
+                unsafe {
+                    let pix_vic = self.get_vicinity(x, y, chan);
+                    let val = f(pix_vic)?;
+                    let idx = self.get_idx(x, y);
+                    self.data.get_unchecked_mut(idx)[chan] = val;
+                };
+            }
+        }
+        Ok(())
+    }
+
+    pub fn undo_transform(&mut self, transform: &Transform) {
+        for vals in self.data.iter_mut() {
+            transform.undo(vals);
+        }
     }
 }

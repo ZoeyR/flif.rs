@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 pub type ColorValue = i16;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
     Red = 0,
     Green = 1,

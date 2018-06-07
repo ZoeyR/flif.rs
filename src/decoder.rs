@@ -1,9 +1,10 @@
-use super::{Flif, FlifInfo, Metadata, DecodingImage};
+use super::{Flif, FlifInfo, Metadata, DecodingImage, PixelVicinity};
 use std::io::Read;
 use components::header::{BytesPerChannel, Header, SecondHeader};
 use numbers::chances::UpdateTable;
 use error::*;
 use numbers::rac::Rac;
+use numbers::median3;
 use maniac::{ManiacTree, build_pvec};
 use colors::{Channel, ChannelSet};
 
@@ -104,63 +105,53 @@ fn non_interlaced_pixels<R: Read>(
 ) -> Result<DecodingImage> {
     let mut image = DecodingImage::new(info);
     let mut pvec = Vec::with_capacity(10);
-    for c in CHANNEL_ORDER.iter().cloned() {
-        if info.header.channels.contains_channel(c) {
-            for y in 0..info.header.height {
-                for x in 0..info.header.width {
-                    let guess = make_guess(info, &image, x, y, c);
-                    let range = info.transform.crange(c, image.get_vals(y, x));
-                    let snap = info.transform.snap(c, image.get_vals(y, x), guess);
-                    build_pvec(&mut pvec, snap, x, y, c, &image);
+    for c in CHANNEL_ORDER.iter()
+        .filter(|c| info.header.channels.contains_channel(**c)).cloned()
+    {
+        image.channel_pass(c, |pix_vic| {
+            let guess = make_guess(info, &pix_vic);
+            let range = info.transform.crange(c, &pix_vic.pixel);
+            let snap = info.transform.snap(c, &pix_vic.pixel, guess);
+            build_pvec(&mut pvec, snap, &pix_vic);
 
-                    let value = if let Some(ref mut maniac) = maniac[c] {
-                        maniac.process(rac, &pvec, snap, range.min, range.max)?
-                    } else {
-                        range.min
-                    };
-
-                    image.set_val(y, x, c, value);
-                }
+            if let Some(ref mut maniac) = maniac[c] {
+                maniac.process(rac, &pvec, snap, range.min, range.max)
+            } else {
+                Ok(range.min)
             }
-        }
+        })?;
     }
 
-    for y in 0..info.header.height {
-        for x in 0..info.header.width {
-            info.transform.undo(image.get_vals_mut(y, x));
-        }
-    }
+    image.undo_transform(&info.transform);
 
     Ok(image)
 }
 
-fn make_guess(info: &FlifInfo, image: &DecodingImage, x: usize, y: usize, channel: Channel) -> i16 {
+fn make_guess(info: &FlifInfo, pix_vic: &PixelVicinity) -> i16 {
     let transformation = &info.transform;
-    let left = if x > 0 {
-        image.get_val(y, x - 1, channel)
-    } else if y > 0 {
-        image.get_val(y - 1, x, channel)
-    } else if info.second_header.alpha_zero && channel != Channel::Alpha
-        && image.get_val(y, x, Channel::Alpha) == 0
+    let chan = pix_vic.chan;
+    let left = if let Some(val) = pix_vic.left {
+        val
+    } else if let Some(val) = pix_vic.top {
+        val
+    } else if info.second_header.alpha_zero
+        && chan != Channel::Alpha
+        && pix_vic.pixel[Channel::Alpha] == 0
     {
-        (transformation.range(channel).min + transformation.range(channel).max) / 2
+        (transformation.range(chan).min + transformation.range(chan).max) / 2
     } else {
-        transformation.range(channel).min
+        transformation.range(chan).min
     };
 
-    let top = if y == 0 {
+    let top = if let Some(val) = pix_vic.top { val } else { left };
+
+    let top_left = if let Some(val) = pix_vic.top_left {
+        val
+    } else if let Some(val) = pix_vic.top {
+        val
+    } else {
         left
-    } else {
-        image.get_val(y - 1, x, channel)
     };
 
-    let top_left = if y == 0 {
-        left
-    } else if x == 0 && y > 0 {
-        top
-    } else {
-        image.get_val(y - 1, x - 1, channel)
-    };
-
-    ::numbers::median3(left + top - top_left, left, top)
+    median3(left + top - top_left, left, top)
 }
