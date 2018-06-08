@@ -1,0 +1,187 @@
+use std::io::Read;
+
+use components::transformations::Transform;
+use numbers::rac::Rac;
+use colors::{Channel, ChannelSet, ColorSpace, ColorValue, Pixel};
+use maniac::ManiacTree;
+pub use error::{Error, Result};
+use FlifInfo;
+
+pub use decoder::Decoder;
+
+pub(crate) struct DecodingImage {
+    height: usize,
+    width: usize,
+    channels: ColorSpace,
+    data: Vec<Pixel>,
+}
+
+#[derive(Debug)]
+pub(crate) struct EdgePixelVicinity {
+    pub pixel: Pixel,
+    pub chan: Channel,
+    pub is_rgba: bool,
+
+    pub left: Option<ColorValue>,
+    pub left2: Option<ColorValue>,
+    pub top: Option<ColorValue>,
+    pub top2: Option<ColorValue>,
+    pub top_left: Option<ColorValue>,
+    pub top_right: Option<ColorValue>,
+}
+
+#[derive(Debug)]
+pub(crate) struct CorePixelVicinity {
+    pub pixel: Pixel,
+    pub chan: Channel,
+    pub is_rgba: bool,
+
+    pub left: ColorValue,
+    pub left2: ColorValue,
+    pub top: ColorValue,
+    pub top2: ColorValue,
+    pub top_left: ColorValue,
+    pub top_right: ColorValue,
+}
+
+type Maniac<'a> = ChannelSet<Option<ManiacTree<'a>>>;
+
+// safety criteria for unsafe methods: `x < self.width` and `y < self.height`
+// and `self.data.len() == self.width*self.height` must be true
+impl DecodingImage {
+    pub fn new(info: &FlifInfo) -> DecodingImage {
+        DecodingImage {
+            height: info.header.height,
+            width: info.header.width,
+            channels: info.header.channels,
+            data: vec![Pixel::default(); info.header.height * info.header.width],
+        }
+    }
+
+    fn get_idx(&self, x: usize, y: usize) -> usize {
+        (self.width * y) + x
+    }
+
+    pub fn get_data(&self) -> &[Pixel] {
+        &self.data
+    }
+
+    // safety: `x < width` and `y < height`
+    unsafe fn get_val(&self, x: usize, y: usize, chan: Channel) -> ColorValue {
+        self.data.get_unchecked(self.get_idx(x, y))[chan]
+    }
+
+    // safety: `x < width` and `y < height`
+    unsafe fn get_edge_vicinity(&self, x: usize, y: usize, chan: Channel)
+        -> EdgePixelVicinity
+    {
+        EdgePixelVicinity {
+            pixel: *self.data.get_unchecked((self.width * y) + x),
+            is_rgba: self.channels == ColorSpace::RGBA,
+            chan,
+            top: if y != 0 { Some(self.get_val(x, y - 1, chan)) } else { None },
+            left: if x != 0 { Some(self.get_val(x - 1, y, chan)) } else { None },
+            left2: if x > 1 { Some(self.get_val(x - 2, y, chan)) } else { None },
+            top2: if y > 1 { Some(self.get_val(x, y - 2, chan)) } else { None },
+            top_left: if x != 0 && y != 0 {
+                Some(self.get_val(x - 1, y - 1, chan))
+            } else {
+                None
+            },
+            top_right: if y != 0 && x + 1 < self.width {
+                Some(self.get_val(x + 1, y - 1, chan))
+            } else {
+                None
+            },
+        }
+    }
+
+    // safety: `1 < x < width - 1` and `1 < y`
+    unsafe fn get_core_vicinity(&self, x: usize, y: usize, chan: Channel)
+        -> CorePixelVicinity
+    {
+        CorePixelVicinity {
+            pixel: *self.data.get_unchecked((self.width * y) + x),
+            chan,
+            is_rgba: self.channels == ColorSpace::RGBA,
+            top: self.get_val(x, y - 1, chan),
+            left: self.get_val(x - 1, y, chan),
+            left2: self.get_val(x - 2, y, chan),
+            top2: self.get_val(x, y - 2, chan),
+            top_left: self.get_val(x - 1, y - 1, chan),
+            top_right: self.get_val(x + 1, y - 1, chan),
+        }
+    }
+
+    // safety: `x < width` and `y < height`
+    unsafe fn process_edge_pixel<E, R: Read>(
+        &mut self, x: usize, y: usize, chan: Channel,
+        maniac: &mut Maniac, rac: &mut Rac<R>,
+        mut edge_f: E
+    )-> Result<()>
+        where E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>
+    {
+        let pix_vic = self.get_edge_vicinity(x, y, chan);
+        let val = edge_f(pix_vic, maniac, rac)?;
+        let idx = self.get_idx(x, y);
+        self.data.get_unchecked_mut(idx)[chan] = val;
+        Ok(())
+    }
+
+    // iterate over all image pixels and call closure for them without any
+    // bound checks
+    pub fn channel_pass<E, F, R: Read>(
+        &mut self, chan: Channel, maniac: &mut Maniac, rac: &mut Rac<R>,
+        mut edge_f: E, mut core_f: F,
+    ) -> Result<()>
+    where E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
+          F: FnMut(CorePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
+    {
+        let width = self.width;
+        let height = self.height;
+        // strictly speaking it's redundant, but to be safe
+        assert_eq!(self.data.len(), height*width);
+        // special case for small images
+        if width <= 3 || height <= 2 {
+            for y in 0..height {
+                for x in 0..width {
+                    unsafe {
+                        self.process_edge_pixel(x, y, chan, maniac, rac, &mut edge_f)?
+                    }
+                }
+            }
+            return Ok(());
+        }
+        // process first two rows
+        for y in 0..2 {
+            for x in 0..width {
+                unsafe {
+                    self.process_edge_pixel(x, y, chan, maniac, rac, &mut edge_f)?;
+                }
+            }
+        }
+        // main loop
+        for y in 2..height {
+            // safe because we are sure that x and y inside the image
+            unsafe {
+                self.process_edge_pixel(0, y, chan, maniac, rac, &mut edge_f)?;
+                self.process_edge_pixel(1, y, chan, maniac, rac, &mut edge_f)?;
+                let end = width - 1;
+                for x in 2..end {
+                    let pix_vic = self.get_core_vicinity(x, y, chan);
+                    let val = core_f(pix_vic, maniac, rac)?;
+                    let idx = self.get_idx(x, y);
+                    self.data.get_unchecked_mut(idx)[chan] = val;
+                }
+                self.process_edge_pixel(end, y, chan, maniac, rac, &mut edge_f)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn undo_transform(&mut self, transform: &Transform) {
+        for vals in self.data.iter_mut() {
+            transform.undo(vals);
+        }
+    }
+}

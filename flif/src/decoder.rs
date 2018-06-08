@@ -1,12 +1,13 @@
-use super::{Flif, FlifInfo, Metadata, DecodingImage, PixelVicinity};
+use super::{Flif, FlifInfo, Metadata};
 use std::io::Read;
 use components::header::{BytesPerChannel, Header, SecondHeader};
 use numbers::chances::UpdateTable;
 use error::*;
 use numbers::rac::Rac;
 use numbers::median3;
-use maniac::{ManiacTree, build_pvec};
+use maniac::{ManiacTree, core_pvec, edge_pvec};
 use colors::{Channel, ChannelSet};
+use decoding_image::{DecodingImage, CorePixelVicinity, EdgePixelVicinity};
 
 pub struct Decoder<R: Read> {
     info: FlifInfo,
@@ -107,14 +108,25 @@ fn non_interlaced_pixels<R: Read>(
     for c in CHANNEL_ORDER.iter()
         .filter(|c| info.header.channels.contains_channel(**c)).cloned()
     {
-        image.channel_pass(c, |pix_vic| {
-            let guess = make_guess(info, &pix_vic);
+        image.channel_pass(c, maniac, rac, |pix_vic, maniac, rac| {
+            let guess = make_edge_guess(info, &pix_vic);
             let range = info.transform.crange(c, &pix_vic.pixel);
             let snap = info.transform.snap(c, &pix_vic.pixel, guess);
-            let pvals = build_pvec(snap, &pix_vic);
+            let pvec = edge_pvec(snap, &pix_vic);
 
             if let Some(ref mut maniac) = maniac[c] {
-                maniac.process(rac, &pvals, snap, range.min, range.max)
+                maniac.process(rac, &pvec, snap, range.min, range.max)
+            } else {
+                Ok(range.min)
+            }
+        }, |pix_vic, maniac, rac| {
+            let guess = make_core_guess(&pix_vic);
+            let range = info.transform.crange(c, &pix_vic.pixel);
+            let snap = info.transform.snap(c, &pix_vic.pixel, guess);
+            let pvec = core_pvec(snap, &pix_vic);
+
+            if let Some(ref mut maniac) = maniac[c] {
+                maniac.process(rac, &pvec, snap, range.min, range.max)
             } else {
                 Ok(range.min)
             }
@@ -126,7 +138,15 @@ fn non_interlaced_pixels<R: Read>(
     Ok(image)
 }
 
-fn make_guess(info: &FlifInfo, pix_vic: &PixelVicinity) -> i16 {
+fn make_core_guess(pix_vic: &CorePixelVicinity) -> i16 {
+    let left = pix_vic.left;
+    let top = pix_vic.top;
+    let top_left = pix_vic.top_left;
+
+    median3(left + top - top_left, left, top)
+}
+
+fn make_edge_guess(info: &FlifInfo, pix_vic: &EdgePixelVicinity) -> i16 {
     let transformation = &info.transform;
     let chan = pix_vic.chan;
     let left = if let Some(val) = pix_vic.left {

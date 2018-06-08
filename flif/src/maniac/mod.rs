@@ -1,5 +1,4 @@
 #![allow(unused)]
-use super::PixelVicinity;
 use colors::{Channel, ColorSpace, ColorValue};
 use DecodingImage;
 use components::transformations::ColorRange;
@@ -11,65 +10,12 @@ use numbers::near_zero::NearZeroCoder;
 use error::*;
 use components::transformations::Transform;
 
+mod pvec;
+pub(crate) use self::pvec::{core_pvec, edge_pvec};
+
 pub struct ManiacTree<'a> {
     update_table: &'a UpdateTable,
     root: Option<ManiacNode<'a>>,
-}
-
-pub(crate) fn build_pvec(prediction: ColorValue, pix_vic: &PixelVicinity)
-    -> [ColorValue; 10]
-{
-    let mut pvals = [0; 10];
-    let mut i = 0;
-
-    let chan = pix_vic.chan;
-    if chan == Channel::Green || chan == Channel::Blue {
-        pvals[i] = pix_vic.pixel[Channel::Red];
-        i += 1;
-    }
-
-    if chan == Channel::Blue {
-        pvals[i] = pix_vic.pixel[Channel::Green];
-        i += 1;
-    }
-
-    if chan != Channel::Alpha && pix_vic.is_rgba {
-        pvals[i] = pix_vic.pixel[Channel::Alpha];
-        i += 1;
-    }
-
-    pvals[i] = prediction;
-
-    let left = pix_vic.left.unwrap_or(0);
-    let top = pix_vic.top.unwrap_or(0);
-    let top_left = pix_vic.top_left.unwrap_or(0);
-
-    // median index
-    pvals[i+1] = match prediction {
-        pred if pred == left + top - top_left => 0,
-        pred if pred == left => 1,
-        pred if pred == top => 2,
-        _ => 0,
-    };
-
-    if let Some(top_left) = pix_vic.top_left {
-        pvals[i+2] = left - top_left;
-        pvals[i+3] = top_left - top;
-    }
-
-    if let Some(top_right) = pix_vic.top_right {
-        pvals[i+4] = top - top_right;
-    }
-
-    if let Some(top2) = pix_vic.top2 {
-        pvals[i+5] = top2 - top;
-    }
-
-    if let Some(left2) = pix_vic.left2 {
-        pvals[i+6] = left2 - left;
-    }
-
-    pvals
 }
 
 impl<'a> ManiacTree<'a> {
