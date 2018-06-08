@@ -3,6 +3,9 @@ use error::*;
 use inflate::inflate_bytes;
 use numbers::FlifReadExt;
 
+// maximum size of the comressed metadata chunk to prevent DoS attack
+const MAX_METADATA_CHUNK: usize = 1<<20;
+
 #[derive(Copy, Clone, Debug)]
 pub enum ChunkType {
     Iccp,
@@ -59,9 +62,16 @@ impl Metadata {
         };
 
         let chunk_size = reader.read_varint()?;
+        if chunk_size > MAX_METADATA_CHUNK {
+            Err(Error::InvalidMetadata(format!(
+                "requested chunk size ({} bytes) is bigger than the limit ({} bytes)",
+                chunk_size, MAX_METADATA_CHUNK
+            )))?
+        }
         let mut deflated_chunk = vec![0; chunk_size];
         reader.read_exact(&mut deflated_chunk)?;
-        let inflated_chunk = inflate_bytes(&deflated_chunk).map_err(Error::InvalidMetadata)?;
+        let inflated_chunk = inflate_bytes(&deflated_chunk)
+            .map_err(Error::InvalidMetadata)?;
 
         Ok(MetadataType::Optional(Metadata {
             chunk_type,
