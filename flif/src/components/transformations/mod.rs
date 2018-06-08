@@ -1,17 +1,17 @@
+use self::bounds::Bounds;
+use self::channel_compact::ChannelCompact;
+use self::permute_planes::PermutePlanes;
+use self::ycocg::YCoGg;
+use colors::{Channel, ColorSpace, ColorValue, Pixel};
 use error::*;
+use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
-use numbers::chances::UpdateTable;
-use self::channel_compact::ChannelCompact;
-use self::bounds::Bounds;
-use self::ycocg::YCoGg;
-use self::permute_planes::PermutePlanes;
-use colors::{Channel, ColorSpace, ColorValue, Pixel};
 
 mod bounds;
 mod channel_compact;
-mod ycocg;
 mod permute_planes;
+mod ycocg;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Transformation {
@@ -64,7 +64,7 @@ impl ::std::fmt::Display for Transformation {
     }
 }
 
-pub trait Transform: ::std::fmt::Debug {
+pub trait Transform: ::std::fmt::Debug + Send + Sync {
     fn snap(&self, channel: Channel, pixel: &Pixel, value: ColorValue) -> ColorValue {
         let range = self.crange(channel, pixel);
 
