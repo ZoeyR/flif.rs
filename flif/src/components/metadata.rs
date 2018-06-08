@@ -70,8 +70,7 @@ impl Metadata {
         }
         let mut deflated_chunk = vec![0; chunk_size];
         reader.read_exact(&mut deflated_chunk)?;
-        let inflated_chunk = inflate_bytes(&deflated_chunk)
-            .map_err(Error::InvalidMetadata)?;
+        let inflated_chunk = inflate_bytes(&deflated_chunk).map_err(Error::InvalidMetadata)?;
 
         Ok(MetadataType::Optional(Metadata {
             chunk_type,
