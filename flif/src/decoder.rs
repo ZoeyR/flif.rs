@@ -8,6 +8,7 @@ use numbers::median3;
 use maniac::{ManiacTree, core_pvec, edge_pvec};
 use colors::{Channel, ChannelSet};
 use decoding_image::{DecodingImage, CorePixelVicinity, EdgePixelVicinity};
+use Limits;
 
 pub struct Decoder<R: Read> {
     info: FlifInfo,
@@ -16,7 +17,12 @@ pub struct Decoder<R: Read> {
 
 impl<R: Read> Decoder<R> {
     pub fn new(reader: R) -> Result<Self> {
-        let (info, rac) = identify_internal(reader)?;
+        let (info, rac) = identify_internal(reader, Default::default())?;
+        Ok(Decoder { info, rac })
+    }
+
+    pub fn with_limits(reader: R, limits: Limits) -> Result<Self> {
+        let (info, rac) = identify_internal(reader, limits)?;
         Ok(Decoder { info, rac })
     }
 
@@ -67,12 +73,24 @@ impl<R: Read> Decoder<R> {
     }
 }
 
-fn identify_internal<R: Read>(mut reader: R) -> Result<(FlifInfo, Rac<R>)> {
+fn identify_internal<R: Read>(mut reader: R, limits: Limits)
+    -> Result<(FlifInfo, Rac<R>)>
+{
     // read the first header
     let main_header = Header::from_reader(&mut reader)?;
+    let frames = main_header.num_frames as usize;
+    let pixels = main_header.width*main_header.height*frames;
+    if pixels > limits.pixels {
+        Err(Error::LimitViolation(format!(
+            "number of pixels eceeds limit: {} vs {}",
+            pixels, limits.pixels,
+        )))?
+    }
 
     // read the metadata chunks
-    let (metadata, non_optional_byte) = Metadata::all_from_reader(&mut reader)?;
+    let (metadata, non_optional_byte) = Metadata::all_from_reader(
+        &mut reader, &limits
+    )?;
 
     if non_optional_byte != 0 {
         return Err(Error::UnknownRequiredMetadata(non_optional_byte));

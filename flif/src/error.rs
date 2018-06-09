@@ -9,6 +9,7 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
     Io(io::Error),
     InvalidHeader { desc: &'static str },
+    LimitViolation(String),
     UnknownCriticalMetadata([u8; 4]),
     UnknownRequiredMetadata(u8),
     InvalidMetadata(String),
@@ -23,6 +24,7 @@ impl error::Error for Error {
         match *self {
             Error::InvalidHeader { desc } => desc,
             Error::Io(ref err) => err.description(),
+            Error::LimitViolation(_) => "input image violated decoder limits",
             Error::UnknownCriticalMetadata(_) => "encountered an unknown critical metadata",
             Error::UnknownRequiredMetadata(_) => "encountered an unknown required metadata",
             Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
@@ -39,6 +41,7 @@ impl error::Error for Error {
         match *self {
             Error::InvalidHeader { .. } => None,
             Error::Io(ref err) => Some(err),
+            Error::LimitViolation(_) => None,
             Error::UnknownCriticalMetadata(_) => None,
             Error::UnknownRequiredMetadata(_) => None,
             Error::InvalidMetadata(_) => None,
@@ -61,6 +64,7 @@ impl fmt::Display for Error {
         match *self {
             Error::InvalidHeader { desc } => write!(fmt, "FLIF header was invalid: {}", desc),
             Error::Io(ref err) => write!(fmt, "error reading from stream: {}", err),
+            Error::LimitViolation(ref info) => write!(fmt, "{}", info),
             Error::UnknownCriticalMetadata(ref header) => write!(
                 fmt,
                 "unknown critical metadata header encountered: {}",

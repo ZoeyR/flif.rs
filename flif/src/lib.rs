@@ -50,6 +50,10 @@ impl Flif {
         Decoder::new(reader)?.decode_image()
     }
 
+    pub fn decode_with_limits<R: Read>(reader: R, limits: Limits) -> Result<Self> {
+        Decoder::with_limits(reader, limits)?.decode_image()
+    }
+
     pub fn info(&self) -> &FlifInfo {
         &self.info
     }
@@ -71,6 +75,30 @@ impl Flif {
         }
 
         data
+    }
+}
+
+/// Limits on input images to prevent OOM based DoS
+#[derive(Copy, Clone ,Debug)]
+pub struct Limits {
+    /// max size of the compressed metadata in bytes (default: 1 MB)
+    pub metadata_chunk: usize,
+    /// max number of metadata entries (default: 8)
+    pub metadata_count: usize,
+    /// max number of pixels: `width * height * frames` (default: 2<sup>26</sup>)
+    pub pixels: usize,
+    /// max number of MANIAC nodes (default: 4096)
+    pub maniac_nodes: usize,
+}
+
+impl Default for Limits {
+    fn default() -> Self {
+        Self {
+            metadata_chunk: 1<<20,
+            metadata_count: 8,
+            pixels: 1<<26,
+            maniac_nodes: 4096,
+        }
     }
 }
 
