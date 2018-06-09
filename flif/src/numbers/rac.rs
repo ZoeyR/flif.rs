@@ -2,9 +2,10 @@ use std::io;
 use std::io::Read;
 #[cfg(test)]
 use std::io::Write;
-use numbers::chances::{ChanceTable, ChanceTableEntry};
-use error::*;
+
 use super::FlifReadExt;
+use error::*;
+use numbers::chances::{ChanceTable, ChanceTableEntry};
 
 pub trait RacRead {
     fn read_bit(&mut self) -> Result<bool>;

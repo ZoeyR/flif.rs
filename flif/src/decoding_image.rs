@@ -1,10 +1,10 @@
 use std::io::Read;
 
-use components::transformations::Transform;
-use numbers::rac::Rac;
 use colors::{Channel, ChannelSet, ColorSpace, ColorValue, Pixel};
-use maniac::ManiacTree;
+use components::transformations::Transform;
 pub use error::{Error, Result};
+use maniac::ManiacTree;
+use numbers::rac::Rac;
 use FlifInfo;
 
 pub use decoder::Decoder;
@@ -66,24 +66,40 @@ impl DecodingImage {
     }
 
     unsafe fn get_val(&self, x: usize, y: usize, chan: Channel) -> ColorValue {
-        debug_assert!(x < self.width && y < self.height &&
-            self.data.len() == self.width * self.height);
+        debug_assert!(
+            x < self.width && y < self.height && self.data.len() == self.width * self.height
+        );
         self.data.get_unchecked(self.get_idx(x, y))[chan]
     }
 
-    unsafe fn get_edge_vicinity(&self, x: usize, y: usize, chan: Channel)
-        -> EdgePixelVicinity
-    {
-        debug_assert!(x < self.width && y < self.height &&
-            self.data.len() == self.width * self.height);
+    unsafe fn get_edge_vicinity(&self, x: usize, y: usize, chan: Channel) -> EdgePixelVicinity {
+        debug_assert!(
+            x < self.width && y < self.height && self.data.len() == self.width * self.height
+        );
         EdgePixelVicinity {
             pixel: *self.data.get_unchecked((self.width * y) + x),
             is_rgba: self.channels == ColorSpace::RGBA,
             chan,
-            top: if y != 0 { Some(self.get_val(x, y - 1, chan)) } else { None },
-            left: if x != 0 { Some(self.get_val(x - 1, y, chan)) } else { None },
-            left2: if x > 1 { Some(self.get_val(x - 2, y, chan)) } else { None },
-            top2: if y > 1 { Some(self.get_val(x, y - 2, chan)) } else { None },
+            top: if y != 0 {
+                Some(self.get_val(x, y - 1, chan))
+            } else {
+                None
+            },
+            left: if x != 0 {
+                Some(self.get_val(x - 1, y, chan))
+            } else {
+                None
+            },
+            left2: if x > 1 {
+                Some(self.get_val(x - 2, y, chan))
+            } else {
+                None
+            },
+            top2: if y > 1 {
+                Some(self.get_val(x, y - 2, chan))
+            } else {
+                None
+            },
             top_left: if x != 0 && y != 0 {
                 Some(self.get_val(x - 1, y - 1, chan))
             } else {
@@ -97,11 +113,14 @@ impl DecodingImage {
         }
     }
 
-    unsafe fn get_core_vicinity(&self, x: usize, y: usize, chan: Channel)
-        -> CorePixelVicinity
-    {
-        debug_assert!(x < self.width - 1 && y < self.height &&
-            x > 1 && y > 1 && self.data.len() == self.width * self.height);
+    unsafe fn get_core_vicinity(&self, x: usize, y: usize, chan: Channel) -> CorePixelVicinity {
+        debug_assert!(
+            x < self.width - 1
+                && y < self.height
+                && x > 1
+                && y > 1
+                && self.data.len() == self.width * self.height
+        );
         CorePixelVicinity {
             pixel: *self.data.get_unchecked((self.width * y) + x),
             chan,
@@ -116,14 +135,20 @@ impl DecodingImage {
     }
 
     unsafe fn process_edge_pixel<E, R: Read>(
-        &mut self, x: usize, y: usize, chan: Channel,
-        maniac: &mut Maniac, rac: &mut Rac<R>,
-        mut edge_f: E
-    )-> Result<()>
-        where E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>
+        &mut self,
+        x: usize,
+        y: usize,
+        chan: Channel,
+        maniac: &mut Maniac,
+        rac: &mut Rac<R>,
+        mut edge_f: E,
+    ) -> Result<()>
+    where
+        E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
     {
-        debug_assert!(x < self.width && y < self.height &&
-            self.data.len() == self.width * self.height);
+        debug_assert!(
+            x < self.width && y < self.height && self.data.len() == self.width * self.height
+        );
         let pix_vic = self.get_edge_vicinity(x, y, chan);
         let val = edge_f(pix_vic, maniac, rac)?;
         let idx = self.get_idx(x, y);
@@ -134,11 +159,16 @@ impl DecodingImage {
     // iterate over all image pixels and call closure for them without any
     // bound checks
     pub fn channel_pass<E, F, R: Read>(
-        &mut self, chan: Channel, maniac: &mut Maniac, rac: &mut Rac<R>,
-        mut edge_f: E, mut core_f: F,
+        &mut self,
+        chan: Channel,
+        maniac: &mut Maniac,
+        rac: &mut Rac<R>,
+        mut edge_f: E,
+        mut core_f: F,
     ) -> Result<()>
-    where E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
-          F: FnMut(CorePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
+    where
+        E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
+        F: FnMut(CorePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
     {
         let width = self.width;
         let height = self.height;
@@ -147,9 +177,7 @@ impl DecodingImage {
         if width <= 3 || height <= 2 {
             for y in 0..height {
                 for x in 0..width {
-                    unsafe {
-                        self.process_edge_pixel(x, y, chan, maniac, rac, &mut edge_f)?
-                    }
+                    unsafe { self.process_edge_pixel(x, y, chan, maniac, rac, &mut edge_f)? }
                 }
             }
             return Ok(());

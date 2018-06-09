@@ -1,9 +1,10 @@
-extern crate png;
 extern crate flif;
+extern crate png;
 
 use std::fs::File;
-use flif::Flif;
 use std::io::BufReader;
+
+use flif::Flif;
 
 #[test]
 fn sea_snail() {

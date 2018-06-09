@@ -1,18 +1,17 @@
 extern crate flif;
 extern crate png;
 extern crate structopt;
-#[macro_use] extern crate structopt_derive;
+#[macro_use]
+extern crate structopt_derive;
 
 use std::fs::File;
 use std::io::Write;
 use std::io::{BufReader, BufWriter};
 
 use flif::colors::ColorSpace;
-use flif::{Result, Error};
 use flif::{Decoder, FlifInfo};
-
+use flif::{Error, Result};
 use png::HasParameters;
-
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -28,8 +27,9 @@ struct Args {
 enum Command {
     #[structopt(name = "decode")]
     Decode {
-        #[structopt(short = "i", long = "identify",
-                    help = "don't decode, just identify the input FLIF")]
+        #[structopt(
+            short = "i", long = "identify", help = "don't decode, just identify the input FLIF"
+        )]
         identify: bool,
         #[structopt(name = "INPUT", help = "Input file")]
         input: String,
@@ -76,11 +76,8 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
 
             let info = image.info();
 
-            let mut encoder = png::Encoder::new(
-                w,
-                info.header.width as u32,
-                info.header.height as u32,
-            );
+            let mut encoder =
+                png::Encoder::new(w, info.header.width as u32, info.header.height as u32);
 
             let color_type = match info.header.channels {
                 ColorSpace::RGBA => png::ColorType::RGBA,
@@ -110,10 +107,7 @@ fn id_file(info: &FlifInfo) {
         println!("animated, frames: {}", info.header.num_frames);
     }
     println!("channels: {:?}", info.header.channels);
-    println!(
-        "dimensions: {} x {}",
-        info.header.width, info.header.height
-    );
+    println!("dimensions: {} x {}", info.header.width, info.header.height);
 
     let len = info.second_header.transformations.len();
     if len != 0 {

@@ -1,4 +1,5 @@
 use std::io::Read;
+
 use error::*;
 use inflate::inflate_bytes;
 use numbers::FlifReadExt;
@@ -24,9 +25,10 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    pub(crate) fn all_from_reader<R: Read>(mut reader: R, limits: &Limits)
-        -> Result<(Vec<Metadata>, u8)>
-    {
+    pub(crate) fn all_from_reader<R: Read>(
+        mut reader: R,
+        limits: &Limits,
+    ) -> Result<(Vec<Metadata>, u8)> {
         let mut ret = Vec::with_capacity(limits.metadata_count);
         let required_type = loop {
             match Self::from_reader(&mut reader, limits)? {

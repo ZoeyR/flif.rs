@@ -1,10 +1,10 @@
-use components::transformations::ColorRange;
-use error::*;
-use numbers::near_zero::NearZeroCoder;
-use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::RacRead;
 use super::Transform;
 use colors::{Channel, ChannelSet, ColorSpace, Pixel};
+use components::transformations::ColorRange;
+use error::*;
+use numbers::chances::{ChanceTable, UpdateTable};
+use numbers::near_zero::NearZeroCoder;
+use numbers::rac::RacRead;
 
 #[derive(Debug)]
 pub struct ChannelCompact {
@@ -30,12 +30,11 @@ impl ChannelCompact {
             let mut min = t_range.min;
             for i in 0..t.ranges[c].max {
                 t.decompacted[c].push(
-                    min
-                        + rac.read_near_zero(
-                            0,
-                            t_range.max - (min + (t.ranges[c].max - i)),
-                            &mut context,
-                        )?,
+                    min + rac.read_near_zero(
+                        0,
+                        t_range.max - (min + (t.ranges[c].max - i)),
+                        &mut context,
+                    )?,
                 );
                 min = t.decompacted[c][i as usize];
             }

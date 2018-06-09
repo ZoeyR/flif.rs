@@ -1,4 +1,5 @@
 use std::io::prelude::*;
+
 use error::*;
 use num_traits::{PrimInt, Unsigned};
 

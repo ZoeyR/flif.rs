@@ -1,12 +1,13 @@
 use std::io::Read;
-use error::*;
-use numbers::FlifReadExt;
-use numbers::rac::RacRead;
-use numbers::symbol::UniformSymbolCoder;
-use numbers::chances::UpdateTable;
+
 use super::transformations;
 use super::transformations::{Transform, Transformation};
 use colors::ColorSpace;
+use error::*;
+use numbers::chances::UpdateTable;
+use numbers::rac::RacRead;
+use numbers::symbol::UniformSymbolCoder;
+use numbers::FlifReadExt;
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum BytesPerChannel {
@@ -45,7 +46,7 @@ impl Header {
             5 => (false, true),
             6 => (true, true),
             _ => Err(Error::InvalidHeader {
-                desc: "interlacing/animation bits not valid"
+                desc: "interlacing/animation bits not valid",
             })?,
         };
 
@@ -54,7 +55,7 @@ impl Header {
             3 => ColorSpace::RGB,
             4 => ColorSpace::RGBA,
             _ => Err(Error::InvalidHeader {
-                desc: "invalid number of channels"
+                desc: "invalid number of channels",
             })?,
         };
 
@@ -127,9 +128,11 @@ impl SecondHeader {
         };
 
         let frame_delay = if animated {
-            Some((0..main_header.num_frames)
-                .map(|_| rac.read_val(0, 60_000))
-                .collect::<Result<Vec<_>>>()?)
+            Some(
+                (0..main_header.num_frames)
+                    .map(|_| rac.read_val(0, 60_000))
+                    .collect::<Result<Vec<_>>>()?,
+            )
         } else {
             None
         };

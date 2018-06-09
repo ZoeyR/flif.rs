@@ -15,30 +15,28 @@
 //!     let raw_pixels = image.get_raw_pixels();
 //! }
 //! ```
+extern crate fnv;
 extern crate inflate;
 extern crate num_traits;
-extern crate fnv;
 
 use std::io::Read;
 
+use colors::ColorSpace;
 use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
-use colors::ColorSpace;
-pub use error::{Error, Result};
+use decoding_image::DecodingImage;
 
 pub use decoder::Decoder;
+pub use error::{Error, Result};
 
-mod decoder;
-mod numbers;
-mod maniac;
-mod decoding_image;
 pub mod colors;
-
 pub mod components;
+mod decoder;
+mod decoding_image;
 mod error;
-
-use decoding_image::DecodingImage;
+mod maniac;
+mod numbers;
 
 pub struct Flif {
     info: FlifInfo,
@@ -79,7 +77,7 @@ impl Flif {
 }
 
 /// Limits on input images to prevent OOM based DoS
-#[derive(Copy, Clone ,Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Limits {
     /// max size of the compressed metadata in bytes (default: 1 MB)
     pub metadata_chunk: usize,
@@ -94,9 +92,9 @@ pub struct Limits {
 impl Default for Limits {
     fn default() -> Self {
         Self {
-            metadata_chunk: 1<<20,
+            metadata_chunk: 1 << 20,
             metadata_count: 8,
-            pixels: 1<<26,
+            pixels: 1 << 26,
             maniac_nodes: 4096,
         }
     }
