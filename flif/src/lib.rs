@@ -85,7 +85,7 @@ pub struct Limits {
     pub metadata_count: usize,
     /// max number of pixels: `width * height * frames` (default: 2<sup>26</sup>)
     pub pixels: usize,
-    /// max number of MANIAC nodes (default: 1024)
+    /// max number of MANIAC nodes (default: 4096)
     pub maniac_nodes: usize,
 }
 
@@ -95,7 +95,7 @@ impl Default for Limits {
             metadata_chunk: 1<<20,
             metadata_count: 8,
             pixels: 1<<26,
-            maniac_nodes: 1024,
+            maniac_nodes: 4096,
         }
     }
 }
