@@ -30,10 +30,14 @@ impl error::Error for Error {
             Error::InvalidMetadata(_) => "metadata chunk was not a valid deflate stream",
             Error::InvalidVarint => {
                 "reader did not contain a varint, or varint was too large to store"
-            },
-            Error::InvalidOperation(_) => "an invalid operation was hit, possibly due to a bug or a bad input file",
+            }
+            Error::InvalidOperation(_) => {
+                "an invalid operation was hit, possibly due to a bug or a bad input file"
+            }
             Error::Unimplemented(desc) => desc,
-            Error::UnimplementedTransformation(_) => "a transformation was found which hasn't yet been implemented"
+            Error::UnimplementedTransformation(_) => {
+                "a transformation was found which hasn't yet been implemented"
+            }
         }
     }
 
@@ -84,7 +88,9 @@ impl fmt::Display for Error {
             ),
             Error::InvalidOperation(ref info) => write!(fmt, "{}", info),
             Error::Unimplemented(desc) => write!(fmt, "{}", desc),
-            Error::UnimplementedTransformation(ref name) => write!(fmt, "found unimplemented transformation type: {}", name),
+            Error::UnimplementedTransformation(ref name) => {
+                write!(fmt, "found unimplemented transformation type: {}", name)
+            }
         }
     }
 }

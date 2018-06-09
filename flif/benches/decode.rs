@@ -2,8 +2,8 @@
 extern crate flif;
 extern crate test;
 
-use test::Bencher;
 use flif::Flif;
+use test::Bencher;
 
 use std::io::{Cursor, Read};
 

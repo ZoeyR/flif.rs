@@ -1,7 +1,8 @@
 use std::io::Read;
+
+use super::FlifReadExt;
 use error::{Error, Result};
 use num_traits::{PrimInt, Unsigned};
-use super::FlifReadExt;
 
 // T::from(_).unwrap() is panic-safe in this function because there exists no type that is both
 // PrimInt and Unsigned that cannot store a u8
@@ -18,7 +19,8 @@ pub fn read_varint<R: Read, T: PrimInt + Unsigned>(mut reader: R) -> Result<T> {
         }
 
         let byte = byte & 0b0111_1111;
-        if let Some(val) = acc.checked_add(&T::from(byte).unwrap())
+        if let Some(val) = acc
+            .checked_add(&T::from(byte).unwrap())
             .and_then(|val| val.checked_mul(bitshift_multiplier))
         {
             acc = val;
@@ -62,8 +64,8 @@ mod tests {
 
     #[test]
     fn test_varint_overflow_read() {
-        use numbers::FlifReadExt;
         use error::*;
+        use numbers::FlifReadExt;
 
         let buf = [0xFF, 0xFF, 0xFF, 0xFF, 0x7F];
         let result: Result<u32> = buf.as_ref().read_varint();

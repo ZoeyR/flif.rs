@@ -1,6 +1,6 @@
-use components::transformations::ColorRange;
 use super::Transform;
 use colors::{Channel, Pixel};
+use components::transformations::ColorRange;
 
 #[derive(Debug)]
 pub struct YCoGg {

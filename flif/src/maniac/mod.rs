@@ -1,14 +1,16 @@
 #![allow(unused)]
-use colors::{Channel, ColorSpace, ColorValue};
-use DecodingImage;
-use components::transformations::ColorRange;
-use FlifInfo;
-use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::rac::{Rac, RacRead};
+
 use std::io::Read;
-use numbers::near_zero::NearZeroCoder;
-use error::*;
+
+use colors::{Channel, ColorSpace, ColorValue};
+use components::transformations::ColorRange;
 use components::transformations::Transform;
+use error::*;
+use numbers::chances::{ChanceTable, UpdateTable};
+use numbers::near_zero::NearZeroCoder;
+use numbers::rac::{Rac, RacRead};
+use DecodingImage;
+use FlifInfo;
 
 mod pvec;
 pub(crate) use self::pvec::{core_pvec, edge_pvec};

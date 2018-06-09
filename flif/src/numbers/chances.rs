@@ -1,20 +1,16 @@
 use fnv::FnvHashMap as HashMap;
 
-const EXP_TABLE: [u16; 10] = [
-    1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048,
-];
+const EXP_TABLE: [u16; 10] = [1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048];
 
-const MANT_TABLE: [u16; 8] = [
-    1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048,
-];
+const MANT_TABLE: [u16; 8] = [1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048];
 
 #[derive(Debug, Clone)]
 pub struct ChanceTable<'a> {
-    zero: u16, // ChanceTableEntry::Zero
-    sign: u16, // ChanceTableEntry::Sign
+    zero: u16,            // ChanceTableEntry::Zero
+    sign: u16,            // ChanceTableEntry::Sign
     exp_false: [u16; 10], // [Exp(0, false) ... Exp(9, false)]
-    exp_true: [u16; 10], // [Exp(0, true) ... Exp(9, true)]
-    mant: [u16; 8], // [Mant(0) ... Mant(7)]
+    exp_true: [u16; 10],  // [Exp(0, true) ... Exp(9, true)]
+    mant: [u16; 8],       // [Mant(0) ... Mant(7)]
 
     ext_table: HashMap<ChanceTableEntry, u16>,
     updates: &'a UpdateTable,
@@ -30,7 +26,8 @@ impl<'a> ChanceTable<'a> {
             exp_false: EXP_TABLE,
             exp_true: EXP_TABLE,
             mant: MANT_TABLE,
-            ext_table, updates
+            ext_table,
+            updates,
         }
     }
 
@@ -38,12 +35,9 @@ impl<'a> ChanceTable<'a> {
         match entry {
             ChanceTableEntry::Zero => self.zero,
             ChanceTableEntry::Sign => self.sign,
-            ChanceTableEntry::Exp(v, false) if v < 10 =>
-                self.exp_false[usize::from(v)],
-            ChanceTableEntry::Exp(v, true) if v < 10 =>
-                self.exp_true[usize::from(v)],
-            ChanceTableEntry::Mant(v) if v < 8 =>
-                self.mant[usize::from(v)],
+            ChanceTableEntry::Exp(v, false) if v < 10 => self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 10 => self.exp_true[usize::from(v)],
+            ChanceTableEntry::Mant(v) if v < 8 => self.mant[usize::from(v)],
             entry => self.ext_table.get(&entry).cloned().unwrap_or(2048),
         }
     }
@@ -52,12 +46,9 @@ impl<'a> ChanceTable<'a> {
         let old_chance = match entry {
             ChanceTableEntry::Zero => &mut self.zero,
             ChanceTableEntry::Sign => &mut self.sign,
-            ChanceTableEntry::Exp(v, false) if v < 10 =>
-                &mut self.exp_false[usize::from(v)],
-            ChanceTableEntry::Exp(v, true) if v < 10 =>
-                &mut self.exp_true[usize::from(v)],
-            ChanceTableEntry::Mant(v) if v < 8 =>
-                &mut self.mant[usize::from(v)],
+            ChanceTableEntry::Exp(v, false) if v < 10 => &mut self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 10 => &mut self.exp_true[usize::from(v)],
+            ChanceTableEntry::Mant(v) if v < 8 => &mut self.mant[usize::from(v)],
             entry => self.ext_table.entry(entry).or_insert(2048),
         };
         *old_chance = self.updates.next_chance(bit, *old_chance);
@@ -97,7 +88,8 @@ impl UpdateTable {
                 new_chance = old_chance + 1;
             }
 
-            if (old_chance != 0) && ((old_chance as usize) < updates.len())
+            if (old_chance != 0)
+                && ((old_chance as usize) < updates.len())
                 && new_chance <= max_chance as u16
             {
                 updates[old_chance as usize] = new_chance;
@@ -198,7 +190,6 @@ mod tests {
         4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012, 4013, 4014, 4015, 4015, 4016, 4017, 4018, 4019, 4020, 4021, 4022, 4023, 4024, 4025, 4026, 4027, 4028, 4029, 4030, 4031, 4032, 4033, 4033, 4034, 4035, 4036, 4037, 4038, 4039, 4040, 4041, 4042, 4043, 4044, 4045, 4046, 4047, 4048, 4049, 4049, 4051, 4052, 4052, 4053, 4054, 4055, 4056, 4057, 4059, 4059, 4060, 4060, 4062, 4063, 4064, 4065, 4066, 4067, 4067, 4069, 4069, 4070, 4072, 4072, 4073, 4074, 4075, 4076, 4077, 4078, 4079, 4080, 4081, 4082, 4083, 4084, 4085, 4086, 4087, 4088, 4089, 4090, 4091, 4092, 4093, 4094, 4094, 0,
     ];
 
-
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const UPDATE_TABLE_FALSE: [u16; 4096] = [ 0, 4096, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 24, 26, 27, 27, 29, 29, 30, 31, 32, 33, 34, 36, 36, 37, 37, 39, 40, 41, 42, 43, 44, 44, 45, 47, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93,
         94, 95, 96, 97, 98, 99, 99, 100, 101, 102, 103, 105, 105, 106, 107, 108, 109, 110, 110, 112, 113, 114, 115, 116, 117, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
@@ -264,10 +255,10 @@ mod tests {
 
     #[test]
     fn test_near_zero_read() {
-        use numbers::chances::{ChanceTable, ChanceTableEntry, UpdateTable};
-        use numbers::rac::RacRead;
-        use numbers::near_zero::NearZeroCoder;
         use error::*;
+        use numbers::chances::{ChanceTable, ChanceTableEntry, UpdateTable};
+        use numbers::near_zero::NearZeroCoder;
+        use numbers::rac::RacRead;
 
         struct MockRac;
         impl RacRead for MockRac {

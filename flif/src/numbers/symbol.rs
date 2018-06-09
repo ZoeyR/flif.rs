@@ -1,6 +1,6 @@
+use super::rac::RacRead;
 use error::*;
 use num_traits::PrimInt;
-use super::rac::RacRead;
 
 pub trait UniformSymbolCoder {
     fn read_val<T: PrimInt>(&mut self, min: T, max: T) -> Result<T>;

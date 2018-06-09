@@ -30,18 +30,18 @@ pub(crate) fn core_pvec(pred: ColorValue, pvic: &CorePixelVicinity) -> Pvec {
     let top_left = pvic.top_left;
 
     // median index
-    pvec[i+1] = match pred {
+    pvec[i + 1] = match pred {
         pred if pred == left + top - top_left => 0,
         pred if pred == left => 1,
         pred if pred == top => 2,
         _ => 0,
     };
 
-    pvec[i+2] = left - top_left;
-    pvec[i+3] = top_left - top;
-    pvec[i+4] = top - pvic.top_right;
-    pvec[i+5] = pvic.top2 - top;
-    pvec[i+6] = pvic.left2 - left;
+    pvec[i + 2] = left - top_left;
+    pvec[i + 3] = top_left - top;
+    pvec[i + 4] = top - pvic.top_right;
+    pvec[i + 5] = pvic.top2 - top;
+    pvec[i + 6] = pvic.left2 - left;
 
     pvec
 }
@@ -73,7 +73,7 @@ pub(crate) fn edge_pvec(pred: ColorValue, pvic: &EdgePixelVicinity) -> Pvec {
     let top_left = pvic.top_left.unwrap_or(0);
 
     // median index
-    pvec[i+1] = match pred {
+    pvec[i + 1] = match pred {
         pred if pred == left + top - top_left => 0,
         pred if pred == left => 1,
         pred if pred == top => 2,
@@ -81,20 +81,20 @@ pub(crate) fn edge_pvec(pred: ColorValue, pvic: &EdgePixelVicinity) -> Pvec {
     };
 
     if let Some(top_left) = pvic.top_left {
-        pvec[i+2] = left - top_left;
-        pvec[i+3] = top_left - top;
+        pvec[i + 2] = left - top_left;
+        pvec[i + 3] = top_left - top;
     }
 
     if let Some(top_right) = pvic.top_right {
-        pvec[i+4] = top - top_right;
+        pvec[i + 4] = top - top_right;
     }
 
     if let Some(top2) = pvic.top2 {
-        pvec[i+5] = top2 - top;
+        pvec[i + 5] = top2 - top;
     }
 
     if let Some(left2) = pvic.left2 {
-        pvec[i+6] = left2 - left;
+        pvec[i + 6] = left2 - left;
     }
 
     pvec
