@@ -20,7 +20,7 @@ impl<R: Read> Decoder<R> {
         Ok(Decoder { info, rac })
     }
 
-    pub fn new_with_limits(reader: R, limits: Limits) -> Result<Self> {
+    pub fn with_limits(reader: R, limits: Limits) -> Result<Self> {
         let (info, rac) = identify_internal(reader, limits)?;
         Ok(Decoder { info, rac })
     }
@@ -87,10 +87,12 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits)
     }
 
     // read the metadata chunks
-    let (metadata, non_opt_byte) = Metadata::all_from_reader(&mut reader, &limits)?;
+    let (metadata, non_optional_byte) = Metadata::all_from_reader(
+        &mut reader, &limits
+    )?;
 
-    if non_opt_byte != 0 {
-        return Err(Error::UnknownRequiredMetadata(non_opt_byte));
+    if non_optional_byte != 0 {
+        return Err(Error::UnknownRequiredMetadata(non_optional_byte));
     }
 
     // After this point all values are encoding using the RAC so methods should no longer take

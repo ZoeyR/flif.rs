@@ -49,7 +49,7 @@ impl Flif {
     }
 
     pub fn decode_with_limits<R: Read>(reader: R, limits: Limits) -> Result<Self> {
-        Decoder::new_with_limits(reader, limits)?.decode_image()
+        Decoder::with_limits(reader, limits)?.decode_image()
     }
 
     pub fn info(&self) -> &FlifInfo {
@@ -85,6 +85,8 @@ pub struct Limits {
     pub metadata_count: usize,
     /// max number of pixels: `width * height * frames` (default: 2<sup>26</sup>)
     pub pixels: usize,
+    /// max number of MANIAC nodes (default: 1024)
+    pub maniac_nodes: usize,
 }
 
 impl Default for Limits {
@@ -93,6 +95,7 @@ impl Default for Limits {
             metadata_chunk: 1<<20,
             metadata_count: 8,
             pixels: 1<<26,
+            maniac_nodes: 1024,
         }
     }
 }
