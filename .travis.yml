@@ -3,8 +3,26 @@ rust:
   - stable
   - beta
   - nightly
-script:
-  - cargo test --all --verbose
+env:
+
 matrix:
+  include:
+    - rust: nightly
+      env: RUSTFMT=true
   allow_failures:
     - rust: nightly
+      env:
+
+before_script:
+- |
+  if [ "${RUSTFMT}" ]; then
+    rustup component add rustfmt-preview
+  fi
+
+script:
+- |
+  if [ "${RUSTFMT}" ]; then
+    cargo fmt --all -- --check
+  else
+    cargo test --all --verbose
+  fi
