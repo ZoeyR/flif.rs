@@ -9,5 +9,5 @@ repository = "https://github.com/dgriffen/flif.rs"
 [dependencies]
 structopt = "0.1"
 structopt-derive = "0.1"
-png = "0.11"
+png = "0.12"
 flif = { version = "0.2", path = "../flif/" }

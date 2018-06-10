@@ -31,6 +31,7 @@ impl<'a> ChanceTable<'a> {
         }
     }
 
+    #[inline(always)]
     pub fn get_chance(&self, entry: ChanceTableEntry) -> u16 {
         match entry {
             ChanceTableEntry::Zero => self.zero,
@@ -42,6 +43,7 @@ impl<'a> ChanceTable<'a> {
         }
     }
 
+    #[inline(always)]
     pub fn update_entry(&mut self, bit: bool, entry: ChanceTableEntry) {
         let old_chance = match entry {
             ChanceTableEntry::Zero => &mut self.zero,
