@@ -233,65 +233,48 @@ impl<'a> ManiacTree<'a> {
     ) -> Result<ColorValue> {
         use self::ManiacNode::*;
         let mut node_index = 0;
-        let (val, new_node) = loop {
-            let mut node = InactiveLeaf;
-            ::std::mem::swap(&mut self.nodes[node_index], &mut node);
+        loop {
+            let (lnodes, rnodes) = &mut self.nodes.split_at_mut(node_index + 1);
+            let node = &mut lnodes[node_index];
             match node {
                 Property {
                     id,
                     value,
-                    mut counter,
-                    mut table,
+                    counter,
+                    table,
                 } => {
-                    if counter > 0 {
-                        let val = rac.read_near_zero(min, max, &mut table)?;
-                        counter -= 1;
-                        break (
-                            val,
-                            Property {
-                                id,
-                                value,
-                                counter,
-                                table,
-                            },
-                        );
+                    break if *counter > 0 {
+                        *counter -= 1;
+                        return rac.read_near_zero(min, max, table);
                     } else {
                         let mut left_table = table.clone();
-                        let mut right_table = table;
+                        let mut right_table = table.clone();
 
-                        let val = if pvec[id as usize] > value {
+                        let val = if pvec[*id as usize] > *value {
                             rac.read_near_zero(min, max, &mut left_table)?
                         } else {
                             rac.read_near_zero(min, max, &mut right_table)?
                         };
 
-                        let mut left = InactiveLeaf;
-                        let mut right = InactiveLeaf;
-                        ::std::mem::swap(&mut self.nodes[2 * node_index + 1], &mut left);
-                        ::std::mem::swap(&mut self.nodes[2 * node_index + 2], &mut right);
-                        self.nodes[2 * node_index + 1] = left.activate(left_table);
-                        self.nodes[2 * node_index + 2] = right.activate(right_table);
-                        break (val, Inner { id, value });
+                        rnodes[node_index].activate(left_table);
+                        rnodes[node_index + 1].activate(right_table);
+                        *node = Inner { id: *id, value: *value };
+                        return Ok(val);
                     }
                 }
                 Inner { id, value } => {
-                    ::std::mem::swap(&mut self.nodes[node_index], &mut node);
-                    if pvec[id as usize] > value {
+                    if pvec[*id as usize] > *value {
                         node_index = 2 * node_index + 1;
                     } else {
                         node_index = 2 * node_index + 2;
                     }
                 }
-                Leaf(mut table) => {
-                    let val = rac.read_near_zero(min, max, &mut table)?;
-                    break (val, Leaf(table));
+                Leaf(table) => {
+                    return rac.read_near_zero(min, max, table);
                 }
                 _ => panic!("improperly constructed tree, Inactive node reached during traversal"),
             }
-        };
-
-        self.nodes[node_index] = new_node;
-        Ok(val)
+        }
     }
 
     fn build_prange_vec(channel: Channel, info: &FlifInfo) -> Vec<ColorRange> {
@@ -354,17 +337,17 @@ enum ManiacNode<'a> {
 
 impl<'a> ManiacNode<'a> {
     // return type is temporary, will be some reasonable pixel value
-    pub fn activate(self, table: ChanceTable<'a>) -> Self {
+    pub fn activate(&mut self, table: ChanceTable<'a>) {
         use self::ManiacNode::*;
-        match self {
+        *self = match self {
             InactiveLeaf => Leaf(table),
             InactiveProperty { id, value, counter } => Property {
-                id,
-                value,
-                counter,
-                table,
+                id: *id,
+                value: *value,
+                counter: *counter,
+                table: table,
             },
-            other => other,
+            _ => return,
         }
     }
 }
