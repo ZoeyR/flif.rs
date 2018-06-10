@@ -12,19 +12,21 @@ use numbers::rac::Rac;
 use Limits;
 
 pub struct Decoder<R: Read> {
+    limits: Limits,
     info: FlifInfo,
     rac: Rac<R>,
 }
 
 impl<R: Read> Decoder<R> {
     pub fn new(reader: R) -> Result<Self> {
-        let (info, rac) = identify_internal(reader, Default::default())?;
-        Ok(Decoder { info, rac })
+        let limits = Default::default();
+        let (info, rac) = identify_internal(reader, limits)?;
+        Ok(Decoder { limits, info, rac })
     }
 
     pub fn with_limits(reader: R, limits: Limits) -> Result<Self> {
         let (info, rac) = identify_internal(reader, limits)?;
-        Ok(Decoder { info, rac })
+        Ok(Decoder { limits, info, rac })
     }
 
     pub fn info(&self) -> &FlifInfo {
@@ -66,7 +68,13 @@ impl<R: Read> Decoder<R> {
             if range.min == range.max {
                 maniac_vec[channel] = None;
             } else {
-                let tree = ManiacTree::new(&mut self.rac, channel, &self.info, &update_table)?;
+                let tree = ManiacTree::new(
+                    &mut self.rac,
+                    channel,
+                    &self.info,
+                    &update_table,
+                    &self.limits,
+                )?;
                 maniac_vec[channel] = Some(tree);
             }
         }
@@ -86,7 +94,7 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
     let pixels = main_header.width * main_header.height * frames;
     if pixels > limits.pixels {
         Err(Error::LimitViolation(format!(
-            "number of pixels eceeds limit: {} vs {}",
+            "number of pixels exceeds limit: {} vs {}",
             pixels, limits.pixels,
         )))?
     }
