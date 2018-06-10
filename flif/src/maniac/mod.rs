@@ -11,12 +11,12 @@ use numbers::near_zero::NearZeroCoder;
 use numbers::rac::{Rac, RacRead};
 use DecodingImage;
 use FlifInfo;
+use Limits;
 
 mod pvec;
 pub(crate) use self::pvec::{core_pvec, edge_pvec};
 
 pub struct ManiacTree<'a> {
-    update_table: &'a UpdateTable,
     nodes: Vec<ManiacNode<'a>>,
 }
 
@@ -26,6 +26,7 @@ impl<'a> ManiacTree<'a> {
         channel: Channel,
         info: &FlifInfo,
         update_table: &'a UpdateTable,
+        limits: &Limits,
     ) -> Result<ManiacTree<'a>> {
         let context_a = ChanceTable::new(update_table);
         let context_b = ChanceTable::new(update_table);
@@ -37,21 +38,60 @@ impl<'a> ManiacTree<'a> {
             &mut [context_a, context_b, context_c],
             update_table,
             prange,
-            info,
+            limits,
         )?;
 
-        Ok(ManiacTree {
-            update_table,
-            nodes,
-        })
+        Ok(ManiacTree { nodes })
     }
 
     pub fn size(&self) -> usize {
-        unimplemented!()
+        use self::ManiacNode::*;
+
+        let mut size = 0;
+        let mut stack = vec![0];
+        loop {
+            let index = match stack.pop() {
+                Some(index) => index,
+                None => break size,
+            };
+
+            size += 1;
+            match self.nodes[index] {
+                Property { .. } | InactiveProperty { .. } | Inner { .. } => {
+                    stack.push(2 * index + 2);
+                    stack.push(2 * index + 1);
+                }
+                _ => {
+                    continue;
+                }
+            };
+        }
     }
 
     pub fn depth(&self) -> usize {
-        unimplemented!()
+        use self::ManiacNode::*;
+
+        let mut largest_depth = 0;
+
+        let mut stack = vec![(0, 1)];
+        loop {
+            let (index, depth) = match stack.pop() {
+                Some(index) => index,
+                None => break largest_depth,
+            };
+
+            largest_depth = ::std::cmp::max(largest_depth, depth);
+
+            match self.nodes[index] {
+                Property { .. } | InactiveProperty { .. } | Inner { .. } => {
+                    stack.push((2 * index + 2, depth + 1));
+                    stack.push((2 * index + 1, depth + 1));
+                }
+                _ => {
+                    continue;
+                }
+            };
+        }
     }
 
     pub fn process<R: Read>(
@@ -75,11 +115,12 @@ impl<'a> ManiacTree<'a> {
         context: &mut [ChanceTable; 3],
         update_table: &'a UpdateTable,
         prange: Vec<ColorRange>,
-        info: &FlifInfo,
+        limits: &Limits,
     ) -> Result<Vec<ManiacNode<'a>>> {
         use self::ManiacNode::*;
 
         let mut result_vec = vec![];
+        let mut node_count = 0;
         let mut process_stack = vec![(0, prange)];
         loop {
             let (index, prange) = match process_stack.pop() {
@@ -87,10 +128,17 @@ impl<'a> ManiacTree<'a> {
                 _ => break,
             };
 
+            if node_count > limits.maniac_nodes {
+                Err(Error::LimitViolation(format!(
+                    "number of maniac nodes exceeds limit"
+                )))?;
+            }
+
+            node_count += 1;
             let node = if index == 0 {
-                Self::create_node(rac, context, update_table, &prange, info)?
+                Self::create_node(rac, context, update_table, &prange)?
             } else {
-                Self::create_inner_node(rac, context, &prange, info)?
+                Self::create_inner_node(rac, context, &prange)?
             };
 
             if index >= result_vec.len() {
@@ -126,7 +174,6 @@ impl<'a> ManiacTree<'a> {
         context: &mut [ChanceTable; 3],
         update_table: &'a UpdateTable,
         prange: &[ColorRange],
-        info: &FlifInfo,
     ) -> Result<ManiacNode<'a>> {
         let chance_table = ChanceTable::new(update_table);
         let mut property = rac.read_near_zero(0, prange.len() as isize, &mut context[0])?;
@@ -155,7 +202,6 @@ impl<'a> ManiacTree<'a> {
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
         prange: &[ColorRange],
-        info: &FlifInfo,
     ) -> Result<ManiacNode<'a>> {
         let mut property = rac.read_near_zero(0, prange.len() as isize, &mut context[0])?;
 
@@ -240,7 +286,7 @@ impl<'a> ManiacTree<'a> {
                     let val = rac.read_near_zero(min, max, &mut table)?;
                     break (val, Leaf(table));
                 }
-                _ => panic!(),
+                _ => panic!("improperly constructed tree, Inactive node reached during traversal"),
             }
         };
 
