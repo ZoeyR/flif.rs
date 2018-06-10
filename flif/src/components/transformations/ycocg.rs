@@ -99,7 +99,7 @@ impl Transform for YCoGg {
 
                 ColorRange { min, max }
             }
-            n => self.crange(n, values),
+            Channel::Alpha => self.alpha_range,
         }
     }
 }
