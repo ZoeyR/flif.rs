@@ -13,3 +13,12 @@ fn bench_cutout_full_decode(b: &mut Bencher) {
         test::black_box(raw);
     });
 }
+
+#[bench]
+fn bench_grey_decode(b: &mut Bencher) {
+    let data = include_bytes!("../../resources/road.flif");
+    b.iter(|| {
+        let raw = Flif::decode(data.as_ref()).unwrap().get_raw_pixels();
+        test::black_box(raw);
+    });
+}
