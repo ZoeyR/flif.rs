@@ -1,6 +1,7 @@
-use std::io::prelude::*;
+use std::cmp::{min, max};
+use std::io::Read;
 
-use error::*;
+use error::Result;
 use num_traits::{PrimInt, Unsigned};
 
 pub mod chances;
@@ -26,8 +27,7 @@ impl<R: Read> FlifReadExt for R {
     }
 }
 
-pub fn median3<T: PrimInt>(first: T, second: T, third: T) -> T {
-    let mut slice = [first, second, third];
-    slice.sort();
-    slice[1]
+#[inline(always)]
+pub fn median3<T: PrimInt>(a: T, b: T, c: T) -> T {
+    max(min(a, b), min(max(a, b), c))
 }
