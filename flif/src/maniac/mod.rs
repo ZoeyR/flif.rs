@@ -237,42 +237,44 @@ impl<'a> ManiacTree<'a> {
             let (lnodes, rnodes) = &mut self.nodes.split_at_mut(node_index + 1);
             let node = &mut lnodes[node_index];
             match node {
-                Property {
-                    id,
-                    value,
-                    counter,
-                    table,
-                } => {
-                    break if *counter > 0 {
-                        *counter -= 1;
-                        return rac.read_near_zero(min, max, table);
-                    } else {
-                        let mut left_table = table.clone();
-                        let mut right_table = table.clone();
-
-                        let val = if pvec[*id as usize] > *value {
-                            rac.read_near_zero(min, max, &mut left_table)?
-                        } else {
-                            rac.read_near_zero(min, max, &mut right_table)?
-                        };
-
-                        rnodes[node_index].activate(left_table);
-                        rnodes[node_index + 1].activate(right_table);
-                        *node = Inner { id: *id, value: *value };
-                        return Ok(val);
-                    }
-                }
                 Inner { id, value } => {
                     if pvec[*id as usize] > *value {
                         node_index = 2 * node_index + 1;
                     } else {
                         node_index = 2 * node_index + 2;
                     }
-                }
+                },
                 Leaf(table) => {
                     return rac.read_near_zero(min, max, table);
-                }
-                _ => panic!("improperly constructed tree, Inactive node reached during traversal"),
+                },
+                node => {
+                    let (val, new_node) = match node {
+                        Property { id, value, counter: 0, table } => {
+                            let mut left_table = table.clone();
+                            let mut right_table = table.clone();
+
+                            let val = if pvec[*id as usize] > *value {
+                                rac.read_near_zero(min, max, &mut left_table)?
+                            } else {
+                                rac.read_near_zero(min, max, &mut right_table)?
+                            };
+
+                            rnodes[node_index].activate(left_table);
+                            rnodes[node_index + 1].activate(right_table);
+                            (val, Inner { id: *id, value: *value })
+                        },
+                        Property { counter, table, .. } => {
+                            *counter -= 1;
+                            return rac.read_near_zero(min, max, table);
+                        },
+                        _ => panic!(
+                            "improperly constructed tree, \
+                            inactive node reached during traversal"
+                        ),
+                    };
+                    *node = new_node;
+                    return Ok(val);
+                },
             }
         }
     }
