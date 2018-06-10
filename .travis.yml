@@ -12,6 +12,8 @@ matrix:
   allow_failures:
     - rust: nightly
       env:
+    - rust: nightly
+      env: RUSTFMT=true
 
 before_script:
 - |
