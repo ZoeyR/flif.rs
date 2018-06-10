@@ -253,7 +253,7 @@ impl<'a> ManiacTree<'a> {
                             id,
                             value,
                             counter: 0,
-                            table
+                            table,
                         } => {
                             let mut left_table = table.clone();
                             let mut right_table = table.clone();
@@ -270,7 +270,7 @@ impl<'a> ManiacTree<'a> {
                                 val,
                                 Inner {
                                     id: *id,
-                                    value: *value
+                                    value: *value,
                                 },
                             )
                         }
