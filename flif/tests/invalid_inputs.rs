@@ -43,9 +43,9 @@ fn memory_growth() {
     match Flif::decode_with_limits(bytes.as_ref(), limits) {
         Err(Error::InvalidOperation(ref message)) if message.contains("maniac") => {}
         Err(err) => panic!(
-            "Expected an Error::InvalidOperation indicating the maniac tree was too large, got {:?}",
+            "Expected an Error::InvalidOperation indicating the maniac tree was invalid, got {:?}",
             err
         ),
-        _ => panic!("Expected an Error::InvalidOperation indicating the maniac tree was too large, got a valid image instead")
+        _ => panic!("Expected an Error::InvalidOperation indicating the maniac tree was invalid, got a valid image instead")
     }
 }
