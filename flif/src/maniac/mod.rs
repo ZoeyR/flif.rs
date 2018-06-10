@@ -45,27 +45,7 @@ impl<'a> ManiacTree<'a> {
     }
 
     pub fn size(&self) -> usize {
-        use self::ManiacNode::*;
-
-        let mut size = 0;
-        let mut stack = vec![0];
-        loop {
-            let index = match stack.pop() {
-                Some(index) => index,
-                None => break size,
-            };
-
-            size += 1;
-            match self.nodes[index] {
-                Property { .. } | InactiveProperty { .. } | Inner { .. } => {
-                    stack.push(2 * index + 2);
-                    stack.push(2 * index + 1);
-                }
-                _ => {
-                    continue;
-                }
-            };
-        }
+        return self.nodes.len();
     }
 
     pub fn depth(&self) -> usize {
@@ -83,9 +63,11 @@ impl<'a> ManiacTree<'a> {
             largest_depth = ::std::cmp::max(largest_depth, depth);
 
             match self.nodes[index] {
-                Property { .. } | InactiveProperty { .. } | Inner { .. } => {
-                    stack.push((2 * index + 2, depth + 1));
-                    stack.push((2 * index + 1, depth + 1));
+                Property { left, right, .. }
+                | InactiveProperty { left, right, .. }
+                | Inner { left, right, .. } => {
+                    stack.push((right, depth + 1));
+                    stack.push((left, depth + 1));
                 }
                 _ => {
                     continue;
@@ -119,8 +101,7 @@ impl<'a> ManiacTree<'a> {
     ) -> Result<Vec<ManiacNode<'a>>> {
         use self::ManiacNode::*;
 
-        let mut result_vec = vec![];
-        let mut node_count = 0;
+        let mut result_vec = vec![ManiacNode::InactiveLeaf];
         let mut process_stack = vec![(0, prange)];
         loop {
             let (index, prange) = match process_stack.pop() {
@@ -128,27 +109,28 @@ impl<'a> ManiacTree<'a> {
                 _ => break,
             };
 
-            if node_count > limits.maniac_nodes {
+            if result_vec.len() > limits.maniac_nodes {
                 Err(Error::LimitViolation(format!(
                     "number of maniac nodes exceeds limit"
                 )))?;
             }
 
-            node_count += 1;
+            let child_start = result_vec.len();
             let node = if index == 0 {
-                Self::create_node(rac, context, update_table, &prange)?
+                Self::create_node(child_start, rac, context, update_table, &prange)?
             } else {
-                Self::create_inner_node(rac, context, &prange)?
+                Self::create_inner_node(child_start, rac, context, &prange)?
             };
-
-            if index >= result_vec.len() {
-                result_vec.resize(index + 1, ManiacNode::InactiveLeaf);
-            }
 
             let (property, test_value) = match node {
                 Property { id, value, .. }
                 | InactiveProperty { id, value, .. }
-                | Inner { id, value } => (id, value),
+                | Inner { id, value, .. } => {
+                    if child_start >= result_vec.len() {
+                        result_vec.resize(child_start + 2, ManiacNode::InactiveLeaf);
+                    }
+                    (id, value)
+                }
                 _ => {
                     result_vec[index] = node;
                     continue;
@@ -161,8 +143,8 @@ impl<'a> ManiacTree<'a> {
             let mut right_prange = prange;
             right_prange[property as usize].max = test_value;
 
-            process_stack.push((2 * index + 2, right_prange));
-            process_stack.push((2 * index + 1, left_prange));
+            process_stack.push((child_start + 1, right_prange));
+            process_stack.push((child_start, left_prange));
             result_vec[index] = node;
         }
 
@@ -170,6 +152,7 @@ impl<'a> ManiacTree<'a> {
     }
 
     fn create_node<R: Read>(
+        child_start: usize,
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
         update_table: &'a UpdateTable,
@@ -183,6 +166,10 @@ impl<'a> ManiacTree<'a> {
         }
         property -= 1;
 
+        if prange[property as usize].min >= prange[property as usize].max {
+            Err(Error::InvalidOperation(format!("Invalid maniac tree")))?
+        }
+
         let counter = rac.read_near_zero(1 as i32, 512 as i32, &mut context[1])?;
         let test_value = rac.read_near_zero(
             prange[property as usize].min,
@@ -195,10 +182,13 @@ impl<'a> ManiacTree<'a> {
             table: chance_table,
             value: test_value,
             counter: counter as u32,
+            left: child_start,
+            right: child_start + 1,
         })
     }
 
     fn create_inner_node<R: Read>(
+        child_start: usize,
         rac: &mut Rac<R>,
         context: &mut [ChanceTable; 3],
         prange: &[ColorRange],
@@ -209,6 +199,10 @@ impl<'a> ManiacTree<'a> {
             return Ok(ManiacNode::InactiveLeaf);
         }
         property -= 1;
+
+        if prange[property as usize].min >= prange[property as usize].max {
+            Err(Error::InvalidOperation(format!("Invalid maniac tree")))?
+        }
 
         let counter = rac.read_near_zero(1 as i32, 512 as i32, &mut context[1])?;
         let test_value = rac.read_near_zero(
@@ -221,6 +215,8 @@ impl<'a> ManiacTree<'a> {
             id: property,
             value: test_value,
             counter: counter as u32,
+            left: child_start,
+            right: child_start + 1,
         })
     }
 
@@ -237,11 +233,16 @@ impl<'a> ManiacTree<'a> {
             let (lnodes, rnodes) = &mut self.nodes.split_at_mut(node_index + 1);
             let node = &mut lnodes[node_index];
             match node {
-                Inner { id, value } => {
+                Inner {
+                    id,
+                    value,
+                    left,
+                    right,
+                } => {
                     if pvec[*id as usize] > *value {
-                        node_index = 2 * node_index + 1;
+                        node_index = *left;
                     } else {
-                        node_index = 2 * node_index + 2;
+                        node_index = *right;
                     }
                 }
                 Leaf(table) => {
@@ -254,6 +255,8 @@ impl<'a> ManiacTree<'a> {
                             value,
                             counter: 0,
                             table,
+                            left,
+                            right,
                         } => {
                             let mut left_table = table.clone();
                             let mut right_table = table.clone();
@@ -264,13 +267,15 @@ impl<'a> ManiacTree<'a> {
                                 rac.read_near_zero(min, max, &mut right_table)?
                             };
 
-                            rnodes[node_index].activate(left_table);
-                            rnodes[node_index + 1].activate(right_table);
+                            rnodes[*left - node_index - 1].activate(left_table);
+                            rnodes[*right - node_index - 1].activate(right_table);
                             (
                                 val,
                                 Inner {
                                     id: *id,
                                     value: *value,
+                                    left: *left,
+                                    right: *right,
                                 },
                             )
                         }
@@ -332,16 +337,22 @@ enum ManiacNode<'a> {
         value: i16,
         table: ChanceTable<'a>,
         counter: u32,
+        left: usize,
+        right: usize,
     },
     InactiveProperty {
         id: isize,
         value: i16,
         counter: u32,
+        left: usize,
+        right: usize,
     },
     /// Inner nodes are property nodes whose counters have reached zero. They no longer have a context associated with them.
     Inner {
         id: isize,
         value: i16,
+        left: usize,
+        right: usize,
     },
     /// Leaf nodes are nodes that can never become inner nodes
     Leaf(ChanceTable<'a>),
@@ -354,11 +365,19 @@ impl<'a> ManiacNode<'a> {
         use self::ManiacNode::*;
         *self = match self {
             InactiveLeaf => Leaf(table),
-            InactiveProperty { id, value, counter } => Property {
+            InactiveProperty {
+                id,
+                value,
+                counter,
+                left,
+                right,
+            } => Property {
                 id: *id,
                 value: *value,
                 counter: *counter,
                 table: table,
+                left: *left,
+                right: *right,
             },
             _ => return,
         }
