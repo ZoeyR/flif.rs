@@ -243,13 +243,18 @@ impl<'a> ManiacTree<'a> {
                     } else {
                         node_index = 2 * node_index + 2;
                     }
-                },
+                }
                 Leaf(table) => {
                     return rac.read_near_zero(min, max, table);
-                },
+                }
                 node => {
                     let (val, new_node) = match node {
-                        Property { id, value, counter: 0, table } => {
+                        Property {
+                            id,
+                            value,
+                            counter: 0,
+                            table
+                        } => {
                             let mut left_table = table.clone();
                             let mut right_table = table.clone();
 
@@ -261,20 +266,26 @@ impl<'a> ManiacTree<'a> {
 
                             rnodes[node_index].activate(left_table);
                             rnodes[node_index + 1].activate(right_table);
-                            (val, Inner { id: *id, value: *value })
-                        },
+                            (
+                                val,
+                                Inner {
+                                    id: *id,
+                                    value: *value
+                                },
+                            )
+                        }
                         Property { counter, table, .. } => {
                             *counter -= 1;
                             return rac.read_near_zero(min, max, table);
-                        },
+                        }
                         _ => panic!(
                             "improperly constructed tree, \
-                            inactive node reached during traversal"
+                             inactive node reached during traversal"
                         ),
                     };
                     *node = new_node;
                     return Ok(val);
-                },
+                }
             }
         }
     }
