@@ -30,6 +30,7 @@ fn ycocg_stack_overflow() {
     let _ = Flif::decode_with_limits(bytes.as_ref(), limits).map(|img| img.get_raw_pixels());
 }
 
+/// Tests an issue found in [#34](https://github.com/dgriffen/flif.rs/issues/34)
 #[test]
 fn memory_growth() {
     let bytes = b"FLIF11F\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00FLIF\x00\x00L\xc5XifI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00FLIF\x00\x00\x00\x00\x00\x00\x00";
