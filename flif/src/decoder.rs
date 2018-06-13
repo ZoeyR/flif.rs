@@ -98,8 +98,7 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
         Some(pix) if pix > limits.pixels => {
             Err(Error::LimitViolation(format!(
                 "number of pixels exceeds limit: {}/{}",
-                pix,
-                limits.pixels,
+                pix, limits.pixels,
             )))?;
         }
         None => {
