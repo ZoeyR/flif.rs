@@ -57,6 +57,7 @@ impl<R: Read> RacRead for Rac<R> {
         self.get(chance)
     }
 
+    #[inline(always)]
     fn read(&mut self, context: &mut ChanceTable, entry: ChanceTableEntry) -> Result<bool> {
         let chance = context.get_chance(entry);
         let transformed_chance = Self::apply_chance(u32::from(chance), self.range);

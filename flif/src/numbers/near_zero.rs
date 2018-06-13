@@ -19,16 +19,18 @@ impl<R: RacRead> NearZeroCoder for R {
         max: I,
         context: &mut ChanceTable,
     ) -> Result<I> {
-        if min > I::zero() {
-            Ok(read_near_zero_inner(self, I::zero(), max - min, context)? + min)
+        let (min, max, delta) = if min > I::zero() {
+            (I::zero(), max - min, min)
         } else if max < I::zero() {
-            Ok(read_near_zero_inner(self, min - max, I::zero(), context)? + max)
+            (min - max, I::zero(), max)
         } else {
-            read_near_zero_inner(self, min, max, context)
-        }
+            (min, max, I::zero())
+        };
+        Ok(read_near_zero_inner(self, min, max, context)? + delta)
     }
 }
 
+#[inline(always)]
 fn read_near_zero_inner<R: RacRead, I: PrimInt>(
     read: &mut R,
     min: I,
