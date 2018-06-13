@@ -91,13 +91,12 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
     // read the first header
     let main_header = Header::from_reader(&mut reader)?;
     let frames = main_header.num_frames as usize;
-    let pixels = main_header.width * main_header.height * frames;
-    if pixels > limits.pixels {
-        Err(Error::LimitViolation(format!(
-            "number of pixels exceeds limit: {} vs {}",
-            pixels, limits.pixels,
-        )))?
-    }
+    frames.checked_mul(main_header.width)
+        .and_then(|val| val.checked_mul(main_header.height))
+        .and_then(|pixels| if pixels > limits.pixels { None } else { Some(()) })
+        .ok_or(Error::LimitViolation(format!(
+            "number of pixels exceeds limit: {}", limits.pixels,
+        )))?;
 
     // read the metadata chunks
     let (metadata, non_optional_byte) = Metadata::all_from_reader(&mut reader, &limits)?;
