@@ -3,6 +3,8 @@ use num_traits::PrimInt;
 use numbers::chances::{ChanceTable, ChanceTableEntry};
 use numbers::rac::RacRead;
 
+use std::cmp;
+
 pub trait NearZeroCoder {
     fn read_near_zero<I: PrimInt>(
         &mut self,
@@ -19,13 +21,9 @@ impl<R: RacRead> NearZeroCoder for R {
         max: I,
         context: &mut ChanceTable,
     ) -> Result<I> {
-        let (min, max, delta) = if min > I::zero() {
-            (I::zero(), max - min, min)
-        } else if max < I::zero() {
-            (min - max, I::zero(), max)
-        } else {
-            (min, max, I::zero())
-        };
+        let delta = cmp::min(max, cmp::max(I::zero(), min));
+        let min = min - delta;
+        let max = max - delta;
         Ok(read_near_zero_inner(self, min, max, context)? + delta)
     }
 }
