@@ -22,8 +22,8 @@ pub struct Header {
     pub interlaced: bool,
     pub channels: ColorSpace,
     pub bytes_per_channel: BytesPerChannel,
-    pub width: usize,
-    pub height: usize,
+    pub width: u32,
+    pub height: u32,
     pub num_frames: u32,
 }
 
@@ -41,8 +41,7 @@ fn read_varint<R: Read>(reader: &mut R, delta: u32) -> Result<u32> {
 }
 
 /// Check if number of pixels uphelds provided limit
-fn check_limit(width: usize, height: usize, frames: u32, limit: usize) -> Result<()> {
-    let frames = frames as usize;
+fn check_limit(width: u32, height: u32, frames: u32, limit: u32) -> Result<()> {
     let pixels = frames
         .checked_mul(width)
         .and_then(|val| val.checked_mul(height));
@@ -104,8 +103,8 @@ impl Header {
                 desc: "bytes per channel was not a valid value",
             })?,
         };
-        let width = read_varint(&mut reader, 1)? as usize;
-        let height = read_varint(&mut reader, 1)? as usize;
+        let width = read_varint(&mut reader, 1)?;
+        let height = read_varint(&mut reader, 1)?;
 
         let num_frames = if animated {
             read_varint(&mut reader, 2)?

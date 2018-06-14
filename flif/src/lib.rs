@@ -64,7 +64,7 @@ impl Flif {
         };
         let width = self.info.header.width;
         let height = self.info.header.height;
-        let mut data = Vec::with_capacity(n * width * height);
+        let mut data = Vec::with_capacity((n * width * height) as usize);
 
         for vals in self.image_data.get_data().iter() {
             for channel in self.info.header.channels {
@@ -80,13 +80,13 @@ impl Flif {
 #[derive(Copy, Clone, Debug)]
 pub struct Limits {
     /// max size of the compressed metadata in bytes (default: 1 MB)
-    pub metadata_chunk: usize,
+    pub metadata_chunk: u32,
     /// max number of metadata entries (default: 8)
-    pub metadata_count: usize,
-    /// max number of pixels: `width * height * frames` (default: 2<sup>26</sup>)
-    pub pixels: usize,
-    /// max number of MANIAC nodes (default: 2<sup>14</sup>)
-    pub maniac_nodes: usize,
+    pub metadata_count: u32,
+    /// max number of pixels: `width * height * frames` (default: 67M = 2<sup>26</sup>)
+    pub pixels: u32,
+    /// max number of MANIAC nodes (default: 16384 = 2<sup>14</sup>)
+    pub maniac_nodes: u32,
 }
 
 impl Default for Limits {

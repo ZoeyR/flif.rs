@@ -10,8 +10,8 @@ use FlifInfo;
 pub use decoder::Decoder;
 
 pub(crate) struct DecodingImage {
-    height: usize,
-    width: usize,
+    height: u32,
+    width: u32,
     channels: ColorSpace,
     data: Vec<Pixel>,
 }
@@ -49,35 +49,36 @@ type Maniac<'a> = ChannelSet<Option<ManiacTree<'a>>>;
 // safety criterias defined by `debug_assert`s
 impl DecodingImage {
     pub fn new(info: &FlifInfo) -> DecodingImage {
+        let pixels = (info.header.height * info.header.width) as usize;
         DecodingImage {
             height: info.header.height,
             width: info.header.width,
             channels: info.header.channels,
-            data: vec![Pixel::default(); info.header.height * info.header.width],
+            data: vec![Pixel::default(); pixels],
         }
     }
 
-    fn get_idx(&self, x: usize, y: usize) -> usize {
-        (self.width * y) + x
+    fn check_data(&self) -> bool {
+        self.data.len() == (self.width * self.height) as usize
+    }
+
+    fn get_idx(&self, x: u32, y: u32) -> usize {
+        ((self.width * y) + x) as usize
     }
 
     pub fn get_data(&self) -> &[Pixel] {
         &self.data
     }
 
-    unsafe fn get_val(&self, x: usize, y: usize, chan: Channel) -> ColorValue {
-        debug_assert!(
-            x < self.width && y < self.height && self.data.len() == self.width * self.height
-        );
+    unsafe fn get_val(&self, x: u32, y: u32, chan: Channel) -> ColorValue {
+        debug_assert!(x < self.width && y < self.height && self.check_data());
         self.data.get_unchecked(self.get_idx(x, y))[chan]
     }
 
-    unsafe fn get_edge_vicinity(&self, x: usize, y: usize, chan: Channel) -> EdgePixelVicinity {
-        debug_assert!(
-            x < self.width && y < self.height && self.data.len() == self.width * self.height
-        );
+    unsafe fn get_edge_vicinity(&self, x: u32, y: u32, chan: Channel) -> EdgePixelVicinity {
+        debug_assert!(x < self.width && y < self.height && self.check_data());
         EdgePixelVicinity {
-            pixel: *self.data.get_unchecked((self.width * y) + x),
+            pixel: *self.data.get_unchecked(self.get_idx(x, y)),
             is_rgba: self.channels == ColorSpace::RGBA,
             chan,
             top: if y != 0 {
@@ -113,16 +114,16 @@ impl DecodingImage {
         }
     }
 
-    unsafe fn get_core_vicinity(&self, x: usize, y: usize, chan: Channel) -> CorePixelVicinity {
+    unsafe fn get_core_vicinity(&self, x: u32, y: u32, chan: Channel) -> CorePixelVicinity {
         debug_assert!(
             x < self.width - 1
                 && y < self.height
                 && x > 1
                 && y > 1
-                && self.data.len() == self.width * self.height
+                && self.check_data()
         );
         CorePixelVicinity {
-            pixel: *self.data.get_unchecked((self.width * y) + x),
+            pixel: *self.data.get_unchecked(self.get_idx(x, y)),
             chan,
             is_rgba: self.channels == ColorSpace::RGBA,
             top: self.get_val(x, y - 1, chan),
@@ -136,8 +137,8 @@ impl DecodingImage {
 
     unsafe fn process_edge_pixel<E, R: Read>(
         &mut self,
-        x: usize,
-        y: usize,
+        x: u32,
+        y: u32,
         chan: Channel,
         maniac: &mut Maniac,
         rac: &mut Rac<R>,
@@ -146,9 +147,7 @@ impl DecodingImage {
     where
         E: FnMut(EdgePixelVicinity, &mut Maniac, &mut Rac<R>) -> Result<ColorValue>,
     {
-        debug_assert!(
-            x < self.width && y < self.height && self.data.len() == self.width * self.height
-        );
+        debug_assert!(x < self.width && y < self.height && self.check_data());
         let pix_vic = self.get_edge_vicinity(x, y, chan);
         let val = edge_f(pix_vic, maniac, rac)?;
         let idx = self.get_idx(x, y);
@@ -172,7 +171,7 @@ impl DecodingImage {
     {
         let width = self.width;
         let height = self.height;
-        debug_assert!(self.data.len() == width * height);
+        debug_assert!(self.check_data());
         // special case for small images
         if width <= 3 || height <= 2 {
             for y in 0..height {
