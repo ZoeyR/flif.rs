@@ -29,15 +29,11 @@ pub struct Header {
 
 /// Helper function for reading width, height and num_frames
 fn read_varint<R: Read>(reader: &mut R, delta: u32) -> Result<u32> {
-    reader
-        .read_varint::<u32>()
-        .and_then(|v| {
-            v.checked_add(delta).ok_or_else(|| {
-                Error::LimitViolation(
-                    "number of pixels exceeds limit: overflow".to_string()
-                )
-            })
+    reader.read_varint::<u32>().and_then(|v| {
+        v.checked_add(delta).ok_or_else(|| {
+            Error::LimitViolation("number of pixels exceeds limit: overflow".to_string())
         })
+    })
 }
 
 /// Check if number of pixels uphelds provided limit
@@ -46,23 +42,18 @@ fn check_limit(width: u32, height: u32, frames: u32, limit: u32) -> Result<()> {
         .checked_mul(width)
         .and_then(|val| val.checked_mul(height));
     match pixels {
-        Some(pix) if pix > limit => {
-            Err(Error::LimitViolation(format!(
-                "number of pixels exceeds limit: {}/{}",
-                pix, limit,
-            )))
-        }
-        None => {
-            Err(Error::LimitViolation(
-                "number of pixels exceeds limit: overflow".to_string()
-            ))
-        }
+        Some(pix) if pix > limit => Err(Error::LimitViolation(format!(
+            "number of pixels exceeds limit: {}/{}",
+            pix, limit,
+        ))),
+        None => Err(Error::LimitViolation(
+            "number of pixels exceeds limit: overflow".to_string(),
+        )),
         Some(_) => Ok(()),
     }
 }
 
 impl Header {
-
     pub(crate) fn from_reader<R: Read>(mut reader: R, limits: &Limits) -> Result<Self> {
         // first read in some magic
         let mut magic_buf = [0; 4];

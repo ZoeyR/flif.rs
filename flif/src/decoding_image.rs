@@ -115,13 +115,7 @@ impl DecodingImage {
     }
 
     unsafe fn get_core_vicinity(&self, x: u32, y: u32, chan: Channel) -> CorePixelVicinity {
-        debug_assert!(
-            x < self.width - 1
-                && y < self.height
-                && x > 1
-                && y > 1
-                && self.check_data()
-        );
+        debug_assert!(x < self.width - 1 && y < self.height && x > 1 && y > 1 && self.check_data());
         CorePixelVicinity {
             pixel: *self.data.get_unchecked(self.get_idx(x, y)),
             chan,
