@@ -8,6 +8,7 @@ use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
 use numbers::FlifReadExt;
+use Limits;
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum BytesPerChannel {
@@ -26,8 +27,44 @@ pub struct Header {
     pub num_frames: u32,
 }
 
+/// Helper function for reading width, height and num_frames
+fn read_varint<R: Read>(reader: &mut R, delta: u32) -> Result<u32> {
+    reader
+        .read_varint::<u32>()
+        .and_then(|v| {
+            v.checked_add(delta).ok_or_else(|| {
+                Error::LimitViolation(
+                    "number of pixels exceeds limit: overflow".to_string()
+                )
+            })
+        })
+}
+
+/// Check if number of pixels uphelds provided limit
+fn check_limit(width: usize, height: usize, frames: u32, limit: usize) -> Result<()> {
+    let frames = frames as usize;
+    let pixels = frames
+        .checked_mul(width)
+        .and_then(|val| val.checked_mul(height));
+    match pixels {
+        Some(pix) if pix > limit => {
+            Err(Error::LimitViolation(format!(
+                "number of pixels exceeds limit: {}/{}",
+                pix, limit,
+            )))
+        }
+        None => {
+            Err(Error::LimitViolation(
+                "number of pixels exceeds limit: overflow".to_string()
+            ))
+        }
+        Some(_) => Ok(()),
+    }
+}
+
 impl Header {
-    pub(crate) fn from_reader<R: Read>(mut reader: R) -> Result<Self> {
+
+    pub(crate) fn from_reader<R: Read>(mut reader: R, limits: &Limits) -> Result<Self> {
         // first read in some magic
         let mut magic_buf = [0; 4];
         reader.read_exact(&mut magic_buf)?;
@@ -67,14 +104,16 @@ impl Header {
                 desc: "bytes per channel was not a valid value",
             })?,
         };
-        let width = 1 + reader.read_varint::<usize>()?;
-        let height = 1 + reader.read_varint::<usize>()?;
+        let width = read_varint(&mut reader, 1)? as usize;
+        let height = read_varint(&mut reader, 1)? as usize;
 
         let num_frames = if animated {
-            2 + reader.read_varint::<u32>()?
+            read_varint(&mut reader, 2)?
         } else {
             1
         };
+
+        check_limit(width, height, num_frames, limits.pixels)?;
 
         Ok(Header {
             interlaced,
