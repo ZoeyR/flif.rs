@@ -28,7 +28,7 @@ impl ChannelCompact {
             let t_range = transformation.range(c);
             t.ranges[c].max = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?;
             let mut min = t_range.min;
-            for i in 0..t.ranges[c].max {
+            for i in 0..t.ranges[c].max + 1 {
                 t.decompacted[c].push(
                     min + rac.read_near_zero(
                         0,
@@ -36,7 +36,7 @@ impl ChannelCompact {
                         &mut context,
                     )?,
                 );
-                min = t.decompacted[c][i as usize];
+                min = t.decompacted[c][i as usize] + 1;
             }
         }
 
