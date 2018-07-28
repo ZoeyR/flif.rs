@@ -28,7 +28,9 @@ enum Command {
     #[structopt(name = "decode")]
     Decode {
         #[structopt(
-            short = "i", long = "identify", help = "don't decode, just identify the input FLIF"
+            short = "i",
+            long = "identify",
+            help = "don't decode, just identify the input FLIF"
         )]
         identify: bool,
         #[structopt(name = "INPUT", help = "Input file")]
