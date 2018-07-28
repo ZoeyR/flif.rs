@@ -109,7 +109,7 @@ impl<'a> ManiacTree<'a> {
                 _ => break,
             };
 
-            if result_vec.len() > limits.maniac_nodes {
+            if result_vec.len() > limits.maniac_nodes as usize {
                 Err(Error::LimitViolation(format!(
                     "number of maniac nodes exceeds limit"
                 )))?;

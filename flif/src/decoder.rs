@@ -89,15 +89,7 @@ impl<R: Read> Decoder<R> {
 
 fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo, Rac<R>)> {
     // read the first header
-    let main_header = Header::from_reader(&mut reader)?;
-    let frames = main_header.num_frames as usize;
-    let pixels = main_header.width * main_header.height * frames;
-    if pixels > limits.pixels {
-        Err(Error::LimitViolation(format!(
-            "number of pixels exceeds limit: {} vs {}",
-            pixels, limits.pixels,
-        )))?
-    }
+    let main_header = Header::from_reader(&mut reader, &limits)?;
 
     // read the metadata chunks
     let (metadata, non_optional_byte) = Metadata::all_from_reader(&mut reader, &limits)?;

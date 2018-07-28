@@ -29,13 +29,13 @@ impl Metadata {
         mut reader: R,
         limits: &Limits,
     ) -> Result<(Vec<Metadata>, u8)> {
-        let mut ret = Vec::with_capacity(limits.metadata_count);
+        let mut ret = Vec::with_capacity(limits.metadata_count as usize);
         let required_type = loop {
             match Self::from_reader(&mut reader, limits)? {
                 MetadataType::Optional(metadata) => ret.push(metadata),
                 MetadataType::Required(byte) => break byte,
             }
-            if ret.len() > limits.metadata_count {
+            if ret.len() > limits.metadata_count as usize {
                 Err(Error::LimitViolation(format!(
                     "number of metadata entries exceeds limit: {}",
                     limits.metadata_count,
@@ -70,7 +70,7 @@ impl Metadata {
         };
 
         let chunk_size = reader.read_varint()?;
-        if chunk_size > limits.metadata_chunk {
+        if chunk_size > limits.metadata_chunk as usize {
             Err(Error::LimitViolation(format!(
                 "requested metadata chunk size exceeds limit: {} vs {}",
                 chunk_size, limits.metadata_chunk,
