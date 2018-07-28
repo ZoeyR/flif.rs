@@ -12,9 +12,9 @@ pub enum Channel {
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum ColorSpace {
-    Monochrome,
-    RGB,
-    RGBA,
+    Monochrome = 1,
+    RGB = 3,
+    RGBA = 4,
 }
 
 pub type Pixel = ChannelSet<ColorValue>;
