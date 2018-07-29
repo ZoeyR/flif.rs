@@ -37,10 +37,10 @@ fn read_varint<R: Read>(reader: &mut R, delta: u32) -> Result<u32> {
 }
 
 /// Check if number of pixels uphelds provided limit
-fn check_limit(width: u32, height: u32, frames: u32, limit: u32) -> Result<()> {
-    let pixels = frames
-        .checked_mul(width)
-        .and_then(|val| val.checked_mul(height));
+fn check_limit(width: u32, height: u32, frames: u32, limit: u64) -> Result<()> {
+    let pixels = (frames as u64)
+        .checked_mul(width as u64)
+        .and_then(|val| val.checked_mul(height as u64));
     match pixels {
         Some(pix) if pix > limit => Err(Error::LimitViolation(format!(
             "number of pixels exceeds limit: {}/{}",

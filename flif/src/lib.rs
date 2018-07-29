@@ -84,7 +84,7 @@ pub struct Limits {
     /// max number of metadata entries (default: 8)
     pub metadata_count: u32,
     /// max number of pixels: `width * height * frames` (default: 67M = 2<sup>26</sup>)
-    pub pixels: u32,
+    pub pixels: u64,
     /// max number of MANIAC nodes (default: 16384 = 2<sup>14</sup>)
     pub maniac_nodes: u32,
 }
