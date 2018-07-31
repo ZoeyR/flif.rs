@@ -1,25 +1,25 @@
 use colors::{Channel, ColorSpace, ColorValue};
-use decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use decoding_image::{CorePixelVicinity, EdgePixelVicinity, PixelTrait};
 
 type Pvec = [ColorValue; 11];
 
-pub(crate) fn core_pvec(pred: ColorValue, pvic: &CorePixelVicinity) -> Pvec {
+pub(crate) fn core_pvec<P: PixelTrait>(pred: ColorValue, pvic: &CorePixelVicinity<P>) -> Pvec {
     let mut pvec = [0; 11];
     let mut i = 0;
 
     let chan = pvic.chan;
-    if chan == Channel::Green || chan == Channel::Blue {
-        pvec[i] = pvic.pixel[Channel::Red];
+    if let Some(val) = pvic.pixel.get_red_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 
-    if chan == Channel::Blue {
-        pvec[i] = pvic.pixel[Channel::Green];
+    if let Some(val) = pvic.pixel.get_green_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 
-    if chan != Channel::Alpha && pvic.is_rgba {
-        pvec[i] = pvic.pixel[Channel::Alpha];
+    if let Some(val) = pvic.pixel.get_alpha_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 
@@ -46,23 +46,23 @@ pub(crate) fn core_pvec(pred: ColorValue, pvic: &CorePixelVicinity) -> Pvec {
     pvec
 }
 
-pub(crate) fn edge_pvec(pred: ColorValue, pvic: &EdgePixelVicinity) -> Pvec {
+pub(crate) fn edge_pvec<P: PixelTrait>(pred: ColorValue, pvic: &EdgePixelVicinity<P>) -> Pvec {
     let mut pvec = [0; 11];
     let mut i = 0;
 
     let chan = pvic.chan;
-    if chan == Channel::Green || chan == Channel::Blue {
-        pvec[i] = pvic.pixel[Channel::Red];
+    if let Some(val) = pvic.pixel.get_red_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 
-    if chan == Channel::Blue {
-        pvec[i] = pvic.pixel[Channel::Green];
+    if let Some(val) = pvic.pixel.get_green_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 
-    if chan != Channel::Alpha && pvic.is_rgba {
-        pvec[i] = pvic.pixel[Channel::Alpha];
+    if let Some(val) = pvic.pixel.get_alpha_pvec(chan) {
+        pvec[i] = val;
         i += 1;
     }
 

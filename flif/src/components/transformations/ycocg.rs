@@ -1,6 +1,10 @@
 use super::Transform;
-use colors::{Channel, Pixel};
+use colors::Channel;
 use components::transformations::ColorRange;
+
+const R: usize = 0;
+const G: usize = 1;
+const B: usize = 2;
 
 #[derive(Debug)]
 pub struct YCoGg {
@@ -26,16 +30,13 @@ impl YCoGg {
 }
 
 impl Transform for YCoGg {
-    fn undo(&self, pixel: &mut Pixel) {
-        let red = pixel[Channel::Green] + pixel[Channel::Red] + ((1 - pixel[Channel::Blue]) >> 1)
-            - (pixel[Channel::Green] >> 1);
-        let green = pixel[Channel::Red] - ((-pixel[Channel::Blue]) >> 1);
-        let blue =
-            pixel[Channel::Red] + ((1 - pixel[Channel::Blue]) >> 1) - (pixel[Channel::Green] >> 1);
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] {
+        let red = pixel[G] + pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
+        let green = pixel[R] - ((-pixel[B]) >> 1);
+        let blue = pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
+        let alpha = pixel[3];
 
-        pixel[Channel::Red] = red;
-        pixel[Channel::Green] = green;
-        pixel[Channel::Blue] = blue;
+        [red, green, blue, alpha]
     }
 
     fn range(&self, channel: Channel) -> ColorRange {
@@ -48,24 +49,24 @@ impl Transform for YCoGg {
         ColorRange { min, max }
     }
 
-    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
+    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange {
         let origmax4 = (self.max + 1) / 4;
 
         match channel {
             channel @ Channel::Red => self.range(channel),
             Channel::Green => {
-                let min = if values[Channel::Red] < origmax4 - 1 {
-                    -3 - (4 * values[Channel::Red])
-                } else if values[Channel::Red] > (3 * origmax4) - 1 {
-                    4 * (values[Channel::Red] - self.max)
+                let min = if values[R] < origmax4 - 1 {
+                    -3 - (4 * values[R])
+                } else if values[R] > (3 * origmax4) - 1 {
+                    4 * (values[R] - self.max)
                 } else {
                     -self.max
                 };
 
-                let max = if values[Channel::Red] < origmax4 - 1 {
-                    3 + (4 * values[Channel::Red])
-                } else if values[Channel::Red] > (3 * origmax4) - 1 {
-                    4 * origmax4 - 4 * (1 + values[Channel::Red] - 3 * origmax4)
+                let max = if values[R] < origmax4 - 1 {
+                    3 + (4 * values[R])
+                } else if values[R] > (3 * origmax4) - 1 {
+                    4 * origmax4 - 4 * (1 + values[R] - 3 * origmax4)
                 } else {
                     self.max
                 };
@@ -73,11 +74,11 @@ impl Transform for YCoGg {
                 ColorRange { min, max }
             }
             Channel::Blue => {
-                let co = values[Channel::Green];
-                let y = values[Channel::Red];
-                let min = if values[Channel::Red] < origmax4 - 1 {
+                let co = values[G];
+                let y = values[R];
+                let min = if values[R] < origmax4 - 1 {
                     -(2 * y + 1)
-                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                } else if values[R] > (3 * origmax4) - 1 {
                     -(2 * (4 * origmax4 - 1 - y) - ((1 + co.abs()) / 2) * 2)
                 } else {
                     -::std::cmp::min(
@@ -86,9 +87,9 @@ impl Transform for YCoGg {
                     )
                 };
 
-                let max = if values[Channel::Red] < origmax4 - 1 {
+                let max = if values[R] < origmax4 - 1 {
                     1 + 2 * y - (co.abs() / 2) * 2
-                } else if values[Channel::Red] > (3 * origmax4) - 1 {
+                } else if values[R] > (3 * origmax4) - 1 {
                     2 * (4 * origmax4 - 1 - y)
                 } else {
                     -::std::cmp::max(

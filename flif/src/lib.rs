@@ -15,13 +15,11 @@
 //!     let raw_pixels = image.get_raw_pixels();
 //! }
 //! ```
-extern crate fnv;
 extern crate inflate;
 extern crate num_traits;
 
 use std::io::Read;
 
-use colors::ColorSpace;
 use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
 use components::transformations::Transform;
@@ -40,7 +38,7 @@ mod numbers;
 
 pub struct Flif {
     info: FlifInfo,
-    image_data: DecodingImage,
+    raw: Box<[u8]>,
 }
 
 impl Flif {
@@ -56,23 +54,13 @@ impl Flif {
         &self.info
     }
 
+    // deprecate?
     pub fn get_raw_pixels(&self) -> Vec<u8> {
-        let n = match self.info.header.channels {
-            ColorSpace::RGBA => 4,
-            ColorSpace::RGB => 3,
-            ColorSpace::Monochrome => 1,
-        };
-        let width = self.info.header.width;
-        let height = self.info.header.height;
-        let mut data = Vec::with_capacity((n * width * height) as usize);
+        self.raw.to_vec()
+    }
 
-        for vals in self.image_data.get_data().iter() {
-            for channel in self.info.header.channels {
-                data.push(vals[channel] as u8)
-            }
-        }
-
-        data
+    pub fn raw(&self) -> &Box<[u8]> {
+        &self.raw
     }
 }
 

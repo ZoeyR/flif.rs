@@ -1,5 +1,5 @@
 use super::Transform;
-use colors::{Channel, Pixel};
+use colors::Channel;
 use components::transformations::ColorRange;
 
 #[derive(Debug)]
@@ -22,7 +22,7 @@ impl PermutePlanes {
 }
 
 impl Transform for PermutePlanes {
-    fn undo(&self, _pixel: &mut Pixel) {}
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] { pixel }
 
     fn range(&self, channel: Channel) -> ColorRange {
         let min = match channel {
@@ -33,7 +33,7 @@ impl Transform for PermutePlanes {
         ColorRange { min, max: self.max }
     }
 
-    fn crange(&self, _channel: Channel, _values: &Pixel) -> ColorRange {
+    fn crange(&self, _channel: Channel, _values: [i16; 4]) -> ColorRange {
         unimplemented!()
     }
 }

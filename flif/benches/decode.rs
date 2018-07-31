@@ -22,3 +22,12 @@ fn bench_grey_decode(b: &mut Bencher) {
         test::black_box(raw);
     });
 }
+
+#[bench]
+fn bench_full(b: &mut Bencher) {
+    let data = include_bytes!("../../resources/invalid_tid.flif");
+    b.iter(|| {
+        let raw = Flif::decode(data.as_ref()).unwrap().get_raw_pixels();
+        test::black_box(raw);
+    });
+}

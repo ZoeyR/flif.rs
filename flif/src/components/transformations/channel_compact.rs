@@ -1,5 +1,5 @@
 use super::Transform;
-use colors::{Channel, ChannelSet, ColorSpace, Pixel};
+use colors::{Channel, ChannelSet, ColorSpace};
 use components::transformations::ColorRange;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
@@ -45,13 +45,13 @@ impl ChannelCompact {
 }
 
 impl Transform for ChannelCompact {
-    fn undo(&self, _pixel: &mut Pixel) {}
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] { pixel }
 
     fn range(&self, channel: Channel) -> ColorRange {
         self.ranges[channel]
     }
 
-    fn crange(&self, channel: Channel, _values: &Pixel) -> ColorRange {
+    fn crange(&self, channel: Channel, _values: [i16; 4]) -> ColorRange {
         self.ranges[channel]
     }
 }

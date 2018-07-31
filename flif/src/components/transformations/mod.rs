@@ -2,7 +2,7 @@ use self::bounds::Bounds;
 use self::channel_compact::ChannelCompact;
 use self::permute_planes::PermutePlanes;
 use self::ycocg::YCoGg;
-use colors::{Channel, ColorSpace, ColorValue, Pixel};
+use colors::{Channel, ColorSpace, ColorValue};
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
@@ -65,7 +65,7 @@ impl ::std::fmt::Display for Transformation {
 }
 
 pub trait Transform: ::std::fmt::Debug + Send + Sync {
-    fn snap(&self, channel: Channel, pixel: &Pixel, value: ColorValue) -> ColorValue {
+    fn snap(&self, channel: Channel, pixel: [i16; 4], value: ColorValue) -> ColorValue {
         let range = self.crange(channel, pixel);
 
         if value > range.max {
@@ -77,15 +77,15 @@ pub trait Transform: ::std::fmt::Debug + Send + Sync {
         }
     }
 
-    fn undo(&self, pixel: &mut Pixel);
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4];
 
     fn range(&self, channel: Channel) -> ColorRange;
 
-    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange;
+    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange;
 }
 
 impl Transform for Box<Transform> {
-    fn undo(&self, pixel: &mut Pixel) {
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] {
         (**self).undo(pixel)
     }
 
@@ -93,7 +93,7 @@ impl Transform for Box<Transform> {
         (**self).range(channel)
     }
 
-    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
+    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange {
         (**self).crange(channel, values)
     }
 }
@@ -102,13 +102,13 @@ impl Transform for Box<Transform> {
 struct Orig;
 
 impl Transform for Orig {
-    fn undo(&self, _pixel: &mut Pixel) {}
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] { pixel }
 
     fn range(&self, _channel: Channel) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
 
-    fn crange(&self, _channel: Channel, _values: &Pixel) -> ColorRange {
+    fn crange(&self, _channel: Channel, _values: [i16; 4]) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
 }

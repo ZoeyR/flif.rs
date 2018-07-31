@@ -1,5 +1,5 @@
 use super::Transform;
-use colors::{Channel, ChannelSet, ColorSpace, Pixel};
+use colors::{Channel, ChannelSet, ColorSpace};
 use components::transformations::ColorRange;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
@@ -39,15 +39,15 @@ impl Bounds {
 }
 
 impl Transform for Bounds {
-    fn undo(&self, pixel: &mut Pixel) {
-        self.previous_transformation.undo(pixel);
+    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] {
+        self.previous_transformation.undo(pixel)
     }
 
     fn range(&self, channel: Channel) -> ColorRange {
         self.ranges[channel]
     }
 
-    fn crange(&self, channel: Channel, values: &Pixel) -> ColorRange {
+    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange {
         if channel == Channel::Red || channel == Channel::Alpha {
             return self.ranges[channel];
         }
