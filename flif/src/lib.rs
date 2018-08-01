@@ -55,7 +55,7 @@ impl Flif {
         &self.info
     }
 
-    // deprecate?
+    #[deprecated(since="0.3.1", note="please use `raw` and `into_raw` instead")]
     pub fn get_raw_pixels(&self) -> Vec<u8> {
         self.raw.to_vec()
     }
