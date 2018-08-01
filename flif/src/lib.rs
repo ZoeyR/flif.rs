@@ -63,6 +63,10 @@ impl Flif {
     pub fn raw(&self) -> &Box<[u8]> {
         &self.raw
     }
+
+    pub fn into_raw(self) -> Box<[u8]> {
+        self.raw
+    }
 }
 
 /// Limits on input images to prevent OOM based DoS
