@@ -134,6 +134,48 @@ impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
         }
     }
 
+    fn process_edge_pixel_safe(
+        &mut self,
+        vic: EdgePixelVicinity<P>,
+        chan: P::Channels,
+        maniac: &mut Option<ManiacTree<'a>>,
+    ) -> Result<i16>
+    {
+        let c = chan.as_channel();
+        let pix = vic.pixel.to_rgba();
+        let range = self.info.transform.crange(c, pix);
+
+        Ok(if let Some(ref mut maniac) = maniac {
+            let guess = make_edge_guess(self.info, &vic);
+            let snap = self.info.transform.snap(c, pix, guess);
+            let pvec = edge_pvec(snap, &vic);
+            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+        } else {
+            range.min
+        })
+    }
+
+    fn process_core_pixel_safe(
+        &mut self,
+        vic: CorePixelVicinity<P>,
+        chan: P::Channels,
+        maniac: &mut Option<ManiacTree<'a>>,
+    ) -> Result<i16>
+    {
+        let c = chan.as_channel();
+        let pix = vic.pixel.to_rgba();
+        let range = self.info.transform.crange(c, pix);
+
+        Ok(if let Some(ref mut maniac) = maniac {
+            let guess = make_core_guess(&vic);
+            let snap = self.info.transform.snap(c, pix, guess);
+            let pvec = core_pvec(snap, &vic);
+            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+        } else {
+            range.min
+        })
+    }
+
     unsafe fn process_edge_pixel(
         &mut self,
         x: u32,
@@ -143,21 +185,7 @@ impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
     ) -> Result<()>
     {
         let vic = self.get_edge_vicinity(x, y, chan);
-
-        let guess = make_edge_guess(self.info, &vic);
-        let c = chan.as_channel();
-        let pix = vic.pixel.to_rgba();
-        let range = self.info.transform.crange(c, pix);
-
-        let val = if let Some(ref mut maniac) = maniac {
-            let snap = self.info.transform.snap(c, pix, guess);
-            let pvec = edge_pvec(snap, &vic);
-            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
-        } else {
-            range.min
-        };
-
-
+        let val = self.process_edge_pixel_safe(vic, chan, maniac)?;
         let idx = self.get_idx(x, y);
         self.data.get_unchecked_mut(idx).set_value(val, chan);
         Ok(())
@@ -172,21 +200,7 @@ impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
     ) -> Result<()>
     {
         let vic = self.get_core_vicinity(x, y, chan);
-
-        let guess = make_core_guess(&vic);
-        let c = chan.as_channel();
-        let pix = vic.pixel.to_rgba();
-        let range = self.info.transform.crange(c, pix);
-        let snap = self.info.transform.snap(c, pix, guess);
-        let pvec = core_pvec(snap, &vic);
-
-        let val = if let Some(ref mut maniac) = maniac {
-            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
-        } else {
-            range.min
-        };
-
-
+        let val = self.process_core_pixel_safe(vic, chan, maniac)?;
         let idx = self.get_idx(x, y);
         self.data.get_unchecked_mut(idx).set_value(val, chan);
         Ok(())
@@ -276,7 +290,7 @@ fn make_core_guess<P: PixelTrait>(pix_vic: &CorePixelVicinity<P>) -> i16 {
     median3(left + top - top_left, left, top)
 }
 
-pub(crate) fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
+fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
     where P: PixelTrait, P::Channels: ChannelsTrait
 {
     let transformation = &info.transform;
