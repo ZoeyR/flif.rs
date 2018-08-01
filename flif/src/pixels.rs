@@ -5,7 +5,7 @@ pub trait ChannelsTrait {
     fn is_alpha(&self) -> bool;
 }
 
-pub trait PixelTrait: Default + Copy {
+pub trait Pixel: Default + Copy {
     type Channels: ChannelsTrait + Copy;
     type ChanOrder: AsRef<[Self::Channels]>;
 
@@ -43,7 +43,7 @@ impl ChannelsTrait for GreyChannels {
     fn is_alpha(&self) -> bool { false }
 }
 
-impl PixelTrait for Greyscale {
+impl Pixel for Greyscale {
     type Channels = GreyChannels;
     type ChanOrder = [GreyChannels; 1];
 
@@ -99,7 +99,7 @@ impl ChannelsTrait for RgbChannels {
     fn is_alpha(&self) -> bool { false }
 }
 
-impl PixelTrait for Rgb {
+impl Pixel for Rgb {
     type Channels = RgbChannels;
     type ChanOrder = [RgbChannels; 3];
 
@@ -167,7 +167,7 @@ impl ChannelsTrait for RgbaChannels {
     fn is_alpha(&self) -> bool { *self == RgbaChannels::Alpha }
 }
 
-impl PixelTrait for Rgba {
+impl Pixel for Rgba {
     type Channels = RgbaChannels;
     type ChanOrder = [RgbaChannels; 4];
 

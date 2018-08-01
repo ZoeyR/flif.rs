@@ -17,8 +17,6 @@ pub enum ColorSpace {
     RGBA = 4,
 }
 
-pub type Pixel = ChannelSet<ColorValue>;
-
 #[derive(Copy, Clone, Debug)]
 pub struct ChannelSet<T> {
     red: T,

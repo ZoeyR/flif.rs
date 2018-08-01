@@ -1,10 +1,10 @@
 use colors::{Channel, ColorSpace, ColorValue};
 use decoding_image::{CorePixelVicinity, EdgePixelVicinity};
-use pixels::PixelTrait;
+use pixels::Pixel;
 
 type Pvec = [ColorValue; 11];
 
-pub(crate) fn core_pvec<P: PixelTrait>(pred: ColorValue, pvic: &CorePixelVicinity<P>) -> Pvec {
+pub(crate) fn core_pvec<P: Pixel>(pred: ColorValue, pvic: &CorePixelVicinity<P>) -> Pvec {
     let mut pvec = [0; 11];
     let mut i = 0;
 
@@ -47,7 +47,7 @@ pub(crate) fn core_pvec<P: PixelTrait>(pred: ColorValue, pvic: &CorePixelVicinit
     pvec
 }
 
-pub(crate) fn edge_pvec<P: PixelTrait>(pred: ColorValue, pvic: &EdgePixelVicinity<P>) -> Pvec {
+pub(crate) fn edge_pvec<P: Pixel>(pred: ColorValue, pvic: &EdgePixelVicinity<P>) -> Pvec {
     let mut pvec = [0; 11];
     let mut i = 0;
 

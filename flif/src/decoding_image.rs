@@ -9,10 +9,10 @@ use numbers::median3;
 use numbers::chances::UpdateTable;
 use {FlifInfo, Limits};
 
-use pixels::{PixelTrait, ChannelsTrait};
+use pixels::{Pixel, ChannelsTrait};
 pub use decoder::Decoder;
 
-pub(crate) struct DecodingImage<'a, P: PixelTrait, R: Read + 'a> {
+pub(crate) struct DecodingImage<'a, P: Pixel, R: Read + 'a> {
     height: u32,
     width: u32,
     info: &'a FlifInfo,
@@ -23,7 +23,7 @@ pub(crate) struct DecodingImage<'a, P: PixelTrait, R: Read + 'a> {
 }
 
 #[derive(Debug)]
-pub(crate) struct EdgePixelVicinity<P: PixelTrait> {
+pub(crate) struct EdgePixelVicinity<P: Pixel> {
     pub pixel: P,
     pub chan: P::Channels,
     pub left: Option<ColorValue>,
@@ -35,7 +35,7 @@ pub(crate) struct EdgePixelVicinity<P: PixelTrait> {
 }
 
 #[derive(Debug)]
-pub(crate) struct CorePixelVicinity<P: PixelTrait> {
+pub(crate) struct CorePixelVicinity<P: Pixel> {
     pub pixel: P,
     pub chan: P::Channels,
     pub left: ColorValue,
@@ -47,7 +47,7 @@ pub(crate) struct CorePixelVicinity<P: PixelTrait> {
 }
 
 // safety criterias defined by `debug_assert`s
-impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
+impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
     pub fn new(
         info: &'a FlifInfo, rac: &'a mut Rac<R>, limits: &'a Limits,
         update_table: &'a UpdateTable,
@@ -282,7 +282,7 @@ impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
 }
 
 
-fn make_core_guess<P: PixelTrait>(pix_vic: &CorePixelVicinity<P>) -> i16 {
+fn make_core_guess<P: Pixel>(pix_vic: &CorePixelVicinity<P>) -> i16 {
     let left = pix_vic.left;
     let top = pix_vic.top;
     let top_left = pix_vic.top_left;
@@ -291,7 +291,7 @@ fn make_core_guess<P: PixelTrait>(pix_vic: &CorePixelVicinity<P>) -> i16 {
 }
 
 fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
-    where P: PixelTrait, P::Channels: ChannelsTrait
+    where P: Pixel, P::Channels: ChannelsTrait
 {
     let transformation = &info.transform;
 
