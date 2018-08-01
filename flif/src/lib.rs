@@ -66,7 +66,7 @@ impl Flif {
 }
 
 /// Limits on input images to prevent OOM based DoS
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Limits {
     /// max size of the compressed metadata in bytes (default: 1 MB)
     pub metadata_chunk: u32,

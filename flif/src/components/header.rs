@@ -17,7 +17,7 @@ pub enum BytesPerChannel {
     Two = 2,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Header {
     pub interlaced: bool,
     pub channels: ColorSpace,
@@ -116,7 +116,7 @@ impl Header {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SecondHeader {
     pub bits_per_pixel: Vec<u8>,
     pub alpha_zero: bool,
