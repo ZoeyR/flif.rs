@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use colors::{Channel, ColorValue};
+use colors::ColorValue;
 use components::transformations::Transform;
 pub use error::{Error, Result};
 use maniac::{core_pvec, edge_pvec, ManiacTree};
@@ -9,86 +9,8 @@ use numbers::median3;
 use numbers::chances::UpdateTable;
 use {FlifInfo, Limits};
 
+use pixels::{PixelTrait, ChannelsTrait};
 pub use decoder::Decoder;
-
-
-pub trait ChannelsTrait {
-    fn as_channel(&self) -> Channel;
-    fn from_channel(chan: Channel) -> Self;
-    fn is_alpha(&self) -> bool;
-}
-
-pub trait PixelTrait: Default + Copy {
-    type Channels: ChannelsTrait + Copy;
-    type ChanOrder: AsRef<[Self::Channels]>;
-
-    fn is_rgba() -> bool;
-    fn get_value(&self, chan: Self::Channels) -> ColorValue;
-    fn set_value(&mut self, val: ColorValue, chan: Self::Channels);
-    /// Return if alpha channel equals to zero. For non-RGBA images always
-    /// returns `false`.
-    fn is_alpha_zero(&self) -> bool;
-
-    /// Return red value if chan is green or blue. Always None for greyscale.
-    fn get_red_pvec(&self, chan: Self::Channels) -> Option<ColorValue>;
-    /// Return green value if chan is blue. Always None for greyscale.
-    fn get_green_pvec(&self, chan: Self::Channels) -> Option<ColorValue>;
-    /// Return alpha value if chan is not alpha. Always None for non-RGBA.
-    fn get_alpha_pvec(&self, chan: Self::Channels) -> Option<ColorValue>;
-
-    fn to_rgba(&self) -> [i16; 4];
-    fn get_chan_order() -> Self::ChanOrder;
-    fn size() -> usize;
-}
-
-#[derive(Debug, Default, Copy, Clone)]
-pub struct Greyscale(i16);
-
-#[derive(Debug, Default, Copy, Clone)]
-pub struct GreyChannels;
-
-impl ChannelsTrait for GreyChannels {
-    fn as_channel(&self) -> Channel { Channel::Red }
-    fn from_channel(chan: Channel) -> Self {
-        match chan {
-            Channel::Red => GreyChannels,
-            _ => panic!("invalid cahnnel"),
-        }
-    }
-    fn is_alpha(&self) -> bool { false }
-}
-
-impl PixelTrait for Greyscale {
-    type Channels = GreyChannels;
-    type ChanOrder = [GreyChannels; 1];
-
-    #[inline(always)]
-    fn is_rgba() -> bool { false }
-    #[inline(always)]
-    fn get_value(&self, _chan: Self::Channels) -> ColorValue { self.0 }
-    #[inline(always)]
-    fn set_value(&mut self, val: ColorValue, _chan: Self::Channels) {
-        self.0 = val;
-    }
-    #[inline(always)]
-    fn is_alpha_zero(&self) -> bool { false }
-    #[inline(always)]
-    fn get_red_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> { None }
-    #[inline(always)]
-    fn get_green_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> {
-        None
-    }
-    #[inline(always)]
-    fn get_alpha_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> {
-        None
-    }
-    #[inline(always)]
-    fn to_rgba(&self) -> [i16; 4] { [self.0, 0, 0, 0] }
-    #[inline(always)]
-    fn get_chan_order() -> Self::ChanOrder { [GreyChannels] }
-    #[inline(always)]
-    fn size() -> usize { 1 }
-}
 
 pub(crate) struct DecodingImage<'a, P: PixelTrait, R: Read + 'a> {
     height: u32,
@@ -226,10 +148,10 @@ impl<'a, P: PixelTrait, R: Read> DecodingImage<'a, P, R> {
         let c = chan.as_channel();
         let pix = vic.pixel.to_rgba();
         let range = self.info.transform.crange(c, pix);
-        let snap = self.info.transform.snap(c, pix, guess);
-        let pvec = edge_pvec(snap, &vic);
 
         let val = if let Some(ref mut maniac) = maniac {
+            let snap = self.info.transform.snap(c, pix, guess);
+            let pvec = edge_pvec(snap, &vic);
             maniac.process(self.rac, &pvec, snap, range.min, range.max)?
         } else {
             range.min

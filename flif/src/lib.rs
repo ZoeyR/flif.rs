@@ -35,6 +35,7 @@ mod decoding_image;
 mod error;
 mod maniac;
 mod numbers;
+mod pixels;
 
 pub struct Flif {
     info: FlifInfo,

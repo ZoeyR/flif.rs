@@ -1,5 +1,6 @@
 use colors::{Channel, ColorSpace, ColorValue};
-use decoding_image::{CorePixelVicinity, EdgePixelVicinity, PixelTrait};
+use decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use pixels::PixelTrait;
 
 type Pvec = [ColorValue; 11];
 

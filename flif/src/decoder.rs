@@ -2,10 +2,12 @@ use std::io::Read;
 
 use super::{Flif, FlifInfo, Metadata};
 use components::header::{BytesPerChannel, Header, SecondHeader};
-use decoding_image::{DecodingImage, Greyscale};
+use decoding_image::DecodingImage;
+use pixels::{Greyscale, Rgb, Rgba};
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::Rac;
+use colors::ColorSpace;
 use Limits;
 
 pub struct Decoder<R: Read> {
@@ -60,9 +62,23 @@ impl<R: Read> Decoder<R> {
             self.info.second_header.cutoff,
         );
 
-        let raw = DecodingImage::<Greyscale, _>::new(
-            &self.info, &mut self.rac, &self.limits, &update_table
-        )?.process()?;
+        let raw = match self.info.header.channels {
+            ColorSpace::Monochrome => {
+                DecodingImage::<Greyscale, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+            ColorSpace::RGB => {
+                DecodingImage::<Rgb, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+            ColorSpace::RGBA => {
+                DecodingImage::<Rgba, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+        };
 
         Ok(Flif {
             info: self.info,
@@ -98,5 +114,3 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
         rac,
     ))
 }
-
-//const CHANNEL_ORDER: [Channel; 4] = [Channel::Alpha, Channel::Red, Channel::Green, Channel::Blue];

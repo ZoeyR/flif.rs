@@ -23,6 +23,7 @@ fn bench_grey_decode(b: &mut Bencher) {
     });
 }
 
+/*
 #[bench]
 fn bench_full(b: &mut Bencher) {
     let data = include_bytes!("../../resources/invalid_tid.flif");
@@ -31,3 +32,4 @@ fn bench_full(b: &mut Bencher) {
         test::black_box(raw);
     });
 }
+*/
