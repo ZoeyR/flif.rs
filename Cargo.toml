@@ -2,5 +2,4 @@
 members = [
     "flif",
     "flif-cli",
-    "flif-sys",
 ]

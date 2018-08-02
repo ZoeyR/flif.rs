@@ -74,16 +74,15 @@ fn decode_rgba(data: &[u8]) -> Box<[u8]> {
     }
 }
 
-fn compare_rgb_rgba(rgb: &[u8], rgba: &[u8]) -> bool {
-    if rgb.len() / 3 != rgba.len() / 4 || rgb.len() % 3 != 0 || rgba.len() % 4 != 0 {
-        return false;
-    }
+fn compare_rgb_rgba(rgb: &[u8], rgba: &[u8]) {
+    assert_eq!(rgb.len() / 3, rgba.len() / 4);
+    assert_eq!(rgb.len() % 3, 0);
+    assert_eq!(rgba.len() % 4, 0);
     for (p1, p2) in rgb.chunks(3).zip(rgba.chunks(4)) {
-        if p1 != &p2[..3] || p2[3] != 255 {
-            return false;
-        }
+        println!(".");
+        assert_eq!(p1, &p2[..3]);
+        assert_eq!(p2[3], 255);
     }
-    true
 }
 
 #[test]
@@ -97,7 +96,7 @@ fn sea_snail() {
     let flif_data = include_bytes!("../../resources/sea_snail.flif");
     let data = decode_rgba(flif_data);
 
-    assert!(compare_rgb_rgba(&buf, &data));
+    compare_rgb_rgba(&buf, &data)
 }
 
 #[test]
@@ -111,7 +110,7 @@ fn sea_snail_cutout() {
     let flif_data = include_bytes!("../../resources/sea_snail_cutout.flif");
     let data = decode_rgba(flif_data);
 
-    assert!(compare_rgb_rgba(&buf, &data));
+    compare_rgb_rgba(&buf, &data);
 }
 
 #[test]
