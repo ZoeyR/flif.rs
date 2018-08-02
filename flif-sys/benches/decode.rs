@@ -1,5 +1,3 @@
-#![cfg(feature = "libflif")]
-#![feature(extern_types)]
 #![feature(test)]
 extern crate test;
 extern crate flif_sys as flif;
@@ -80,7 +78,7 @@ fn decode_rgba(data: &[u8]) -> Box<[u8]> {
 }
 
 #[bench]
-fn libflif_cutout_full_decode(b: &mut Bencher) {
+fn bench_cutout_full_decode(b: &mut Bencher) {
     let data = include_bytes!("../../resources/sea_snail_cutout.flif");
     b.iter(|| {
         let raw = decode_rgba(data);
@@ -89,7 +87,7 @@ fn libflif_cutout_full_decode(b: &mut Bencher) {
 }
 
 #[bench]
-fn libflif_grey_decode(b: &mut Bencher) {
+fn bench_road_decode(b: &mut Bencher) {
     let data = include_bytes!("../../resources/road.flif");
     b.iter(|| {
         let raw = decode_gray(data);

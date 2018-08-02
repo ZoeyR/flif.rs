@@ -14,13 +14,5 @@ inflate = "0.4"
 num-traits = "0.2"
 fnv = "1"
 
-# we can't make optional dev-dependencies right now,
-# see https://github.com/rust-lang/cargo/issues/1596
-flif-sys = { version = "0.1", path = "../flif-sys/", optional = true }
-libc = { version = "0.2", optional = true }
-
 [dev-dependencies]
 png = "0.12"
-
-[features]
-libflif = ["flif-sys", "libc"]

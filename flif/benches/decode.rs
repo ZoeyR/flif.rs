@@ -15,7 +15,7 @@ fn bench_cutout_full_decode(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_grey_decode(b: &mut Bencher) {
+fn bench_road_decode(b: &mut Bencher) {
     let data = include_bytes!("../../resources/road.flif");
     b.iter(|| {
         let raw = Flif::decode(data.as_ref()).unwrap().get_raw_pixels();
