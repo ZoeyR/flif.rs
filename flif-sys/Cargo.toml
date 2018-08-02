@@ -1,0 +1,16 @@
+[package]
+name = "flif-sys"
+version = "0.1.0"
+authors = ["Artyom Pavlov"]
+license = "MIT OR Apache-2.0"
+description = "Rust low-level FFI binding to libflif"
+repository = "https://github.com/dgriffen/flif.rs"
+documentation = "https://docs.rs/flif-sys"
+keywords = ["flif", "decoder"]
+categories = ["external-ffi-bindings", "multimedia::encoding", "multimedia::images"]
+
+[dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+png = "0.12"
