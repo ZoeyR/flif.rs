@@ -1,5 +1,5 @@
 use super::Transform;
-use colors::Channel;
+use pixels::{Rgba, RgbaChannels};
 use components::transformations::ColorRange;
 
 const R: usize = 0;
@@ -15,46 +15,48 @@ pub struct YCoGg {
 impl YCoGg {
     pub fn new<T: Transform>(transformation: T) -> YCoGg {
         let max_iter = [
-            transformation.range(Channel::Red).max,
-            transformation.range(Channel::Blue).max,
-            transformation.range(Channel::Green).max,
+            transformation.range(RgbaChannels::Red).max,
+            transformation.range(RgbaChannels::Blue).max,
+            transformation.range(RgbaChannels::Green).max,
         ];
 
         let old_max = max_iter.iter().max().unwrap();
         let new_max = (((old_max / 4) + 1) * 4) - 1;
         YCoGg {
             max: new_max,
-            alpha_range: transformation.range(Channel::Alpha),
+            alpha_range: transformation.range(RgbaChannels::Alpha),
         }
     }
 }
 
 impl Transform for YCoGg {
-    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] {
+    fn undo(&self, pixel: Rgba) -> Rgba {
+        let pixel = pixel.0;
         let red = pixel[G] + pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
         let green = pixel[R] - ((-pixel[B]) >> 1);
         let blue = pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
         let alpha = pixel[3];
 
-        [red, green, blue, alpha]
+        Rgba([red, green, blue, alpha])
     }
 
-    fn range(&self, channel: Channel) -> ColorRange {
+    fn range(&self, channel: RgbaChannels) -> ColorRange {
         let (min, max) = match channel {
-            Channel::Red => (0, self.max),
-            Channel::Green | Channel::Blue => (-self.max, self.max),
+            RgbaChannels::Red => (0, self.max),
+            RgbaChannels::Green | RgbaChannels::Blue => (-self.max, self.max),
             _ => (self.alpha_range.min, self.alpha_range.max),
         };
 
         ColorRange { min, max }
     }
 
-    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange {
+    fn crange(&self, channel: RgbaChannels, values: Rgba) -> ColorRange {
+        let values = values.0;
         let origmax4 = (self.max + 1) / 4;
 
         match channel {
-            channel @ Channel::Red => self.range(channel),
-            Channel::Green => {
+            channel @ RgbaChannels::Red => self.range(channel),
+            RgbaChannels::Green => {
                 let min = if values[R] < origmax4 - 1 {
                     -3 - (4 * values[R])
                 } else if values[R] > (3 * origmax4) - 1 {
@@ -73,7 +75,7 @@ impl Transform for YCoGg {
 
                 ColorRange { min, max }
             }
-            Channel::Blue => {
+            RgbaChannels::Blue => {
                 let co = values[G];
                 let y = values[R];
                 let min = if values[R] < origmax4 - 1 {
@@ -100,7 +102,7 @@ impl Transform for YCoGg {
 
                 ColorRange { min, max }
             }
-            Channel::Alpha => self.alpha_range,
+            RgbaChannels::Alpha => self.alpha_range,
         }
     }
 }

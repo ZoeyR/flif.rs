@@ -1,7 +1,10 @@
+#![allow(deprecated)]
+// re-export to avoid public API breakage
+pub use pixels::{ColorSpace, ColorValue};
+
 use std::ops::{Index, IndexMut};
 
-pub type ColorValue = i16;
-
+#[deprecated(since="0.3.1")]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
     Red = 0,
@@ -10,13 +13,10 @@ pub enum Channel {
     Alpha = 3,
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub enum ColorSpace {
-    Monochrome = 1,
-    RGB = 3,
-    RGBA = 4,
-}
+#[deprecated(since="0.3.1")]
+pub type Pixel = ChannelSet<ColorValue>;
 
+#[deprecated(since="0.3.1")]
 #[derive(Copy, Clone, Debug)]
 pub struct ChannelSet<T> {
     red: T,
@@ -78,6 +78,7 @@ impl IntoIterator for ColorSpace {
     }
 }
 
+#[deprecated(since="0.3.1")]
 pub struct IntoChannelIter {
     next: Channel,
     length: u8,

@@ -2,10 +2,10 @@
 
 use std::io::Read;
 
-use colors::{Channel, ColorSpace, ColorValue};
 use components::transformations::ColorRange;
 use components::transformations::Transform;
 use error::*;
+use pixels::{RgbaChannels, ColorSpace, ColorValue};
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::{Rac, RacRead};
@@ -23,7 +23,7 @@ pub struct ManiacTree<'a> {
 impl<'a> ManiacTree<'a> {
     pub fn new<R: Read>(
         rac: &mut Rac<R>,
-        channel: Channel,
+        channel: RgbaChannels,
         info: &FlifInfo,
         update_table: &'a UpdateTable,
         limits: &Limits,
@@ -295,21 +295,21 @@ impl<'a> ManiacTree<'a> {
         }
     }
 
-    fn build_prange_vec(channel: Channel, info: &FlifInfo) -> Vec<ColorRange> {
+    fn build_prange_vec(channel: RgbaChannels, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
 
         let transform = &info.transform;
 
-        if channel == Channel::Green || channel == Channel::Blue {
-            prange.push(transform.range(Channel::Red));
+        if channel == RgbaChannels::Green || channel == RgbaChannels::Blue {
+            prange.push(transform.range(RgbaChannels::Red));
         }
 
-        if channel == Channel::Blue {
-            prange.push(transform.range(Channel::Green));
+        if channel == RgbaChannels::Blue {
+            prange.push(transform.range(RgbaChannels::Green));
         }
 
-        if channel != Channel::Alpha && info.header.channels == ColorSpace::RGBA {
-            prange.push(transform.range(Channel::Alpha));
+        if channel != RgbaChannels::Alpha && info.header.channels == ColorSpace::RGBA {
+            prange.push(transform.range(RgbaChannels::Alpha));
         }
 
         prange.push(transform.range(channel));

@@ -2,7 +2,7 @@ use std::io::Read;
 
 use super::transformations;
 use super::transformations::{Transform, Transformation};
-use colors::ColorSpace;
+use pixels::ColorSpace;
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;

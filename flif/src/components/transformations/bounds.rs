@@ -1,5 +1,5 @@
 use super::Transform;
-use colors::{Channel, ChannelSet, ColorSpace};
+use pixels::{Rgba, RgbaChannels, ColorSpace};
 use components::transformations::ColorRange;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
@@ -8,7 +8,7 @@ use numbers::rac::RacRead;
 
 #[derive(Debug)]
 pub struct Bounds {
-    ranges: ChannelSet<ColorRange>,
+    ranges: [ColorRange; 4],
     previous_transformation: Box<Transform>,
 }
 
@@ -20,9 +20,10 @@ impl Bounds {
         update_table: &UpdateTable,
     ) -> Result<Bounds> {
         let mut context = ChanceTable::new(update_table);
-        let mut ranges: ChannelSet<ColorRange> = Default::default();
-        for c in channels {
+        let mut ranges = [ColorRange::default(); 4];
+        for &c in &RgbaChannels::ORDER[..channels as usize] {
             let t_range = trans.range(c);
+            let c = c as usize;
             ranges[c].min = rac.read_near_zero(t_range.min, t_range.max, &mut context)?;
             ranges[c].max = rac.read_near_zero(ranges[c].min, t_range.max, &mut context)?;
 
@@ -39,20 +40,21 @@ impl Bounds {
 }
 
 impl Transform for Bounds {
-    fn undo(&self, pixel: [i16; 4]) -> [i16; 4] {
+    fn undo(&self, pixel: Rgba) -> Rgba {
         self.previous_transformation.undo(pixel)
     }
 
-    fn range(&self, channel: Channel) -> ColorRange {
-        self.ranges[channel]
+    fn range(&self, channel: RgbaChannels) -> ColorRange {
+        self.ranges[channel as usize]
     }
 
-    fn crange(&self, channel: Channel, values: [i16; 4]) -> ColorRange {
-        if channel == Channel::Red || channel == Channel::Alpha {
-            return self.ranges[channel];
+    fn crange(&self, channel: RgbaChannels, values: Rgba) -> ColorRange {
+        if channel == RgbaChannels::Red || channel == RgbaChannels::Alpha {
+            return self.ranges[channel as usize];
         }
 
         let mut range = self.previous_transformation.crange(channel, values);
+        let channel = channel as usize;
         range.min = range.min.max(self.ranges[channel].min);
         range.max = range.max.min(self.ranges[channel].max);
 

@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use colors::ColorValue;
+use pixels::ColorValue;
 use components::transformations::Transform;
 pub use error::{Error, Result};
 use maniac::{core_pvec, edge_pvec, ManiacTree};
@@ -235,7 +235,7 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         let mut raw = Vec::with_capacity(n*self.data.len());
         for pixel in self.data.iter_mut() {
             let rgba = self.info.transform.undo(pixel.to_rgba());
-            raw.extend(rgba[..n].iter().map(|v| *v as u8 ));
+            raw.extend(rgba.0[..n].iter().map(|v| *v as u8 ));
         }
 
         Ok(raw.into_boxed_slice())

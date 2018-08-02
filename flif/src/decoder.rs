@@ -7,7 +7,7 @@ use pixels::{Greyscale, Rgb, Rgba};
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::Rac;
-use colors::ColorSpace;
+use pixels::ColorSpace;
 use Limits;
 
 pub struct Decoder<R: Read> {
