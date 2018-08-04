@@ -1,6 +1,5 @@
 use std::io::Read;
 
-use components::transformations::Transform;
 pub use error::{Error, Result};
 use maniac::{core_pvec, edge_pvec, ManiacTree};
 use numbers::chances::UpdateTable;

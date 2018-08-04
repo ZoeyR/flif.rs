@@ -22,7 +22,6 @@ use std::io::Read;
 
 use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
-use components::transformations::Transform;
 use decoding_image::DecodingImage;
 
 pub use decoder::Decoder;

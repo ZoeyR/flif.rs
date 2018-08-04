@@ -1,7 +1,7 @@
 use super::Transform;
 use components::transformations::ColorRange;
 use pixels::Pixel;
-use pixels::{ChannelsTrait, Rgba, RgbaChannels};
+use pixels::{ChannelsTrait, RgbaChannels};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PermutePlanes {

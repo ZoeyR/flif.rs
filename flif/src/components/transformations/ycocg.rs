@@ -1,8 +1,7 @@
 use super::Transform;
 use components::transformations::ColorRange;
 use pixels::Pixel;
-use pixels::RgbChannelsTrait;
-use pixels::{ChannelsTrait, Rgba, RgbaChannels};
+use pixels::{ChannelsTrait, RgbaChannels};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct YCoGg {
@@ -35,18 +34,18 @@ impl YCoGg {
 
 impl Transform for YCoGg {
     fn undo<P: Pixel>(&self, mut pixel: P) -> P {
-        let R = P::Channels::red().unwrap();
-        let G = P::Channels::green().unwrap();
-        let B = P::Channels::blue().unwrap();
-        let red = pixel.get_value(G) + pixel.get_value(R) + ((1 - pixel.get_value(B)) >> 1)
-            - (pixel.get_value(G) >> 1);
+        let r = P::Channels::red().unwrap();
+        let g = P::Channels::green().unwrap();
+        let b = P::Channels::blue().unwrap();
+        let red = pixel.get_value(g) + pixel.get_value(r) + ((1 - pixel.get_value(b)) >> 1)
+            - (pixel.get_value(g) >> 1);
 
-        let green = pixel.get_value(R) - ((-pixel.get_value(B)) >> 1);
-        let blue = pixel.get_value(R) + ((1 - pixel.get_value(B)) >> 1) - (pixel.get_value(G) >> 1);
+        let green = pixel.get_value(r) - ((-pixel.get_value(b)) >> 1);
+        let blue = pixel.get_value(r) + ((1 - pixel.get_value(b)) >> 1) - (pixel.get_value(g) >> 1);
 
-        pixel.set_value(red, R);
-        pixel.set_value(green, G);
-        pixel.set_value(blue, B);
+        pixel.set_value(red, r);
+        pixel.set_value(green, g);
+        pixel.set_value(blue, b);
 
         pixel
     }
@@ -67,27 +66,26 @@ impl Transform for YCoGg {
         values: P,
         _previous: ColorRange,
     ) -> ColorRange {
-        let R = P::Channels::red().unwrap();
-        let G = P::Channels::green().unwrap();
-        let B = P::Channels::blue().unwrap();
+        let r = P::Channels::red().unwrap();
+        let g = P::Channels::green().unwrap();
 
         let origmax4 = (self.max + 1) / 4;
 
         match channel.as_channel() {
             RgbaChannels::Red => self.range::<P>(channel),
             RgbaChannels::Green => {
-                let min = if values.get_value(R) < origmax4 - 1 {
-                    -3 - (4 * values.get_value(R))
-                } else if values.get_value(R) > (3 * origmax4) - 1 {
-                    4 * (values.get_value(R) - self.max)
+                let min = if values.get_value(r) < origmax4 - 1 {
+                    -3 - (4 * values.get_value(r))
+                } else if values.get_value(r) > (3 * origmax4) - 1 {
+                    4 * (values.get_value(r) - self.max)
                 } else {
                     -self.max
                 };
 
-                let max = if values.get_value(R) < origmax4 - 1 {
-                    3 + (4 * values.get_value(R))
-                } else if values.get_value(R) > (3 * origmax4) - 1 {
-                    4 * origmax4 - 4 * (1 + values.get_value(R) - 3 * origmax4)
+                let max = if values.get_value(r) < origmax4 - 1 {
+                    3 + (4 * values.get_value(r))
+                } else if values.get_value(r) > (3 * origmax4) - 1 {
+                    4 * origmax4 - 4 * (1 + values.get_value(r) - 3 * origmax4)
                 } else {
                     self.max
                 };
@@ -95,11 +93,11 @@ impl Transform for YCoGg {
                 ColorRange { min, max }
             }
             RgbaChannels::Blue => {
-                let co = values.get_value(G);
-                let y = values.get_value(R);
-                let min = if values.get_value(R) < origmax4 - 1 {
+                let co = values.get_value(g);
+                let y = values.get_value(r);
+                let min = if values.get_value(r) < origmax4 - 1 {
                     -(2 * y + 1)
-                } else if values.get_value(R) > (3 * origmax4) - 1 {
+                } else if values.get_value(r) > (3 * origmax4) - 1 {
                     -(2 * (4 * origmax4 - 1 - y) - ((1 + co.abs()) / 2) * 2)
                 } else {
                     -::std::cmp::min(
@@ -108,9 +106,9 @@ impl Transform for YCoGg {
                     )
                 };
 
-                let max = if values.get_value(R) < origmax4 - 1 {
+                let max = if values.get_value(r) < origmax4 - 1 {
                     1 + 2 * y - (co.abs() / 2) * 2
-                } else if values.get_value(R) > (3 * origmax4) - 1 {
+                } else if values.get_value(r) > (3 * origmax4) - 1 {
                     2 * (4 * origmax4 - 1 - y)
                 } else {
                     -::std::cmp::max(

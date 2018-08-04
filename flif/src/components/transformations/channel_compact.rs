@@ -4,8 +4,8 @@ use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::RacRead;
+use pixels::ChannelsTrait;
 use pixels::Pixel;
-use pixels::{ChannelsTrait, ColorSpace, Rgba, RgbaChannels};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChannelCompact {

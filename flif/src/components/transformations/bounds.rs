@@ -5,7 +5,7 @@ use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::RacRead;
 use pixels::Pixel;
-use pixels::{ChannelsTrait, ColorSpace, Rgba, RgbaChannels};
+use pixels::{ChannelsTrait, RgbaChannels};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bounds {
@@ -47,7 +47,7 @@ impl Transform for Bounds {
     fn crange<P: Pixel>(
         &self,
         channel: P::Channels,
-        values: P,
+        _values: P,
         previous: ColorRange,
     ) -> ColorRange {
         let rgba_channel = channel.as_channel();

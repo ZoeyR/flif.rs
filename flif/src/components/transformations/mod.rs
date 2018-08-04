@@ -6,8 +6,7 @@ use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
 use numbers::symbol::UniformSymbolCoder;
-use pixels::RgbChannelsTrait;
-use pixels::{ColorSpace, ColorValue, Pixel, Rgba, RgbaChannels};
+use pixels::{ColorValue, Pixel};
 
 mod bounds;
 mod channel_compact;
@@ -164,8 +163,8 @@ impl ::std::fmt::Display for Transformation {
 pub trait Transform: ::std::fmt::Debug + Send + Sync {
     fn snap<P: Pixel>(
         &self,
-        channel: P::Channels,
-        pixel: P,
+        _channel: P::Channels,
+        _pixel: P,
         value: ColorValue,
         range: ColorRange,
     ) -> ColorValue {
