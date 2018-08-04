@@ -40,6 +40,6 @@ fn decode_and_write(input: &str, output: &str) {
     let mut writer = encoder.write_header().unwrap();
 
     // Get the raw pixel array of the FLIF image
-    let data = image.get_raw_pixels();
-    writer.write_image_data(&data).unwrap(); // Save
+    let data = image.raw();
+    writer.write_image_data(data).unwrap(); // Save
 }

@@ -1,15 +1,15 @@
 use super::Transform;
-use colors::{Channel, ChannelSet, ColorSpace, Pixel};
 use components::transformations::ColorRange;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::RacRead;
+use pixels::{ColorSpace, Rgba, RgbaChannels};
 
 #[derive(Debug)]
 pub struct ChannelCompact {
-    ranges: ChannelSet<ColorRange>,
-    decompacted: ChannelSet<Vec<i16>>,
+    ranges: [ColorRange; 4],
+    decompacted: [Vec<i16>; 4],
     channels: ColorSpace,
 }
 impl ChannelCompact {
@@ -26,8 +26,9 @@ impl ChannelCompact {
             channels,
         };
 
-        for c in channels {
+        for &c in &RgbaChannels::ORDER[..channels as usize] {
             let t_range = transformation.range(c);
+            let c = c as usize;
             t.ranges[c].max = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?;
             let mut min = t_range.min;
             for i in 0..t.ranges[c].max + 1 {
@@ -47,17 +48,20 @@ impl ChannelCompact {
 }
 
 impl Transform for ChannelCompact {
-    fn undo(&self, pixel: &mut Pixel) {
+    fn undo(&self, mut pixel: Rgba) -> Rgba {
         for c in self.channels {
-            pixel[c] = self.decompacted[c][pixel[c] as usize];
+            let c = c as usize;
+            pixel.0[c] = self.decompacted[c][pixel.0[c] as usize];
         }
+
+        pixel
     }
 
-    fn range(&self, channel: Channel) -> ColorRange {
-        self.ranges[channel]
+    fn range(&self, channel: RgbaChannels) -> ColorRange {
+        self.ranges[channel as usize]
     }
 
-    fn crange(&self, channel: Channel, _values: &Pixel) -> ColorRange {
-        self.ranges[channel]
+    fn crange(&self, channel: RgbaChannels, _values: Rgba) -> ColorRange {
+        self.ranges[channel as usize]
     }
 }

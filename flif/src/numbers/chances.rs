@@ -1,24 +1,21 @@
-use fnv::FnvHashMap as HashMap;
-
-const EXP_TABLE: [u16; 10] = [1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400, 2300, 2048];
+const EXP_TABLE: [u16; 8] = [1000, 1200, 1500, 1750, 2000, 2300, 2800, 2400];
 
 const MANT_TABLE: [u16; 8] = [1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048];
 
+// This ChanceTable works only for 8 bit images
 #[derive(Debug, Clone)]
 pub struct ChanceTable<'a> {
     zero: u16,            // ChanceTableEntry::Zero
     sign: u16,            // ChanceTableEntry::Sign
-    exp_false: [u16; 10], // [Exp(0, false) ... Exp(9, false)]
-    exp_true: [u16; 10],  // [Exp(0, true) ... Exp(9, true)]
+    exp_false: [u16; 8],  // [Exp(0, false) ... Exp(7, false)]
+    exp_true: [u16; 8],   // [Exp(0, true) ... Exp(7, true)]
     mant: [u16; 8],       // [Mant(0) ... Mant(7)]
-
-    ext_table: HashMap<ChanceTableEntry, u16>,
     updates: &'a UpdateTable,
 }
 
 impl<'a> ChanceTable<'a> {
     pub fn new(updates: &UpdateTable) -> ChanceTable {
-        let ext_table = HashMap::default();
+        //let ext_table = HashMap::default();
 
         ChanceTable {
             zero: 1000,
@@ -26,7 +23,7 @@ impl<'a> ChanceTable<'a> {
             exp_false: EXP_TABLE,
             exp_true: EXP_TABLE,
             mant: MANT_TABLE,
-            ext_table,
+            //ext_table,
             updates,
         }
     }
@@ -36,10 +33,10 @@ impl<'a> ChanceTable<'a> {
         match entry {
             ChanceTableEntry::Zero => self.zero,
             ChanceTableEntry::Sign => self.sign,
-            ChanceTableEntry::Exp(v, false) if v < 10 => self.exp_false[usize::from(v)],
-            ChanceTableEntry::Exp(v, true) if v < 10 => self.exp_true[usize::from(v)],
+            ChanceTableEntry::Exp(v, false) if v < 8 => self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 8 => self.exp_true[usize::from(v)],
             ChanceTableEntry::Mant(v) if v < 8 => self.mant[usize::from(v)],
-            entry => self.ext_table.get(&entry).cloned().unwrap_or(2048),
+            _ => unreachable!(),
         }
     }
 
@@ -48,10 +45,10 @@ impl<'a> ChanceTable<'a> {
         let old_chance = match entry {
             ChanceTableEntry::Zero => &mut self.zero,
             ChanceTableEntry::Sign => &mut self.sign,
-            ChanceTableEntry::Exp(v, false) if v < 10 => &mut self.exp_false[usize::from(v)],
-            ChanceTableEntry::Exp(v, true) if v < 10 => &mut self.exp_true[usize::from(v)],
+            ChanceTableEntry::Exp(v, false) if v < 8 => &mut self.exp_false[usize::from(v)],
+            ChanceTableEntry::Exp(v, true) if v < 8 => &mut self.exp_true[usize::from(v)],
             ChanceTableEntry::Mant(v) if v < 8 => &mut self.mant[usize::from(v)],
-            entry => self.ext_table.entry(entry).or_insert(2048),
+            _ => unreachable!(),
         };
         *old_chance = self.updates.next_chance(bit, *old_chance);
     }

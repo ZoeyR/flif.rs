@@ -27,7 +27,7 @@ fn ycocg_stack_overflow() {
         pixels: 1 << 16,
         maniac_nodes: 512,
     };
-    let _ = Flif::decode_with_limits(bytes.as_ref(), limits).map(|img| img.get_raw_pixels());
+    let _ = Flif::decode_with_limits(bytes.as_ref(), limits).map(|img| img.into_raw());
 }
 
 /// Tests an issue found in [#34](https://github.com/dgriffen/flif.rs/issues/34)

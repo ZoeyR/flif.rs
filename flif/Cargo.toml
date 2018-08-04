@@ -10,7 +10,6 @@ documentation = "https://docs.rs/flif"
 [dependencies]
 inflate = "0.4"
 num-traits = "0.2"
-fnv = "1"
 
 [dev-dependencies]
 png = "0.12"
