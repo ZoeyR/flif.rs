@@ -8,7 +8,7 @@ use flif::Flif;
 #[test]
 fn invalid_bytes_per_channel() {
     let bytes = [0x46, 0x4c, 0x49, 0x46, 0x44, 0x27, 0x46, 0x46];
-    let decoder = Decoder::new(bytes.as_ref());
+    let decoder = Decoder::decode(bytes.as_ref());
     match decoder {
         Err(Error::InvalidHeader {
             desc: "bytes per channel was not a valid value",

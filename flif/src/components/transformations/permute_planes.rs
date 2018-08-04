@@ -1,6 +1,7 @@
 use super::Transform;
 use components::transformations::ColorRange;
-use pixels::{Rgba, RgbaChannels};
+use pixels::Pixel;
+use pixels::{ChannelsTrait, Rgba, RgbaChannels};
 
 #[derive(Debug)]
 pub struct PermutePlanes {
@@ -8,24 +9,26 @@ pub struct PermutePlanes {
 }
 
 impl PermutePlanes {
-    pub fn new<T: Transform>(transformation: T) -> PermutePlanes {
-        let max_iter = [
-            transformation.range(RgbaChannels::Red).max,
-            transformation.range(RgbaChannels::Green).max,
-            transformation.range(RgbaChannels::Blue).max,
-        ];
+    pub fn new<T: Transform<P>, P: Pixel>(transformation: T) -> PermutePlanes {
+        let old_max = P::get_chan_order()
+            .as_ref()
+            .iter()
+            .map(|c| transformation.range(*c).max)
+            .max()
+            .unwrap();
 
-        let old_max = max_iter.iter().max().unwrap();
         let new_max = (((old_max / 4) + 1) * 4) - 1;
         PermutePlanes { max: new_max }
     }
 }
 
-impl Transform for PermutePlanes {
-    fn undo(&self, pixel: Rgba) -> Rgba { pixel }
+impl<P: Pixel> Transform<P> for PermutePlanes {
+    fn undo(&self, pixel: P) -> P {
+        pixel
+    }
 
-    fn range(&self, channel: RgbaChannels) -> ColorRange {
-        let min = match channel {
+    fn range(&self, channel: P::Channels) -> ColorRange {
+        let min = match channel.as_channel() {
             RgbaChannels::Red => 0,
             _ => -self.max,
         };
@@ -33,7 +36,7 @@ impl Transform for PermutePlanes {
         ColorRange { min, max: self.max }
     }
 
-    fn crange(&self, _channel: RgbaChannels, _values: Rgba) -> ColorRange {
+    fn crange(&self, _channel: P::Channels, _values: P) -> ColorRange {
         unimplemented!()
     }
 }

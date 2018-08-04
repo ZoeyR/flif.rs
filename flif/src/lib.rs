@@ -44,18 +44,21 @@ pub struct Flif {
 
 impl Flif {
     pub fn decode<R: Read>(reader: R) -> Result<Self> {
-        Decoder::new(reader)?.decode_image()
+        Decoder::decode(reader)
     }
 
     pub fn decode_with_limits<R: Read>(reader: R, limits: Limits) -> Result<Self> {
-        Decoder::with_limits(reader, limits)?.decode_image()
+        Decoder::with_limits(reader, limits)
     }
 
     pub fn info(&self) -> &FlifInfo {
         &self.info
     }
 
-    #[deprecated(since="0.3.1", note="please use `raw` and `into_raw` instead")]
+    #[deprecated(
+        since = "0.3.1",
+        note = "please use `raw` and `into_raw` instead"
+    )]
     pub fn get_raw_pixels(&self) -> Vec<u8> {
         self.raw.to_vec()
     }
@@ -98,5 +101,4 @@ pub struct FlifInfo {
     pub header: Header,
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader,
-    transform: Box<Transform>,
 }

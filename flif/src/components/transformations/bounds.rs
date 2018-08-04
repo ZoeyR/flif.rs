@@ -1,29 +1,29 @@
 use super::Transform;
-use pixels::{Rgba, RgbaChannels, ColorSpace};
 use components::transformations::ColorRange;
 use error::*;
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::RacRead;
+use pixels::Pixel;
+use pixels::{ChannelsTrait, ColorSpace, Rgba, RgbaChannels};
 
 #[derive(Debug)]
-pub struct Bounds {
+pub struct Bounds<P: Pixel> {
     ranges: [ColorRange; 4],
-    previous_transformation: Box<Transform>,
+    previous_transformation: Box<Transform<P>>,
 }
 
-impl Bounds {
+impl<P: Pixel> Bounds<P> {
     pub fn new<R: RacRead>(
         rac: &mut R,
-        trans: Box<Transform>,
-        channels: ColorSpace,
+        trans: Box<Transform<P>>,
         update_table: &UpdateTable,
-    ) -> Result<Bounds> {
+    ) -> Result<Bounds<P>> {
         let mut context = ChanceTable::new(update_table);
         let mut ranges = [ColorRange::default(); 4];
-        for &c in &RgbaChannels::ORDER[..channels as usize] {
-            let t_range = trans.range(c);
-            let c = c as usize;
+        for c in P::get_chan_order().as_ref() {
+            let t_range = trans.range(*c);
+            let c = c.as_channel() as usize;
             ranges[c].min = rac.read_near_zero(t_range.min, t_range.max, &mut context)?;
             ranges[c].max = rac.read_near_zero(ranges[c].min, t_range.max, &mut context)?;
 
@@ -39,22 +39,23 @@ impl Bounds {
     }
 }
 
-impl Transform for Bounds {
-    fn undo(&self, pixel: Rgba) -> Rgba {
+impl<P: Pixel> Transform<P> for Bounds<P> {
+    fn undo(&self, pixel: P) -> P {
         self.previous_transformation.undo(pixel)
     }
 
-    fn range(&self, channel: RgbaChannels) -> ColorRange {
-        self.ranges[channel as usize]
+    fn range(&self, channel: P::Channels) -> ColorRange {
+        self.ranges[channel.as_channel() as usize]
     }
 
-    fn crange(&self, channel: RgbaChannels, values: Rgba) -> ColorRange {
-        if channel == RgbaChannels::Red || channel == RgbaChannels::Alpha {
-            return self.ranges[channel as usize];
+    fn crange(&self, channel: P::Channels, values: P) -> ColorRange {
+        let rgba_channel = channel.as_channel();
+        if rgba_channel == RgbaChannels::Red || rgba_channel == RgbaChannels::Alpha {
+            return self.ranges[rgba_channel as usize];
         }
 
         let mut range = self.previous_transformation.crange(channel, values);
-        let channel = channel as usize;
+        let channel = rgba_channel as usize;
         range.min = range.min.max(self.ranges[channel].min);
         range.max = range.max.min(self.ranges[channel].max);
 
