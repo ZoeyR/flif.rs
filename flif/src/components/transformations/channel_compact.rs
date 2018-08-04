@@ -10,6 +10,7 @@ use numbers::rac::RacRead;
 pub struct ChannelCompact {
     ranges: ChannelSet<ColorRange>,
     decompacted: ChannelSet<Vec<i16>>,
+    channels: ColorSpace,
 }
 impl ChannelCompact {
     pub fn new<R: RacRead, T: Transform>(
@@ -22,6 +23,7 @@ impl ChannelCompact {
         let mut t = ChannelCompact {
             ranges: Default::default(),
             decompacted: Default::default(),
+            channels,
         };
 
         for c in channels {
@@ -45,7 +47,11 @@ impl ChannelCompact {
 }
 
 impl Transform for ChannelCompact {
-    fn undo(&self, _pixel: &mut Pixel) {}
+    fn undo(&self, pixel: &mut Pixel) {
+        for c in self.channels {
+            pixel[c] = self.decompacted[c][pixel[c] as usize];
+        }
+    }
 
     fn range(&self, channel: Channel) -> ColorRange {
         self.ranges[channel]
