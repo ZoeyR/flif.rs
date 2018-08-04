@@ -44,11 +44,11 @@ pub struct Flif {
 
 impl Flif {
     pub fn decode<R: Read>(reader: R) -> Result<Self> {
-        Decoder::decode(reader)
+        Decoder::new(reader)?.decode_image()
     }
 
     pub fn decode_with_limits<R: Read>(reader: R, limits: Limits) -> Result<Self> {
-        Decoder::with_limits(reader, limits)
+        Decoder::with_limits(reader, limits)?.decode_image()
     }
 
     pub fn info(&self) -> &FlifInfo {

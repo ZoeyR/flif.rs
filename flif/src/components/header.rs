@@ -1,4 +1,8 @@
+use components::transformations::TransformationSet;
+use pixels::Greyscale;
 use pixels::Pixel;
+use pixels::Rgb;
+use pixels::Rgba;
 use std::io::Read;
 
 use super::transformations;
@@ -117,7 +121,7 @@ impl Header {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct SecondHeader {
     pub bits_per_pixel: Vec<u8>,
     pub alpha_zero: bool,
@@ -127,6 +131,8 @@ pub struct SecondHeader {
     pub cutoff: u8,
     pub alpha_divisor: u8,
     pub custom_bitchance: bool,
+    pub transformations: TransformationSet, // Placeholder until transformations are implemented
+    pub invis_pixel_predictor: Option<u8>,
 }
 
 impl SecondHeader {
@@ -174,6 +180,24 @@ impl SecondHeader {
         };
         let update_table = UpdateTable::new(alpha_divisor, cutoff);
 
+        let transformations = match main_header.channels {
+            ColorSpace::Monochrome => ::components::transformations::load_transformations::<
+                _,
+                Greyscale,
+            >(rac, &update_table)?,
+            ColorSpace::RGB => {
+                ::components::transformations::load_transformations::<_, Rgb>(rac, &update_table)?
+            }
+            ColorSpace::RGBA => {
+                ::components::transformations::load_transformations::<_, Rgba>(rac, &update_table)?
+            }
+        };
+        let invis_pixel_predictor = if alpha_zero && main_header.interlaced {
+            Some(rac.read_val(0, 2)?)
+        } else {
+            None
+        };
+
         Ok(SecondHeader {
             bits_per_pixel,
             alpha_zero,
@@ -183,6 +207,8 @@ impl SecondHeader {
             cutoff,
             alpha_divisor,
             custom_bitchance,
+            transformations,
+            invis_pixel_predictor,
         })
     }
 }

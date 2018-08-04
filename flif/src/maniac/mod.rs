@@ -26,7 +26,6 @@ impl<'a> ManiacTree<'a> {
         rac: &mut Rac<R>,
         channel: P::Channels,
         info: &FlifInfo,
-        transform: &Transform<P>,
         update_table: &'a UpdateTable,
         limits: &Limits,
     ) -> Result<ManiacTree<'a>> {
@@ -34,7 +33,7 @@ impl<'a> ManiacTree<'a> {
         let context_b = ChanceTable::new(update_table);
         let context_c = ChanceTable::new(update_table);
 
-        let prange = Self::build_prange_vec(channel, info, transform);
+        let prange = Self::build_prange_vec::<P>(channel, info);
         let nodes = Self::create_nodes(
             rac,
             &mut [context_a, context_b, context_c],
@@ -297,32 +296,29 @@ impl<'a> ManiacTree<'a> {
         }
     }
 
-    fn build_prange_vec<P: Pixel>(
-        chan: P::Channels,
-        info: &FlifInfo,
-        transform: &Transform<P>,
-    ) -> Vec<ColorRange> {
+    fn build_prange_vec<P: Pixel>(chan: P::Channels, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
+        let transform = &info.second_header.transformations;
 
         let channel = chan.as_channel();
         if channel == RgbaChannels::Green || channel == RgbaChannels::Blue {
-            prange.push(transform.range(P::Channels::red().unwrap()));
+            prange.push(transform.range::<P>(P::Channels::red().unwrap()));
         }
 
         if channel == RgbaChannels::Blue {
-            prange.push(transform.range(P::Channels::green().unwrap()));
+            prange.push(transform.range::<P>(P::Channels::green().unwrap()));
         }
 
         if channel != RgbaChannels::Alpha && info.header.channels == ColorSpace::RGBA {
-            prange.push(transform.range(P::Channels::alpha().unwrap()));
+            prange.push(transform.range::<P>(P::Channels::alpha().unwrap()));
         }
 
-        prange.push(transform.range(chan));
+        prange.push(transform.range::<P>(chan));
         prange.push(ColorRange { min: 0, max: 2 });
 
         let maxdiff = ColorRange {
-            min: transform.range(chan).min - transform.range(chan).max,
-            max: transform.range(chan).max - transform.range(chan).min,
+            min: transform.range::<P>(chan).min - transform.range::<P>(chan).max,
+            max: transform.range::<P>(chan).max - transform.range::<P>(chan).min,
         };
         prange.push(maxdiff);
         prange.push(maxdiff);

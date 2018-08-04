@@ -7,15 +7,15 @@ use numbers::rac::RacRead;
 use pixels::Pixel;
 use pixels::{ChannelsTrait, ColorSpace, Rgba, RgbaChannels};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChannelCompact {
     ranges: [ColorRange; 4],
     decompacted: [Vec<i16>; 4],
 }
 impl ChannelCompact {
-    pub fn new<R: RacRead, T: Transform<P>, P: Pixel>(
+    pub fn new<R: RacRead, T: Transform, P: Pixel>(
         rac: &mut R,
-        transformation: T,
+        transformation: &T,
         update_table: &UpdateTable,
     ) -> Result<ChannelCompact> {
         let mut context = ChanceTable::new(update_table);
@@ -25,7 +25,7 @@ impl ChannelCompact {
         };
 
         for c in P::get_chan_order().as_ref() {
-            let t_range = transformation.range(*c);
+            let t_range = transformation.range::<P>(*c);
             let c = c.as_channel() as usize;
             t.ranges[c].max = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?;
             let mut min = t_range.min;
@@ -45,8 +45,8 @@ impl ChannelCompact {
     }
 }
 
-impl<P: Pixel> Transform<P> for ChannelCompact {
-    fn undo(&self, mut pixel: P) -> P {
+impl Transform for ChannelCompact {
+    fn undo<P: Pixel>(&self, mut pixel: P) -> P {
         for c in P::get_chan_order().as_ref() {
             let previous = pixel.get_value(*c);
             pixel.set_value(
@@ -58,11 +58,16 @@ impl<P: Pixel> Transform<P> for ChannelCompact {
         pixel
     }
 
-    fn range(&self, channel: P::Channels) -> ColorRange {
+    fn range<P: Pixel>(&self, channel: P::Channels) -> ColorRange {
         self.ranges[channel.as_channel() as usize]
     }
 
-    fn crange(&self, channel: P::Channels, _values: P) -> ColorRange {
+    fn crange<P: Pixel>(
+        &self,
+        channel: P::Channels,
+        _values: P,
+        _previous: ColorRange,
+    ) -> ColorRange {
         self.ranges[channel.as_channel() as usize]
     }
 }

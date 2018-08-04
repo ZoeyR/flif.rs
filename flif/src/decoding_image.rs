@@ -16,7 +16,6 @@ pub(crate) struct DecodingImage<'a, P: Pixel, R: Read + 'a> {
     height: u32,
     width: u32,
     info: &'a FlifInfo,
-    transform: Box<Transform<P>>,
     rac: &'a mut Rac<R>,
     update_table: &'a UpdateTable,
     limits: &'a Limits,
@@ -51,7 +50,6 @@ pub(crate) struct CorePixelVicinity<P: Pixel> {
 impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
     pub fn new(
         info: &'a FlifInfo,
-        transform: Box<Transform<P>>,
         rac: &'a mut Rac<R>,
         limits: &'a Limits,
         update_table: &'a UpdateTable,
@@ -62,7 +60,6 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
             height: info.header.height,
             width: info.header.width,
             info,
-            transform,
             rac,
             update_table,
             limits,
@@ -141,11 +138,19 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
     ) -> Result<i16> {
-        let range = self.transform.crange(chan, vic.pixel);
+        let range = self
+            .info
+            .second_header
+            .transformations
+            .crange(chan, vic.pixel);
 
         Ok(if let Some(ref mut maniac) = maniac {
-            let guess = make_edge_guess(self.info, &self.transform, &vic);
-            let snap = self.transform.snap(chan, vic.pixel, guess);
+            let guess = make_edge_guess(self.info, &vic);
+            let snap = self
+                .info
+                .second_header
+                .transformations
+                .snap(chan, vic.pixel, guess);
             let pvec = edge_pvec(snap, &vic);
             maniac.process(self.rac, &pvec, snap, range.min, range.max)?
         } else {
@@ -159,11 +164,19 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
     ) -> Result<i16> {
-        let range = self.transform.crange(chan, vic.pixel);
+        let range = self
+            .info
+            .second_header
+            .transformations
+            .crange(chan, vic.pixel);
 
         Ok(if let Some(ref mut maniac) = maniac {
             let guess = make_core_guess(&vic);
-            let snap = self.transform.snap(chan, vic.pixel, guess);
+            let snap = self
+                .info
+                .second_header
+                .transformations
+                .snap(chan, vic.pixel, guess);
             let pvec = core_pvec(snap, &vic);
             maniac.process(self.rac, &pvec, snap, range.min, range.max)?
         } else {
@@ -203,15 +216,14 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         let channels = P::get_chan_order();
         let mut maniac: [Option<ManiacTree>; 4] = Default::default();
         for (i, chan) in channels.as_ref().iter().enumerate() {
-            let range = self.transform.range(*chan);
+            let range = self.info.second_header.transformations.range::<P>(*chan);
             if range.min == range.max {
                 maniac[i] = None;
             } else {
-                let tree = ManiacTree::new(
+                let tree = ManiacTree::new::<_, P>(
                     self.rac,
                     *chan,
                     self.info,
-                    &self.transform,
                     self.update_table,
                     self.limits,
                 )?;
@@ -227,7 +239,12 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         let n = P::size();
         let mut raw = Vec::with_capacity(n * self.data.len());
         for pixel in self.data.iter() {
-            let rgba = self.transform.undo(*pixel).to_rgba();
+            let rgba = self
+                .info
+                .second_header
+                .transformations
+                .undo(*pixel)
+                .to_rgba();
             raw.extend(rgba.0[..n].iter().map(|v| *v as u8));
         }
 
@@ -284,12 +301,12 @@ fn make_core_guess<P: Pixel>(pix_vic: &CorePixelVicinity<P>) -> i16 {
     median3(left + top - top_left, left, top)
 }
 
-fn make_edge_guess<P>(info: &FlifInfo, transform: &Transform<P>, vic: &EdgePixelVicinity<P>) -> i16
+fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
 where
     P: Pixel,
     P::Channels: ChannelsTrait,
 {
-    let transformation = &transform;
+    let transformation = &info.second_header.transformations;
 
     let left = if let Some(val) = vic.left {
         val
@@ -297,9 +314,9 @@ where
         val
     } else if info.second_header.alpha_zero && !vic.chan.is_alpha() && vic.pixel.is_alpha_zero() {
         let chan = vic.chan;
-        (transformation.range(chan).min + transformation.range(chan).max) / 2
+        (transformation.range::<P>(chan).min + transformation.range::<P>(chan).max) / 2
     } else {
-        transformation.range(vic.chan).min
+        transformation.range::<P>(vic.chan).min
     };
 
     let top = if let Some(val) = vic.top { val } else { left };
