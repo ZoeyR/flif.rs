@@ -36,11 +36,11 @@ impl Transform for PermutePlanes {
         ColorRange { min, max: self.max }
     }
 
-    fn crange<P: Pixel>(
+    fn crange<T: Transform, P: Pixel>(
         &self,
         _channel: P::Channels,
         _values: P,
-        _previous: ColorRange,
+        _previous: &[T],
     ) -> ColorRange {
         unimplemented!()
     }

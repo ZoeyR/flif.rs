@@ -11,15 +11,10 @@ fn invalid_tree() {
     let image = Decoder::new(file).unwrap();
     let info = image.info();
 
-    let expected = vec!["Original (Pseudo Transformation)", "Channel Compact"];
+    let expected = "Channel Compact";
     assert_eq!(
         expected,
-        info.second_header
-            .transformations
-            .set
-            .iter()
-            .map(|t| format!("{}", t))
-            .collect::<Vec<_>>()
+        format!("{}", info.second_header.transformations.last)
     );
 }
 
@@ -29,14 +24,9 @@ fn invalid_transform() {
     let image = Decoder::new(file).unwrap();
     let info = image.info();
 
-    let expected = vec!["Original (Pseudo Transformation)", "Channel Compact"];
+    let expected = "Channel Compact";
     assert_eq!(
         expected,
-        info.second_header
-            .transformations
-            .set
-            .iter()
-            .map(|t| format!("{}", t))
-            .collect::<Vec<_>>()
+        format!("{}", info.second_header.transformations.last)
     );
 }

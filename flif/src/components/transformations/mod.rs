@@ -136,11 +136,11 @@ impl Transform for Transformation {
     }
 
     #[inline(always)]
-    fn crange<P: Pixel>(
+    fn crange<T: Transform, P: Pixel>(
         &self,
         channel: P::Channels,
         values: P,
-        previous: ColorRange,
+        previous: &[T],
     ) -> ColorRange {
         match self {
             Transformation::Orig => Orig.crange(channel, values, previous),
@@ -185,8 +185,12 @@ pub trait Transform: ::std::fmt::Debug + Send + Sync {
 
     fn range<P: Pixel>(&self, channel: P::Channels) -> ColorRange;
 
-    fn crange<P: Pixel>(&self, channel: P::Channels, values: P, previous: ColorRange)
-        -> ColorRange;
+    fn crange<T: Transform, P: Pixel>(
+        &self,
+        channel: P::Channels,
+        values: P,
+        previous: &[T],
+    ) -> ColorRange;
 }
 
 #[derive(Debug)]
@@ -201,11 +205,11 @@ impl Transform for Orig {
         ColorRange { min: 0, max: 255 }
     }
 
-    fn crange<P: Pixel>(
+    fn crange<T: Transform, P: Pixel>(
         &self,
         _channel: P::Channels,
         _values: P,
-        _previous: ColorRange,
+        _previous: &[T],
     ) -> ColorRange {
         ColorRange { min: 0, max: 255 }
     }
@@ -214,25 +218,13 @@ impl Transform for Orig {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TransformationSet {
     pub set: Vec<Transformation>,
+    pub last: Transformation,
 }
 
 impl TransformationSet {
-    pub fn snap<P: Pixel>(
-        &self,
-        channel: P::Channels,
-        pixel: P,
-        mut value: ColorValue,
-    ) -> ColorValue {
-        let mut range = ColorRange { min: 0, max: 255 };
-        for t in self.set.iter() {
-            range = t.crange(channel, pixel, range);
-        }
-
-        for t in self.set.iter() {
-            value = t.snap(channel, pixel, value, range);
-        }
-
-        value
+    pub fn snap<P: Pixel>(&self, channel: P::Channels, pixel: P, value: ColorValue) -> ColorValue {
+        let range = self.last.crange(channel, pixel, &self.set);
+        self.last.snap(channel, pixel, value, range)
     }
 
     pub fn undo<P: Pixel>(&self, mut pixel: P) -> P {
@@ -240,23 +232,15 @@ impl TransformationSet {
             pixel = t.undo(pixel);
         }
 
-        pixel
+        self.last.undo(pixel)
     }
 
     pub fn range<P: Pixel>(&self, channel: P::Channels) -> ColorRange {
-        self.set
-            .last()
-            .unwrap_or(&Transformation::Orig)
-            .range::<P>(channel)
+        self.last.range::<P>(channel)
     }
 
     pub fn crange<P: Pixel>(&self, channel: P::Channels, values: P) -> ColorRange {
-        let mut range = ColorRange { min: 0, max: 255 };
-        for t in &self.set {
-            range = t.crange::<P>(channel, values, range);
-        }
-
-        range
+        self.last.crange(channel, values, &self.set)
     }
 }
 
@@ -274,8 +258,10 @@ pub fn load_transformations<R: RacRead, P: 'static + Pixel>(
         transformations.push(transformation);
     }
 
+    let last = transformations.pop().unwrap();
     Ok(TransformationSet {
         set: transformations,
+        last: last,
     })
 }
 

@@ -44,18 +44,19 @@ impl Transform for Bounds {
         self.ranges[channel.as_channel() as usize]
     }
 
-    fn crange<P: Pixel>(
+    fn crange<T: Transform, P: Pixel>(
         &self,
         channel: P::Channels,
-        _values: P,
-        previous: ColorRange,
+        values: P,
+        previous: &[T],
     ) -> ColorRange {
         let rgba_channel = channel.as_channel();
         if rgba_channel == RgbaChannels::Red || rgba_channel == RgbaChannels::Alpha {
             return self.ranges[rgba_channel as usize];
         }
 
-        let mut range = previous;
+        let (last, rest) = previous.split_last().unwrap();
+        let mut range = last.crange(channel, values, rest);
         let channel = rgba_channel as usize;
         range.min = range.min.max(self.ranges[channel].min);
         range.max = range.max.min(self.ranges[channel].max);

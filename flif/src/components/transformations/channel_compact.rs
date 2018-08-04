@@ -62,11 +62,11 @@ impl Transform for ChannelCompact {
         self.ranges[channel.as_channel() as usize]
     }
 
-    fn crange<P: Pixel>(
+    fn crange<T: Transform, P: Pixel>(
         &self,
         channel: P::Channels,
         _values: P,
-        _previous: ColorRange,
+        _previous: &[T],
     ) -> ColorRange {
         self.ranges[channel.as_channel() as usize]
     }
