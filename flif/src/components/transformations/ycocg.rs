@@ -12,7 +12,7 @@ pub struct YCoGg {
 
 impl YCoGg {
     pub fn new<T: Transform, P: Pixel>(transformation: &T) -> YCoGg {
-        let old_max = P::get_chan_order()
+        let old_max = P::get_channels()
             .as_ref()
             .iter()
             .map(|c| transformation.range::<P>(*c).max)
@@ -20,9 +20,8 @@ impl YCoGg {
             .unwrap();
 
         let new_max = (((old_max / 4) + 1) * 4) - 1;
-        let alpha_range = if P::is_rgba() {
-            let c = P::get_chan_order().as_ref()[0];
-            Some(transformation.range::<P>(c))
+        let alpha_range = if let Some(alpha) = P::Channels::alpha() {
+            Some(transformation.range::<P>(alpha))
         } else {
             None
         };

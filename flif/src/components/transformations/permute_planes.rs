@@ -10,7 +10,7 @@ pub struct PermutePlanes {
 
 impl PermutePlanes {
     pub fn new<T: Transform, P: Pixel>(transformation: &T) -> PermutePlanes {
-        let old_max = P::get_chan_order()
+        let old_max = P::get_channels()
             .as_ref()
             .iter()
             .map(|c| transformation.range::<P>(*c).max)

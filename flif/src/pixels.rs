@@ -44,6 +44,9 @@ pub trait Pixel: Default + Copy + Debug {
 
     fn to_rgba(&self) -> Rgba;
     fn get_chan_order() -> Self::ChanOrder;
+
+    fn get_channels() -> Self::ChanOrder;
+
     fn size() -> usize;
 }
 
@@ -116,6 +119,10 @@ impl Pixel for Greyscale {
     }
     #[inline(always)]
     fn get_chan_order() -> Self::ChanOrder {
+        [GreyChannels::Grey]
+    }
+    #[inline(always)]
+    fn get_channels() -> Self::ChanOrder {
         [GreyChannels::Grey]
     }
     #[inline(always)]
@@ -221,6 +228,10 @@ impl Pixel for Rgb {
     }
     #[inline(always)]
     fn get_chan_order() -> Self::ChanOrder {
+        [RgbChannels::Red, RgbChannels::Green, RgbChannels::Blue]
+    }
+    #[inline(always)]
+    fn get_channels() -> Self::ChanOrder {
         [RgbChannels::Red, RgbChannels::Green, RgbChannels::Blue]
     }
     #[inline(always)]
@@ -342,6 +353,15 @@ impl Pixel for Rgba {
             RgbaChannels::Red,
             RgbaChannels::Green,
             RgbaChannels::Blue,
+        ]
+    }
+    #[inline(always)]
+    fn get_channels() -> Self::ChanOrder {
+        [
+            RgbaChannels::Red,
+            RgbaChannels::Green,
+            RgbaChannels::Blue,
+            RgbaChannels::Alpha,
         ]
     }
     #[inline(always)]

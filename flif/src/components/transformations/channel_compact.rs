@@ -24,7 +24,7 @@ impl ChannelCompact {
             decompacted: Default::default(),
         };
 
-        for c in P::get_chan_order().as_ref() {
+        for c in P::get_channels().as_ref() {
             let t_range = transformation.range::<P>(*c);
             let c = c.as_channel() as usize;
             t.ranges[c].max = rac.read_near_zero(0, t_range.max - t_range.min, &mut context)?;
@@ -47,7 +47,7 @@ impl ChannelCompact {
 
 impl Transform for ChannelCompact {
     fn undo<P: Pixel>(&self, mut pixel: P) -> P {
-        for c in P::get_chan_order().as_ref() {
+        for c in P::get_channels().as_ref() {
             let previous = pixel.get_value(*c);
             pixel.set_value(
                 self.decompacted[c.as_channel() as usize][previous as usize],

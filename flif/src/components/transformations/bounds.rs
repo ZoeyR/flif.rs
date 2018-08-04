@@ -20,7 +20,7 @@ impl Bounds {
     ) -> Result<Bounds> {
         let mut context = ChanceTable::new(update_table);
         let mut ranges = [ColorRange::default(); 4];
-        for c in P::get_chan_order().as_ref() {
+        for c in P::get_channels().as_ref() {
             let t_range = trans.range::<P>(*c);
             let c = c.as_channel() as usize;
             ranges[c].min = rac.read_near_zero(t_range.min, t_range.max, &mut context)?;
