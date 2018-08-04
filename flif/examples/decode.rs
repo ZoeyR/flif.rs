@@ -9,8 +9,14 @@ use flif::Flif;
 use png::HasParameters;
 
 fn main() {
-    decode_and_write("resources/flif_logo.flif", "examples/flif_logo_out.png");
-    decode_and_write("resources/sea_snail.flif", "examples/sea_snail_out.png");
+    // decode_and_write(
+    //     "resources/flif_logo.flif",
+    //     "flif/examples/flif_logo_out.png",
+    // );
+    decode_and_write(
+        "resources/sea_snail_cutout.flif",
+        "flif/examples/sea_snail.png",
+    );
 }
 
 fn decode_and_write(input: &str, output: &str) {

@@ -1,14 +1,15 @@
 #![allow(unused)]
 
+use pixels::Pixel;
 use std::io::Read;
 
 use components::transformations::ColorRange;
 use components::transformations::Transform;
 use error::*;
-use pixels::{RgbaChannels, ColorSpace, ColorValue};
 use numbers::chances::{ChanceTable, UpdateTable};
 use numbers::near_zero::NearZeroCoder;
 use numbers::rac::{Rac, RacRead};
+use pixels::{ChannelsTrait, ColorSpace, ColorValue, RgbaChannels};
 use DecodingImage;
 use FlifInfo;
 use Limits;
@@ -21,9 +22,9 @@ pub struct ManiacTree<'a> {
 }
 
 impl<'a> ManiacTree<'a> {
-    pub fn new<R: Read>(
+    pub fn new<R: Read, P: Pixel>(
         rac: &mut Rac<R>,
-        channel: RgbaChannels,
+        channel: P::Channels,
         info: &FlifInfo,
         update_table: &'a UpdateTable,
         limits: &Limits,
@@ -32,7 +33,7 @@ impl<'a> ManiacTree<'a> {
         let context_b = ChanceTable::new(update_table);
         let context_c = ChanceTable::new(update_table);
 
-        let prange = Self::build_prange_vec(channel, info);
+        let prange = Self::build_prange_vec::<P>(channel, info);
         let nodes = Self::create_nodes(
             rac,
             &mut [context_a, context_b, context_c],
@@ -295,29 +296,29 @@ impl<'a> ManiacTree<'a> {
         }
     }
 
-    fn build_prange_vec(channel: RgbaChannels, info: &FlifInfo) -> Vec<ColorRange> {
+    fn build_prange_vec<P: Pixel>(chan: P::Channels, info: &FlifInfo) -> Vec<ColorRange> {
         let mut prange = Vec::new();
+        let transform = &info.second_header.transformations;
 
-        let transform = &info.transform;
-
+        let channel = chan.as_channel();
         if channel == RgbaChannels::Green || channel == RgbaChannels::Blue {
-            prange.push(transform.range(RgbaChannels::Red));
+            prange.push(transform.range::<P>(P::Channels::red().unwrap()));
         }
 
         if channel == RgbaChannels::Blue {
-            prange.push(transform.range(RgbaChannels::Green));
+            prange.push(transform.range::<P>(P::Channels::green().unwrap()));
         }
 
         if channel != RgbaChannels::Alpha && info.header.channels == ColorSpace::RGBA {
-            prange.push(transform.range(RgbaChannels::Alpha));
+            prange.push(transform.range::<P>(P::Channels::alpha().unwrap()));
         }
 
-        prange.push(transform.range(channel));
+        prange.push(transform.range::<P>(chan));
         prange.push(ColorRange { min: 0, max: 2 });
 
         let maxdiff = ColorRange {
-            min: transform.range(channel).min - transform.range(channel).max,
-            max: transform.range(channel).max - transform.range(channel).min,
+            min: transform.range::<P>(chan).min - transform.range::<P>(chan).max,
+            max: transform.range::<P>(chan).max - transform.range::<P>(chan).min,
         };
         prange.push(maxdiff);
         prange.push(maxdiff);

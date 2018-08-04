@@ -3,11 +3,11 @@ use std::io::Read;
 use super::{Flif, FlifInfo, Metadata};
 use components::header::{BytesPerChannel, Header, SecondHeader};
 use decoding_image::DecodingImage;
-use pixels::{Greyscale, Rgb, Rgba};
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::Rac;
 use pixels::ColorSpace;
+use pixels::{Greyscale, Rgb, Rgba};
 use Limits;
 
 pub struct Decoder<R: Read> {
@@ -63,21 +63,24 @@ impl<R: Read> Decoder<R> {
         );
 
         let raw = match self.info.header.channels {
-            ColorSpace::Monochrome => {
-                DecodingImage::<Greyscale, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
-            ColorSpace::RGB => {
-                DecodingImage::<Rgb, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
-            ColorSpace::RGBA => {
-                DecodingImage::<Rgba, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
+            ColorSpace::Monochrome => DecodingImage::<Greyscale, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?.process()?,
+            ColorSpace::RGB => DecodingImage::<Rgb, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?.process()?,
+            ColorSpace::RGBA => DecodingImage::<Rgba, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?.process()?,
         };
 
         Ok(Flif {
@@ -102,14 +105,13 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
     // the Read object directly.
     let mut rac: Rac<_> = Rac::from_reader(reader)?;
 
-    let (second_header, transform) = SecondHeader::from_rac(&main_header, &mut rac)?;
+    let second_header = SecondHeader::from_rac(&main_header, &mut rac)?;
 
     Ok((
         FlifInfo {
             header: main_header,
             metadata,
             second_header,
-            transform,
         },
         rac,
     ))

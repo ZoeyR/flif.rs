@@ -3,7 +3,6 @@ extern crate flif;
 use std::fs::File;
 use std::io::BufReader;
 
-use flif::components::Transformation;
 use flif::Decoder;
 
 #[test]
@@ -12,8 +11,11 @@ fn invalid_tree() {
     let image = Decoder::new(file).unwrap();
     let info = image.info();
 
-    let expected = vec![Transformation::ChannelCompact];
-    assert_eq!(expected, info.second_header.transformations);
+    let expected = "Channel Compact";
+    assert_eq!(
+        expected,
+        format!("{}", info.second_header.transformations.last)
+    );
 }
 
 #[test]
@@ -22,6 +24,9 @@ fn invalid_transform() {
     let image = Decoder::new(file).unwrap();
     let info = image.info();
 
-    let expected = vec![Transformation::ChannelCompact];
-    assert_eq!(expected, info.second_header.transformations);
+    let expected = "Channel Compact";
+    assert_eq!(
+        expected,
+        format!("{}", info.second_header.transformations.last)
+    );
 }

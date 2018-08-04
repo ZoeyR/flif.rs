@@ -91,11 +91,11 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
             let mut writer = encoder.write_header().unwrap();
 
             // Get the raw pixel array of the FLIF image
-            let data = image.get_raw_pixels();
+            let data = image.raw();
             // Save as PNG
             writer.write_image_data(&data).unwrap();
         } else {
-            std::io::stdout().write_all(&image.get_raw_pixels())?;
+            std::io::stdout().write_all(&image.raw())?;
         }
     }
     Ok(())
@@ -111,14 +111,17 @@ fn id_file(info: &FlifInfo) {
     println!("channels: {:?}", info.header.channels);
     println!("dimensions: {} x {}", info.header.width, info.header.height);
 
-    let len = info.second_header.transformations.len();
+    let len = info.second_header.transformations.set.len();
     if len != 0 {
         println!("transformations:");
 
-        for transformation in info.second_header.transformations[..len - 1].iter() {
+        for transformation in info.second_header.transformations.set[..len - 1].iter() {
             println!("├── {}", transformation);
         }
-        println!("└── {}", info.second_header.transformations[len - 1]);
+        println!(
+            "└── {}",
+            info.second_header.transformations.set[len - 1]
+        );
     }
 }
 

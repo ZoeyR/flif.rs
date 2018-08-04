@@ -22,7 +22,6 @@ use std::io::Read;
 
 use components::header::{Header, SecondHeader};
 use components::metadata::Metadata;
-use components::transformations::Transform;
 use decoding_image::DecodingImage;
 
 pub use decoder::Decoder;
@@ -55,7 +54,10 @@ impl Flif {
         &self.info
     }
 
-    #[deprecated(since="0.3.1", note="please use `raw` and `into_raw` instead")]
+    #[deprecated(
+        since = "0.3.1",
+        note = "please use `raw` and `into_raw` instead"
+    )]
     pub fn get_raw_pixels(&self) -> Vec<u8> {
         self.raw.to_vec()
     }
@@ -98,5 +100,4 @@ pub struct FlifInfo {
     pub header: Header,
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader,
-    transform: Box<Transform>,
 }
