@@ -78,6 +78,7 @@ impl Transformation {
 }
 
 impl Transform for Transformation {
+    #[inline(always)]
     fn snap<P: Pixel>(
         &self,
         channel: P::Channels,
@@ -100,6 +101,7 @@ impl Transform for Transformation {
         }
     }
 
+    #[inline(always)]
     fn undo<P: Pixel>(&self, pixel: P) -> P {
         match self {
             Transformation::Orig => Orig.undo(pixel),
@@ -116,6 +118,7 @@ impl Transform for Transformation {
         }
     }
 
+    #[inline(always)]
     fn range<P: Pixel>(&self, channel: P::Channels) -> ColorRange {
         match self {
             Transformation::Orig => Orig.range::<P>(channel),
@@ -132,6 +135,7 @@ impl Transform for Transformation {
         }
     }
 
+    #[inline(always)]
     fn crange<P: Pixel>(
         &self,
         channel: P::Channels,
@@ -222,6 +226,9 @@ impl TransformationSet {
         let mut range = ColorRange { min: 0, max: 255 };
         for t in self.set.iter() {
             range = t.crange(channel, pixel, range);
+        }
+
+        for t in self.set.iter() {
             value = t.snap(channel, pixel, value, range);
         }
 

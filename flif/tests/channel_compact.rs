@@ -3,7 +3,6 @@ extern crate flif;
 use std::fs::File;
 use std::io::BufReader;
 
-use flif::components::Transformation;
 use flif::Decoder;
 
 #[test]

@@ -82,7 +82,7 @@ fn road2() {
 
     let file = BufReader::new(File::open("../resources/road2.flif").unwrap());
     let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
+    let data = image.raw();
 
     assert_eq!(buf[..4], data[..4]);
 }

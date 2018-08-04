@@ -1,12 +1,9 @@
 use components::transformations::TransformationSet;
 use pixels::Greyscale;
-use pixels::Pixel;
 use pixels::Rgb;
 use pixels::Rgba;
 use std::io::Read;
 
-use super::transformations;
-use super::transformations::{Transform, Transformation};
 use error::*;
 use numbers::chances::UpdateTable;
 use numbers::rac::RacRead;
