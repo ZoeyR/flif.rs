@@ -18,12 +18,6 @@ pub trait ChannelsTrait: Sized + Debug + Copy {
     fn is_alpha(&self) -> bool;
 }
 
-pub trait RgbChannelsTrait: ChannelsTrait {
-    fn red() -> Self;
-    fn green() -> Self;
-    fn blue() -> Self;
-}
-
 pub trait Pixel: Default + Copy + Debug {
     type Channels: ChannelsTrait + Copy + Send + Sync;
     type ChanOrder: AsRef<[Self::Channels]>;
@@ -59,15 +53,19 @@ pub enum GreyChannels {
 }
 
 impl ChannelsTrait for GreyChannels {
+    #[inline(always)]
     fn red() -> Option<Self> {
         Some(GreyChannels::Grey)
     }
+    #[inline(always)]
     fn green() -> Option<Self> {
         None
     }
+    #[inline(always)]
     fn blue() -> Option<Self> {
         None
     }
+    #[inline(always)]
     fn alpha() -> Option<Self> {
         None
     }
@@ -142,15 +140,19 @@ pub enum RgbChannels {
 }
 
 impl ChannelsTrait for RgbChannels {
+    #[inline(always)]
     fn red() -> Option<Self> {
         Some(RgbChannels::Red)
     }
+    #[inline(always)]
     fn green() -> Option<Self> {
         Some(RgbChannels::Green)
     }
+    #[inline(always)]
     fn blue() -> Option<Self> {
         Some(RgbChannels::Blue)
     }
+    #[inline(always)]
     fn alpha() -> Option<Self> {
         None
     }
@@ -165,20 +167,6 @@ impl ChannelsTrait for RgbChannels {
     #[inline(always)]
     fn is_alpha(&self) -> bool {
         false
-    }
-}
-
-impl RgbChannelsTrait for RgbChannels {
-    fn red() -> Self {
-        RgbChannels::Red
-    }
-
-    fn green() -> Self {
-        RgbChannels::Green
-    }
-
-    fn blue() -> Self {
-        RgbChannels::Blue
     }
 }
 
@@ -262,15 +250,19 @@ impl RgbaChannels {
 }
 
 impl ChannelsTrait for RgbaChannels {
+    #[inline(always)]
     fn red() -> Option<Self> {
         Some(RgbaChannels::Red)
     }
+    #[inline(always)]
     fn green() -> Option<Self> {
         Some(RgbaChannels::Green)
     }
+    #[inline(always)]
     fn blue() -> Option<Self> {
         Some(RgbaChannels::Blue)
     }
+    #[inline(always)]
     fn alpha() -> Option<Self> {
         Some(RgbaChannels::Alpha)
     }
@@ -281,20 +273,6 @@ impl ChannelsTrait for RgbaChannels {
     #[inline(always)]
     fn is_alpha(&self) -> bool {
         *self == RgbaChannels::Alpha
-    }
-}
-
-impl RgbChannelsTrait for RgbaChannels {
-    fn red() -> Self {
-        RgbaChannels::Red
-    }
-
-    fn green() -> Self {
-        RgbaChannels::Green
-    }
-
-    fn blue() -> Self {
-        RgbaChannels::Blue
     }
 }
 

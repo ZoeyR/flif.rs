@@ -72,7 +72,6 @@ impl Transform for YCoGg {
             RgbaChannels::Red => self.range::<P>(channel),
             RgbaChannels::Green => {
                 let r = values.get_value(P::Channels::red().unwrap());
-                let g = values.get_value(P::Channels::green().unwrap());
                 let min = if r < origmax4 - 1 {
                     -3 - (4 * r)
                 } else if r > (3 * origmax4) - 1 {
