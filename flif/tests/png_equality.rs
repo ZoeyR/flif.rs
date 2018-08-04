@@ -69,3 +69,20 @@ fn road() {
 
     assert_eq!(buf, &image.raw()[..]);
 }
+
+#[test]
+fn road2() {
+    let decoder = png::Decoder::new(File::open("../resources/road2.png").unwrap());
+    let (info, mut reader) = decoder.read_info().unwrap();
+    // Allocate the output buffer.
+    let mut buf = vec![0; info.buffer_size()];
+    // Read the next frame. Currently this function should only called once.
+    // The default options
+    reader.next_frame(&mut buf).unwrap();
+
+    let file = BufReader::new(File::open("../resources/road2.flif").unwrap());
+    let image = Flif::decode(file).unwrap();
+    let data = image.get_raw_pixels();
+
+    assert_eq!(buf[..4], data[..4]);
+}
