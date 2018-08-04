@@ -9,8 +9,8 @@ use test::Bencher;
 fn bench_cutout_full_decode(b: &mut Bencher) {
     let data = include_bytes!("../../resources/sea_snail_cutout.flif");
     b.iter(|| {
-        let raw = Flif::decode(data.as_ref()).unwrap().get_raw_pixels();
-        test::black_box(raw);
+        let img = Flif::decode(data.as_ref()).unwrap();
+        test::black_box(img.raw());
     });
 }
 
@@ -18,7 +18,7 @@ fn bench_cutout_full_decode(b: &mut Bencher) {
 fn bench_grey_decode(b: &mut Bencher) {
     let data = include_bytes!("../../resources/road.flif");
     b.iter(|| {
-        let raw = Flif::decode(data.as_ref()).unwrap().get_raw_pixels();
-        test::black_box(raw);
+        let img = Flif::decode(data.as_ref()).unwrap();
+        test::black_box(img.raw());
     });
 }

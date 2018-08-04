@@ -18,9 +18,8 @@ fn sea_snail() {
 
     let file = BufReader::new(File::open("../resources/sea_snail.flif").unwrap());
     let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
 
-    assert_eq!(buf, data);
+    assert_eq!(buf, &image.raw()[..]);
 }
 
 #[test]
@@ -35,9 +34,8 @@ fn sea_snail_cutout() {
 
     let file = BufReader::new(File::open("../resources/sea_snail_cutout.flif").unwrap());
     let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
 
-    assert_eq!(buf, data);
+    assert_eq!(buf, &image.raw()[..]);
 }
 
 #[test]
@@ -52,9 +50,8 @@ fn flif_logo() {
 
     let file = BufReader::new(File::open("../resources/flif_logo.flif").unwrap());
     let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
 
-    assert_eq!(buf, data);
+    assert_eq!(buf, &image.raw()[..]);
 }
 
 #[test]
@@ -69,7 +66,6 @@ fn road() {
 
     let file = BufReader::new(File::open("../resources/road.flif").unwrap());
     let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
 
-    assert_eq!(buf, data);
+    assert_eq!(buf, &image.raw()[..]);
 }
