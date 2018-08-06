@@ -12,5 +12,5 @@ fuzz_target!(|data: &[u8]| {
         maniac_nodes: 512,
     };
     let _ = flif::Flif::decode_with_limits(Cursor::new(data), limits)
-        .map(|img| img.get_raw_pixels());
+        .map(|img| img.into_raw());
 });

@@ -1,14 +1,13 @@
 use std::io::Read;
 
 use super::{Flif, FlifInfo, Metadata};
-use colors::{Channel, ChannelSet};
 use components::header::{BytesPerChannel, Header, SecondHeader};
-use decoding_image::{CorePixelVicinity, DecodingImage, EdgePixelVicinity};
+use decoding_image::DecodingImage;
+use pixels::{Greyscale, Rgb, Rgba};
 use error::*;
-use maniac::{core_pvec, edge_pvec, ManiacTree};
 use numbers::chances::UpdateTable;
-use numbers::median3;
 use numbers::rac::Rac;
+use pixels::ColorSpace;
 use Limits;
 
 pub struct Decoder<R: Read> {
@@ -62,27 +61,28 @@ impl<R: Read> Decoder<R> {
             self.info.second_header.alpha_divisor,
             self.info.second_header.cutoff,
         );
-        let mut maniac_vec: ChannelSet<Option<ManiacTree>> = Default::default();
-        for channel in self.info.header.channels {
-            let range = self.info.transform.range(channel);
-            if range.min == range.max {
-                maniac_vec[channel] = None;
-            } else {
-                let tree = ManiacTree::new(
-                    &mut self.rac,
-                    channel,
-                    &self.info,
-                    &update_table,
-                    &self.limits,
-                )?;
-                maniac_vec[channel] = Some(tree);
-            }
-        }
 
-        let image_data = non_interlaced_pixels(&mut self.rac, &self.info, &mut maniac_vec)?;
+        let raw = match self.info.header.channels {
+            ColorSpace::Monochrome => {
+                DecodingImage::<Greyscale, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+            ColorSpace::RGB => {
+                DecodingImage::<Rgb, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+            ColorSpace::RGBA => {
+                DecodingImage::<Rgba, _>::new(
+                    &self.info, &mut self.rac, &self.limits, &update_table
+                )?.process()?
+            },
+        };
+
         Ok(Flif {
             info: self.info,
-            image_data,
+            raw,
         })
     }
 }
@@ -113,94 +113,4 @@ fn identify_internal<R: Read>(mut reader: R, limits: Limits) -> Result<(FlifInfo
         },
         rac,
     ))
-}
-
-const CHANNEL_ORDER: [Channel; 4] = [Channel::Alpha, Channel::Red, Channel::Green, Channel::Blue];
-
-fn non_interlaced_pixels<R: Read>(
-    rac: &mut Rac<R>,
-    info: &FlifInfo,
-    maniac: &mut ChannelSet<Option<ManiacTree>>,
-) -> Result<DecodingImage> {
-    let mut image = DecodingImage::new(info);
-    for c in CHANNEL_ORDER
-        .iter()
-        .filter(|c| info.header.channels.contains_channel(**c))
-        .cloned()
-    {
-        image.channel_pass(
-            c,
-            maniac,
-            rac,
-            |pix_vic, maniac, rac| {
-                let guess = make_edge_guess(info, &pix_vic);
-                let range = info.transform.crange(c, &pix_vic.pixel);
-                let snap = info.transform.snap(c, &pix_vic.pixel, guess);
-                let pvec = edge_pvec(snap, &pix_vic);
-
-                if let Some(ref mut maniac) = maniac[c] {
-                    maniac.process(rac, &pvec, snap, range.min, range.max)
-                } else {
-                    Ok(range.min)
-                }
-            },
-            |pix_vic, maniac, rac| {
-                let guess = make_core_guess(&pix_vic);
-                let range = info.transform.crange(c, &pix_vic.pixel);
-                let snap = info.transform.snap(c, &pix_vic.pixel, guess);
-                let pvec = core_pvec(snap, &pix_vic);
-
-                if let Some(ref mut maniac) = maniac[c] {
-                    maniac.process(rac, &pvec, snap, range.min, range.max)
-                } else {
-                    Ok(range.min)
-                }
-            },
-        )?;
-    }
-
-    image.undo_transform(&info.transform);
-
-    Ok(image)
-}
-
-fn make_core_guess(pix_vic: &CorePixelVicinity) -> i16 {
-    let left = pix_vic.left;
-    let top = pix_vic.top;
-    let top_left = pix_vic.top_left;
-
-    median3(left + top - top_left, left, top)
-}
-
-fn make_edge_guess(info: &FlifInfo, pix_vic: &EdgePixelVicinity) -> i16 {
-    let transformation = &info.transform;
-    let chan = pix_vic.chan;
-    let left = if let Some(val) = pix_vic.left {
-        val
-    } else if let Some(val) = pix_vic.top {
-        val
-    } else if info.second_header.alpha_zero
-        && chan != Channel::Alpha
-        && pix_vic.pixel[Channel::Alpha] == 0
-    {
-        (transformation.range(chan).min + transformation.range(chan).max) / 2
-    } else {
-        transformation.range(chan).min
-    };
-
-    let top = if let Some(val) = pix_vic.top {
-        val
-    } else {
-        left
-    };
-
-    let top_left = if let Some(val) = pix_vic.top_left {
-        val
-    } else if let Some(val) = pix_vic.top {
-        val
-    } else {
-        left
-    };
-
-    median3(left + top - top_left, left, top)
 }
