@@ -37,6 +37,7 @@ fn decode_gray(data: &[u8]) -> Box<[u8]> {
                 as *mut libc::c_void;
             flif::flif_image_read_row_GRAY8(image, i, ptr, w as usize);
         }
+        flif::flif_destroy_decoder(decoder);
         buf.into_boxed_slice()
     }
 }
@@ -73,6 +74,7 @@ fn decode_rgba(data: &[u8]) -> Box<[u8]> {
                 as *mut libc::c_void;
             flif::flif_image_read_row_RGBA8(image, i, ptr, 4*w as usize);
         }
+        flif::flif_destroy_decoder(decoder);
         buf.into_boxed_slice()
     }
 }
