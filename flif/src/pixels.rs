@@ -32,6 +32,8 @@ pub trait Pixel: Default + Copy {
 
     fn to_rgba(&self) -> Rgba;
     fn get_chan_order() -> Self::ChanOrder;
+    #[inline(always)]
+    fn maniac_init_order() -> Self::ChanOrder { Self::get_chan_order() }
     fn size() -> usize;
 }
 
@@ -216,6 +218,15 @@ impl Pixel for Rgba {
             RgbaChannels::Red,
             RgbaChannels::Green,
             RgbaChannels::Blue,
+        ]
+    }
+    #[inline(always)]
+    fn maniac_init_order() -> Self::ChanOrder {
+        [
+            RgbaChannels::Red,
+            RgbaChannels::Green,
+            RgbaChannels::Blue,
+            RgbaChannels::Alpha,
         ]
     }
     #[inline(always)]
