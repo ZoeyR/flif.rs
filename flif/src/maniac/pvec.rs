@@ -68,8 +68,6 @@ pub(crate) fn edge_pvec<P: Pixel>(pred: ColorValue, pvic: &EdgePixelVicinity<P>)
 
     pvec[i] = pred;
 
-    let top_left = pvic.top_left.unwrap_or(0);
-
     // median index
     pvec[i + 1] = if let (Some(left), Some(top), Some(top_left)) =
         (pvic.left, pvic.top, pvic.top_left)
