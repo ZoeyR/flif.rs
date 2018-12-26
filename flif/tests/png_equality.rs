@@ -30,5 +30,6 @@ macro_rules! test_equality {
 test_equality!(sea_snail);
 test_equality!(sea_snail_cutout);
 test_equality!(rust_logo);
+test_equality!(rgba_edge);
 test_equality!(road);
 test_equality!(road2);
