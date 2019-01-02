@@ -12,4 +12,4 @@ inflate = "0.4"
 num-traits = "0.2"
 
 [dev-dependencies]
-png = "0.12"
+png = "0.13"
