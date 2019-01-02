@@ -1,8 +1,6 @@
 extern crate flif;
 extern crate png;
 extern crate structopt;
-#[macro_use]
-extern crate structopt_derive;
 
 use std::fs::File;
 use std::io::Write;
