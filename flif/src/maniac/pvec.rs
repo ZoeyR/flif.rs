@@ -75,7 +75,7 @@ pub(crate) fn edge_pvec<P: Pixel>(pred: ColorValue, pvic: &EdgePixelVicinity<P>)
         if pred == left + top - top_left { }
         else if pred == left { pvec[i + 1] = 1 }
         else if pred == top { pvec[i + 1] = 2 }
-    };
+    }
 
     if let (Some(top_left), Some(left)) = (pvic.top_left, pvic.left) {
         pvec[i + 2] = left - top_left;
