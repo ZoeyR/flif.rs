@@ -22,3 +22,12 @@ fn bench_grey_decode(b: &mut Bencher) {
         test::black_box(img.raw());
     });
 }
+
+#[bench]
+fn bench_rgba_decode(b: &mut Bencher) {
+    let data = include_bytes!("../../resources/rust_logo.flif");
+    b.iter(|| {
+        let img = Flif::decode(data.as_ref()).unwrap();
+        test::black_box(img.raw());
+    });
+}

@@ -144,12 +144,18 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         let c = chan.as_channel();
         let pix = vic.pixel.to_rgba();
         let range = self.info.transform.crange(c, pix);
+        let skip = self.info.second_header.alpha_zero &&
+                !chan.is_alpha() && vic.pixel.is_alpha_zero();
 
         Ok(if let Some(ref mut maniac) = maniac {
             let guess = make_edge_guess(self.info, &vic);
-            let snap = self.info.transform.snap(c, pix, guess);
-            let pvec = edge_pvec(snap, &vic);
-            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+            if skip {
+                guess
+            } else {
+                let snap = self.info.transform.snap(c, pix, guess);
+                let pvec = edge_pvec(snap, &vic);
+                maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+            }
         } else {
             range.min
         })
@@ -165,12 +171,18 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         let c = chan.as_channel();
         let pix = vic.pixel.to_rgba();
         let range = self.info.transform.crange(c, pix);
+        let skip = self.info.second_header.alpha_zero &&
+                !chan.is_alpha() && vic.pixel.is_alpha_zero();
 
         Ok(if let Some(ref mut maniac) = maniac {
             let guess = make_core_guess(&vic);
-            let snap = self.info.transform.snap(c, pix, guess);
-            let pvec = core_pvec(snap, &vic);
-            maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+            if skip {
+                guess
+            } else {
+                let snap = self.info.transform.snap(c, pix, guess);
+                let pvec = core_pvec(snap, &vic);
+                maniac.process(self.rac, &pvec, snap, range.min, range.max)?
+            }
         } else {
             range.min
         })
@@ -207,13 +219,13 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
     }
 
     pub fn process(&mut self) -> Result<Box<[u8]>> {
-        let channels = P::get_chan_order();
+        let channels = P::maniac_init_order();
         let mut maniac: [Option<ManiacTree>; 4] = Default::default();
-        for (i, chan) in channels.as_ref().iter().enumerate() {
+        for chan in channels.as_ref() {
             let channel = chan.as_channel();
             let range = self.info.transform.range(channel);
             if range.min == range.max {
-                maniac[i] = None;
+                maniac[channel as usize] = None;
             } else {
                 let tree = ManiacTree::new(
                     self.rac,
@@ -222,12 +234,13 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
                     self.update_table,
                     self.limits,
                 )?;
-                maniac[i] = Some(tree);
+                maniac[channel as usize] = Some(tree);
             }
         }
 
-        for (chan, tree) in channels.as_ref().iter().zip(maniac.iter_mut()) {
-            self.channel_pass(*chan, tree)?;
+        let channels = P::get_chan_order();
+        for chan in channels.as_ref() {
+            self.channel_pass(*chan, &mut maniac[chan.as_channel() as usize])?;
         }
 
         // undo transofrms and copy raw data
