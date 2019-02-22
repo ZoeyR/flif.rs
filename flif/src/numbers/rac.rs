@@ -91,6 +91,7 @@ impl<R: Read> Rac<R> {
         })
     }
 
+    #[inline(always)]
     fn input(&mut self) -> Result<()> {
         for _ in 0..2 {
             if self.range <= Self::MIN_RANGE {
@@ -107,6 +108,7 @@ impl<R: Read> Rac<R> {
         Ok(())
     }
 
+    #[inline(always)]
     fn get(&mut self, chance: u32) -> Result<bool> {
         // this should never happen via a malicious file,
         // the chance here should be produced by our projection
