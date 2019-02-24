@@ -4,8 +4,8 @@ use std::io::Read;
 use std::io::Write;
 
 use super::FlifReadExt;
-use error::*;
-use numbers::chances::{ChanceTable, ChanceTableEntry};
+use crate::error::*;
+use crate::numbers::chances::{ChanceTable, ChanceTableEntry};
 
 pub trait RacRead {
     fn read_bit(&mut self) -> Result<bool>;
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_chance() {
-        use numbers::rac::{Rac, RacRead};
+        use crate::numbers::rac::{Rac, RacRead};
 
         let mut buf: Vec<u8> = vec![];
         {
@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_rac_bidirectional_bits() {
-        use numbers::rac::{Rac, RacRead};
+        use crate::numbers::rac::{Rac, RacRead};
 
         let mut buf: Vec<u8> = vec![];
         {

@@ -15,16 +15,14 @@ macro_rules! test_equality {
     ($name:ident) => {
         #[test]
         fn $name() {
-            let png_data = include_bytes!(
-                concat!("../../resources/", stringify!($name), ".png")
-            ).as_ref();
-            let flif_data = include_bytes!(
-                concat!("../../resources/", stringify!($name), ".flif")
-            ).as_ref();
+            let png_data =
+                include_bytes!(concat!("../../resources/", stringify!($name), ".png")).as_ref();
+            let flif_data =
+                include_bytes!(concat!("../../resources/", stringify!($name), ".flif")).as_ref();
             let image = Flif::decode(flif_data).unwrap();
             assert!(decode_png(png_data) == image.into_raw());
         }
-    }
+    };
 }
 
 test_equality!(sea_snail);

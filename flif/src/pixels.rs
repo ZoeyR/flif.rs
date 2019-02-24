@@ -33,7 +33,9 @@ pub trait Pixel: Default + Copy {
     fn to_rgba(&self) -> Rgba;
     fn get_chan_order() -> Self::ChanOrder;
     #[inline(always)]
-    fn maniac_init_order() -> Self::ChanOrder { Self::get_chan_order() }
+    fn maniac_init_order() -> Self::ChanOrder {
+        Self::get_chan_order()
+    }
     fn size() -> usize;
 }
 
@@ -47,9 +49,13 @@ pub enum GreyChannels {
 
 impl ChannelsTrait for GreyChannels {
     #[inline(always)]
-    fn as_channel(&self) -> RgbaChannels { RgbaChannels::Red }
+    fn as_channel(&self) -> RgbaChannels {
+        RgbaChannels::Red
+    }
     #[inline(always)]
-    fn is_alpha(&self) -> bool { false }
+    fn is_alpha(&self) -> bool {
+        false
+    }
 }
 
 impl Pixel for Greyscale {
@@ -57,17 +63,25 @@ impl Pixel for Greyscale {
     type ChanOrder = [GreyChannels; 1];
 
     #[inline(always)]
-    fn is_rgba() -> bool { false }
+    fn is_rgba() -> bool {
+        false
+    }
     #[inline(always)]
-    fn get_value(&self, _chan: Self::Channels) -> ColorValue { self.0 }
+    fn get_value(&self, _chan: Self::Channels) -> ColorValue {
+        self.0
+    }
     #[inline(always)]
     fn set_value(&mut self, val: ColorValue, _chan: Self::Channels) {
         self.0 = val;
     }
     #[inline(always)]
-    fn is_alpha_zero(&self) -> bool { false }
+    fn is_alpha_zero(&self) -> bool {
+        false
+    }
     #[inline(always)]
-    fn get_red_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> { None }
+    fn get_red_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> {
+        None
+    }
     #[inline(always)]
     fn get_green_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> {
         None
@@ -77,13 +91,18 @@ impl Pixel for Greyscale {
         None
     }
     #[inline(always)]
-    fn to_rgba(&self) -> Rgba { Rgba([self.0, 0, 0, 0]) }
+    fn to_rgba(&self) -> Rgba {
+        Rgba([self.0, 0, 0, 0])
+    }
     #[inline(always)]
-    fn get_chan_order() -> Self::ChanOrder { [GreyChannels::Grey] }
+    fn get_chan_order() -> Self::ChanOrder {
+        [GreyChannels::Grey]
+    }
     #[inline(always)]
-    fn size() -> usize { 1 }
+    fn size() -> usize {
+        1
+    }
 }
-
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Rgb([ColorValue; 3]);
@@ -105,7 +124,9 @@ impl ChannelsTrait for RgbChannels {
         }
     }
     #[inline(always)]
-    fn is_alpha(&self) -> bool { false }
+    fn is_alpha(&self) -> bool {
+        false
+    }
 }
 
 impl Pixel for Rgb {
@@ -113,7 +134,9 @@ impl Pixel for Rgb {
     type ChanOrder = [RgbChannels; 3];
 
     #[inline(always)]
-    fn is_rgba() -> bool { false }
+    fn is_rgba() -> bool {
+        false
+    }
     #[inline(always)]
     fn get_value(&self, chan: Self::Channels) -> ColorValue {
         self.0[chan as usize]
@@ -123,7 +146,9 @@ impl Pixel for Rgb {
         self.0[chan as usize] = val;
     }
     #[inline(always)]
-    fn is_alpha_zero(&self) -> bool { false }
+    fn is_alpha_zero(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn get_red_pvec(&self, chan: Self::Channels) -> Option<ColorValue> {
         if chan == RgbChannels::Green || chan == RgbChannels::Blue {
@@ -134,22 +159,29 @@ impl Pixel for Rgb {
     }
     #[inline(always)]
     fn get_green_pvec(&self, chan: Self::Channels) -> Option<ColorValue> {
-        if chan == RgbChannels::Blue { Some(self.0[1]) } else { None }
+        if chan == RgbChannels::Blue {
+            Some(self.0[1])
+        } else {
+            None
+        }
     }
     #[inline(always)]
     fn get_alpha_pvec(&self, _chan: Self::Channels) -> Option<ColorValue> {
         None
     }
     #[inline(always)]
-    fn to_rgba(&self) -> Rgba { Rgba([self.0[0], self.0[1], self.0[2], 0]) }
+    fn to_rgba(&self) -> Rgba {
+        Rgba([self.0[0], self.0[1], self.0[2], 0])
+    }
     #[inline(always)]
     fn get_chan_order() -> Self::ChanOrder {
         [RgbChannels::Red, RgbChannels::Green, RgbChannels::Blue]
     }
     #[inline(always)]
-    fn size() -> usize { 3 }
+    fn size() -> usize {
+        3
+    }
 }
-
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Rgba(pub [ColorValue; 4]);
@@ -165,16 +197,22 @@ pub enum RgbaChannels {
 impl RgbaChannels {
     /// this order is different from `get_chan_order`
     pub const ORDER: [Self; 4] = [
-        RgbaChannels::Red, RgbaChannels::Green,
-        RgbaChannels::Blue, RgbaChannels::Alpha
+        RgbaChannels::Red,
+        RgbaChannels::Green,
+        RgbaChannels::Blue,
+        RgbaChannels::Alpha,
     ];
 }
 
 impl ChannelsTrait for RgbaChannels {
     #[inline(always)]
-    fn as_channel(&self) -> RgbaChannels { *self }
+    fn as_channel(&self) -> RgbaChannels {
+        *self
+    }
     #[inline(always)]
-    fn is_alpha(&self) -> bool { *self == RgbaChannels::Alpha }
+    fn is_alpha(&self) -> bool {
+        *self == RgbaChannels::Alpha
+    }
 }
 
 impl Pixel for Rgba {
@@ -182,7 +220,9 @@ impl Pixel for Rgba {
     type ChanOrder = [RgbaChannels; 4];
 
     #[inline(always)]
-    fn is_rgba() -> bool { true }
+    fn is_rgba() -> bool {
+        true
+    }
     #[inline(always)]
     fn get_value(&self, chan: Self::Channels) -> ColorValue {
         self.0[chan as usize]
@@ -192,7 +232,9 @@ impl Pixel for Rgba {
         self.0[chan as usize] = val;
     }
     #[inline(always)]
-    fn is_alpha_zero(&self) -> bool { self.0[3] == 0 }
+    fn is_alpha_zero(&self) -> bool {
+        self.0[3] == 0
+    }
     #[inline(always)]
     fn get_red_pvec(&self, chan: Self::Channels) -> Option<ColorValue> {
         if chan == RgbaChannels::Green || chan == RgbaChannels::Blue {
@@ -203,14 +245,24 @@ impl Pixel for Rgba {
     }
     #[inline(always)]
     fn get_green_pvec(&self, chan: Self::Channels) -> Option<ColorValue> {
-        if chan == RgbaChannels::Blue { Some(self.0[1]) } else { None }
+        if chan == RgbaChannels::Blue {
+            Some(self.0[1])
+        } else {
+            None
+        }
     }
     #[inline(always)]
     fn get_alpha_pvec(&self, chan: Self::Channels) -> Option<ColorValue> {
-        if chan != RgbaChannels::Alpha { Some(self.0[3]) } else { None }
+        if chan != RgbaChannels::Alpha {
+            Some(self.0[3])
+        } else {
+            None
+        }
     }
     #[inline(always)]
-    fn to_rgba(&self) -> Rgba { *self }
+    fn to_rgba(&self) -> Rgba {
+        *self
+    }
     #[inline(always)]
     fn get_chan_order() -> Self::ChanOrder {
         [
@@ -230,6 +282,7 @@ impl Pixel for Rgba {
         ]
     }
     #[inline(always)]
-    fn size() -> usize { 4 }
+    fn size() -> usize {
+        4
+    }
 }
-

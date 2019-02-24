@@ -1,16 +1,15 @@
 use std::io::Read;
 
-use pixels::ColorValue;
-use components::transformations::Transform;
-pub use error::{Error, Result};
-use maniac::{core_pvec, edge_pvec, ManiacTree};
-use numbers::rac::Rac;
-use numbers::median3;
-use numbers::chances::UpdateTable;
-use {FlifInfo, Limits};
-
-use pixels::{Pixel, ChannelsTrait};
-pub use decoder::Decoder;
+use crate::components::transformations::Transform;
+pub use crate::decoder::Decoder;
+pub use crate::error::{Error, Result};
+use crate::maniac::{core_pvec, edge_pvec, ManiacTree};
+use crate::numbers::chances::UpdateTable;
+use crate::numbers::median3;
+use crate::numbers::rac::Rac;
+use crate::pixels::ColorValue;
+use crate::pixels::{ChannelsTrait, Pixel};
+use crate::{FlifInfo, Limits};
 
 pub(crate) struct DecodingImage<'a, P: Pixel, R: Read + 'a> {
     height: u32,
@@ -49,7 +48,9 @@ pub(crate) struct CorePixelVicinity<P: Pixel> {
 // safety criterias defined by `debug_assert`s
 impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
     pub fn new(
-        info: &'a FlifInfo, rac: &'a mut Rac<R>, limits: &'a Limits,
+        info: &'a FlifInfo,
+        rac: &'a mut Rac<R>,
+        limits: &'a Limits,
         update_table: &'a UpdateTable,
     ) -> Result<DecodingImage<'a, P, R>> {
         let pixels = (info.header.height * info.header.width) as usize;
@@ -78,9 +79,7 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         self.data.get_unchecked(self.get_idx(x, y)).get_value(chan)
     }
 
-    unsafe fn get_edge_vicinity(&self, x: u32, y: u32, chan: P::Channels)
-        -> EdgePixelVicinity<P>
-    {
+    unsafe fn get_edge_vicinity(&self, x: u32, y: u32, chan: P::Channels) -> EdgePixelVicinity<P> {
         debug_assert!(x < self.width && y < self.height && self.check_data());
         EdgePixelVicinity {
             pixel: *self.data.get_unchecked(self.get_idx(x, y)),
@@ -118,9 +117,7 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         }
     }
 
-    unsafe fn get_core_vicinity(&self, x: u32, y: u32, chan: P::Channels)
-        -> CorePixelVicinity<P>
-    {
+    unsafe fn get_core_vicinity(&self, x: u32, y: u32, chan: P::Channels) -> CorePixelVicinity<P> {
         debug_assert!(x < self.width - 1 && y < self.height && x > 1 && y > 1 && self.check_data());
         CorePixelVicinity {
             pixel: *self.data.get_unchecked(self.get_idx(x, y)),
@@ -139,13 +136,12 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         vic: EdgePixelVicinity<P>,
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
-    ) -> Result<i16>
-    {
+    ) -> Result<i16> {
         let c = chan.as_channel();
         let pix = vic.pixel.to_rgba();
         let range = self.info.transform.crange(c, pix);
-        let skip = self.info.second_header.alpha_zero &&
-                !chan.is_alpha() && vic.pixel.is_alpha_zero();
+        let skip =
+            self.info.second_header.alpha_zero && !chan.is_alpha() && vic.pixel.is_alpha_zero();
 
         Ok(if let Some(ref mut maniac) = maniac {
             let guess = make_edge_guess(self.info, &vic);
@@ -166,13 +162,12 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         vic: CorePixelVicinity<P>,
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
-    ) -> Result<i16>
-    {
+    ) -> Result<i16> {
         let c = chan.as_channel();
         let pix = vic.pixel.to_rgba();
         let range = self.info.transform.crange(c, pix);
-        let skip = self.info.second_header.alpha_zero &&
-                !chan.is_alpha() && vic.pixel.is_alpha_zero();
+        let skip =
+            self.info.second_header.alpha_zero && !chan.is_alpha() && vic.pixel.is_alpha_zero();
 
         Ok(if let Some(ref mut maniac) = maniac {
             let guess = make_core_guess(&vic);
@@ -194,8 +189,7 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         y: u32,
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let vic = self.get_edge_vicinity(x, y, chan);
         let val = self.process_edge_pixel_safe(vic, chan, maniac)?;
         let idx = self.get_idx(x, y);
@@ -209,8 +203,7 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
         y: u32,
         chan: P::Channels,
         maniac: &mut Option<ManiacTree<'a>>,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let vic = self.get_core_vicinity(x, y, chan);
         let val = self.process_core_pixel_safe(vic, chan, maniac)?;
         let idx = self.get_idx(x, y);
@@ -227,13 +220,8 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
             if range.min == range.max {
                 maniac[channel as usize] = None;
             } else {
-                let tree = ManiacTree::new(
-                    self.rac,
-                    channel,
-                    self.info,
-                    self.update_table,
-                    self.limits,
-                )?;
+                let tree =
+                    ManiacTree::new(self.rac, channel, self.info, self.update_table, self.limits)?;
                 maniac[channel as usize] = Some(tree);
             }
         }
@@ -245,17 +233,19 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
 
         // undo transofrms and copy raw data
         let n = P::size();
-        let mut raw = Vec::with_capacity(n*self.data.len());
+        let mut raw = Vec::with_capacity(n * self.data.len());
         for pixel in self.data.iter_mut() {
             let rgba = self.info.transform.undo(pixel.to_rgba());
-            raw.extend(rgba.0[..n].iter().map(|v| *v as u8 ));
+            raw.extend(rgba.0[..n].iter().map(|v| *v as u8));
         }
 
         Ok(raw.into_boxed_slice())
     }
 
     fn channel_pass(
-        &mut self, chan: P::Channels, maniac: &mut Option<ManiacTree<'a>>
+        &mut self,
+        chan: P::Channels,
+        maniac: &mut Option<ManiacTree<'a>>,
     ) -> Result<()> {
         let width = self.width;
         let height = self.height;
@@ -294,7 +284,6 @@ impl<'a, P: Pixel, R: Read> DecodingImage<'a, P, R> {
     }
 }
 
-
 fn make_core_guess<P: Pixel>(pix_vic: &CorePixelVicinity<P>) -> i16 {
     let left = pix_vic.left;
     let top = pix_vic.top;
@@ -304,7 +293,9 @@ fn make_core_guess<P: Pixel>(pix_vic: &CorePixelVicinity<P>) -> i16 {
 }
 
 fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
-    where P: Pixel, P::Channels: ChannelsTrait
+where
+    P: Pixel,
+    P::Channels: ChannelsTrait,
 {
     let transformation = &info.transform;
 
@@ -312,20 +303,14 @@ fn make_edge_guess<P>(info: &FlifInfo, vic: &EdgePixelVicinity<P>) -> i16
         val
     } else if let Some(val) = vic.top {
         val
-    } else if info.second_header.alpha_zero &&
-        !vic.chan.is_alpha() && vic.pixel.is_alpha_zero()
-    {
+    } else if info.second_header.alpha_zero && !vic.chan.is_alpha() && vic.pixel.is_alpha_zero() {
         let chan = vic.chan.as_channel();
         (transformation.range(chan).min + transformation.range(chan).max) / 2
     } else {
         transformation.range(vic.chan.as_channel()).min
     };
 
-    let top = if let Some(val) = vic.top {
-        val
-    } else {
-        left
-    };
+    let top = if let Some(val) = vic.top { val } else { left };
 
     let top_left = if let Some(val) = vic.top_left {
         val

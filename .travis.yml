@@ -3,7 +3,7 @@ rust:
   - stable
   - beta
   - nightly
-  - 1.26.0
+  - 1.31.0
 env:
 
 matrix:
@@ -15,7 +15,7 @@ matrix:
       env:
     - rust: nightly
       env: RUSTFMT=true
-    - rust: 1.26.0
+    - rust: 1.31.0
 
 before_script:
 - |

@@ -1,14 +1,14 @@
 use std::io::Read;
 
 use super::{Flif, FlifInfo, Metadata};
-use components::header::{BytesPerChannel, Header, SecondHeader};
-use decoding_image::DecodingImage;
-use pixels::{Greyscale, Rgb, Rgba};
-use error::*;
-use numbers::chances::UpdateTable;
-use numbers::rac::Rac;
-use pixels::ColorSpace;
-use Limits;
+use crate::components::header::{BytesPerChannel, Header, SecondHeader};
+use crate::decoding_image::DecodingImage;
+use crate::error::*;
+use crate::numbers::chances::UpdateTable;
+use crate::numbers::rac::Rac;
+use crate::pixels::ColorSpace;
+use crate::pixels::{Greyscale, Rgb, Rgba};
+use crate::Limits;
 
 pub struct Decoder<R: Read> {
     limits: Limits,
@@ -63,21 +63,27 @@ impl<R: Read> Decoder<R> {
         );
 
         let raw = match self.info.header.channels {
-            ColorSpace::Monochrome => {
-                DecodingImage::<Greyscale, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
-            ColorSpace::RGB => {
-                DecodingImage::<Rgb, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
-            ColorSpace::RGBA => {
-                DecodingImage::<Rgba, _>::new(
-                    &self.info, &mut self.rac, &self.limits, &update_table
-                )?.process()?
-            },
+            ColorSpace::Monochrome => DecodingImage::<Greyscale, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?
+            .process()?,
+            ColorSpace::RGB => DecodingImage::<Rgb, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?
+            .process()?,
+            ColorSpace::RGBA => DecodingImage::<Rgba, _>::new(
+                &self.info,
+                &mut self.rac,
+                &self.limits,
+                &update_table,
+            )?
+            .process()?,
         };
 
         Ok(Flif {

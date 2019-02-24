@@ -5,6 +5,7 @@ authors = ["Daniel Griffen <daniel@griffen.io>"]
 license = "MIT OR Apache-2.0"
 description = "FLIF decoder CLI tool"
 repository = "https://github.com/dgriffen/flif.rs"
+edition = "2018"
 
 [dependencies]
 structopt = "0.2"

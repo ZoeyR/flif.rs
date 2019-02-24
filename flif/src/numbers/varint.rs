@@ -1,7 +1,8 @@
 use std::io::Read;
 
 use super::FlifReadExt;
-use error::{Error, Result};
+use crate::error::{Error, Result};
+
 use num_traits::{PrimInt, Unsigned};
 
 // T::from(_).unwrap() is panic-safe in this function because there exists no type that is both
@@ -34,7 +35,7 @@ pub fn read_varint<R: Read, T: PrimInt + Unsigned>(mut reader: R) -> Result<T> {
 mod tests {
     #[test]
     fn test_varint_read() {
-        use numbers::FlifReadExt;
+        use crate::numbers::FlifReadExt;
 
         let buf = [0x82, 0x5F, 0x82, 0x2F];
 
@@ -46,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_varint_max_read() {
-        use numbers::FlifReadExt;
+        use crate::numbers::FlifReadExt;
 
         let buf = [0x8F, 0xFF, 0xFF, 0xFF, 0x7F];
         let num: u32 = buf.as_ref().read_varint().unwrap();
@@ -55,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_varint_min_read() {
-        use numbers::FlifReadExt;
+        use crate::numbers::FlifReadExt;
 
         let buf = [0x00];
         let num: u32 = buf.as_ref().read_varint().unwrap();
@@ -64,8 +65,8 @@ mod tests {
 
     #[test]
     fn test_varint_overflow_read() {
-        use error::*;
-        use numbers::FlifReadExt;
+        use crate::error::*;
+        use crate::numbers::FlifReadExt;
 
         let buf = [0xFF, 0xFF, 0xFF, 0xFF, 0x7F];
         let result: Result<u32> = buf.as_ref().read_varint();

@@ -1,6 +1,6 @@
 use super::Transform;
-use components::transformations::ColorRange;
-use pixels::{Rgba, RgbaChannels};
+use crate::components::transformations::ColorRange;
+use crate::pixels::{Rgba, RgbaChannels};
 
 #[derive(Debug)]
 pub struct PermutePlanes {
@@ -22,7 +22,9 @@ impl PermutePlanes {
 }
 
 impl Transform for PermutePlanes {
-    fn undo(&self, pixel: Rgba) -> Rgba { pixel }
+    fn undo(&self, pixel: Rgba) -> Rgba {
+        pixel
+    }
 
     fn range(&self, channel: RgbaChannels) -> ColorRange {
         let min = match channel {

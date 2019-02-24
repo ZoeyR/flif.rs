@@ -1,5 +1,5 @@
-use pixels::{Pixel, ColorSpace, ColorValue};
-use decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use crate::decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use crate::pixels::{ColorSpace, ColorValue, Pixel};
 
 type Pvec = [ColorValue; 10];
 
@@ -69,12 +69,13 @@ pub(crate) fn edge_pvec<P: Pixel>(pred: ColorValue, pvic: &EdgePixelVicinity<P>)
     pvec[i] = pred;
 
     // median index
-    if let (Some(left), Some(top), Some(top_left)) =
-        (pvic.left, pvic.top, pvic.top_left)
-    {
-        if pred == left + top - top_left { }
-        else if pred == left { pvec[i + 1] = 1 }
-        else if pred == top { pvec[i + 1] = 2 }
+    if let (Some(left), Some(top), Some(top_left)) = (pvic.left, pvic.top, pvic.top_left) {
+        if pred == left + top - top_left {
+        } else if pred == left {
+            pvec[i + 1] = 1
+        } else if pred == top {
+            pvec[i + 1] = 2
+        }
     }
 
     if let (Some(top_left), Some(left)) = (pvic.top_left, pvic.left) {

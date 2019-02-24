@@ -2,11 +2,11 @@ use self::bounds::Bounds;
 use self::channel_compact::ChannelCompact;
 use self::permute_planes::PermutePlanes;
 use self::ycocg::YCoGg;
-use pixels::{Rgba, RgbaChannels, ColorSpace, ColorValue};
-use error::*;
-use numbers::chances::UpdateTable;
-use numbers::rac::RacRead;
-use numbers::symbol::UniformSymbolCoder;
+use crate::error::*;
+use crate::numbers::chances::UpdateTable;
+use crate::numbers::rac::RacRead;
+use crate::numbers::symbol::UniformSymbolCoder;
+use crate::pixels::{ColorSpace, ColorValue, Rgba, RgbaChannels};
 
 mod bounds;
 mod channel_compact;
@@ -102,7 +102,9 @@ impl Transform for Box<Transform> {
 struct Orig;
 
 impl Transform for Orig {
-    fn undo(&self, pixel: Rgba) -> Rgba { pixel }
+    fn undo(&self, pixel: Rgba) -> Rgba {
+        pixel
+    }
 
     fn range(&self, _channel: RgbaChannels) -> ColorRange {
         ColorRange { min: 0, max: 255 }

@@ -1,11 +1,12 @@
 [package]
 name = "flif"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Daniel Griffen <daniel@griffen.io>"]
 license = "MIT OR Apache-2.0"
 description = "FLIF decoder written in pure Rust"
 repository = "https://github.com/dgriffen/flif.rs"
 documentation = "https://docs.rs/flif"
+edition = "2018"
 
 [dependencies]
 inflate = "0.4"

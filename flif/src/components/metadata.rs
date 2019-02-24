@@ -1,9 +1,10 @@
 use std::io::Read;
 
-use error::*;
+use crate::error::*;
+use crate::numbers::FlifReadExt;
+use crate::Limits;
+
 use inflate::inflate_bytes;
-use numbers::FlifReadExt;
-use Limits;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ChunkType {

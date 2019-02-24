@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Pixels are now reworked to be more performant
+- Updated projects to 2018 edition
+
+### Removed
+- Deprecated color module
+- get_raw_pixels() method
 
 ## [0.3.0] - 2018-7-28
 ### Added

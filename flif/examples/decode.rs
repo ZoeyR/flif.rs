@@ -1,10 +1,7 @@
-extern crate flif;
-extern crate png;
-
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
-use flif::colors::ColorSpace;
+use flif::components::ColorSpace;
 use flif::Flif;
 use png::HasParameters;
 

@@ -1,6 +1,6 @@
 use super::Transform;
-use pixels::{Rgba, RgbaChannels};
-use components::transformations::ColorRange;
+use crate::components::transformations::ColorRange;
+use crate::pixels::{Rgba, RgbaChannels};
 
 const R: usize = 0;
 const G: usize = 1;
@@ -39,7 +39,8 @@ impl Transform for YCoGg {
         let blue = pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
         let alpha = pixel[3];
 
-        self.previous_transformation.undo(Rgba([red, green, blue, alpha]))
+        self.previous_transformation
+            .undo(Rgba([red, green, blue, alpha]))
     }
 
     fn range(&self, channel: RgbaChannels) -> ColorRange {

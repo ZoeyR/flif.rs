@@ -1,7 +1,8 @@
-use error::*;
+use crate::error::*;
+use crate::numbers::chances::{ChanceTable, ChanceTableEntry};
+use crate::numbers::rac::RacRead;
+
 use num_traits::PrimInt;
-use numbers::chances::{ChanceTable, ChanceTableEntry};
-use numbers::rac::RacRead;
 
 use std::cmp;
 
