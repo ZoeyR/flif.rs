@@ -2,16 +2,16 @@
 
 use std::io::Read;
 
-use components::transformations::ColorRange;
-use components::transformations::Transform;
-use error::*;
-use pixels::{RgbaChannels, ColorSpace, ColorValue};
-use numbers::chances::{ChanceTable, UpdateTable};
-use numbers::near_zero::NearZeroCoder;
-use numbers::rac::{Rac, RacRead};
-use DecodingImage;
-use FlifInfo;
-use Limits;
+use crate::components::transformations::ColorRange;
+use crate::components::transformations::Transform;
+use crate::error::*;
+use crate::numbers::chances::{ChanceTable, UpdateTable};
+use crate::numbers::near_zero::NearZeroCoder;
+use crate::numbers::rac::{Rac, RacRead};
+use crate::pixels::{ColorSpace, ColorValue, RgbaChannels};
+use crate::DecodingImage;
+use crate::FlifInfo;
+use crate::Limits;
 
 mod pvec;
 pub(crate) use self::pvec::{core_pvec, edge_pvec};

@@ -1,17 +1,19 @@
 [package]
 name = "flif"
-version = "0.3.0"
+version = "0.4.1"
 authors = ["Daniel Griffen <daniel@griffen.io>"]
-license = "MIT"
+license = "MIT OR Apache-2.0"
 description = "FLIF decoder written in pure Rust"
 repository = "https://github.com/dgriffen/flif.rs"
 documentation = "https://docs.rs/flif"
+edition = "2018"
 keywords = ["flif", "decoder"]
 categories = ["multimedia::encoding", "multimedia::images"]
+
 
 [dependencies]
 inflate = "0.4"
 num-traits = "0.2"
 
 [dev-dependencies]
-png = "0.12"
+png = "0.13"

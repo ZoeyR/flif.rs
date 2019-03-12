@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.4.0] - 2019-2-21
+### Fixed
+- `ChannelCompact` not correctly undoing transformation
+
+### Changed
+- Pixels are now reworked to be more performant
+- Updated projects to 2018 edition
+
+### Removed
+- Deprecated color module
+- get_raw_pixels() method
+
 ## [0.3.0] - 2018-7-28
 ### Added
 - `Limits` struct to prevent OOM errors from malicious inputs
@@ -67,3 +79,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [0.1.0]: https://github.com/dgriffen/flif.rs/compare/v0.0.2...v0.1.0
 [0.2.0]: https://github.com/dgriffen/flif.rs/compare/v0.1.0...v0.2.0
 [0.3.0]: https://github.com/dgriffen/flif.rs/compare/v0.2.0...v0.3.0
+[0.4.0]: https://github.com/dgriffen/flif.rs/compare/v0.2.0...v0.4.0

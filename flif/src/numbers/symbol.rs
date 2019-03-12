@@ -1,5 +1,6 @@
 use super::rac::RacRead;
-use error::*;
+use crate::error::*;
+
 use num_traits::PrimInt;
 
 pub trait UniformSymbolCoder {

@@ -1,14 +1,8 @@
-extern crate flif;
-extern crate png;
-extern crate structopt;
-#[macro_use]
-extern crate structopt_derive;
-
 use std::fs::File;
 use std::io::Write;
 use std::io::{BufReader, BufWriter};
 
-use flif::colors::ColorSpace;
+use flif::components::ColorSpace;
 use flif::{Decoder, FlifInfo};
 use flif::{Error, Result};
 use png::HasParameters;
@@ -91,11 +85,11 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
             let mut writer = encoder.write_header().unwrap();
 
             // Get the raw pixel array of the FLIF image
-            let data = image.get_raw_pixels();
+            let data = image.raw();
             // Save as PNG
             writer.write_image_data(&data).unwrap();
         } else {
-            std::io::stdout().write_all(&image.get_raw_pixels())?;
+            std::io::stdout().write_all(&image.raw())?;
         }
     }
     Ok(())

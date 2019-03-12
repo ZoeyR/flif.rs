@@ -12,11 +12,9 @@
 //!     let reader = BufReader::new(file);
 //!     let image = Flif::decode(reader).unwrap();
 //!     println!("image info: {:?}", image.info());
-//!     let raw_pixels = image.get_raw_pixels();
+//!     let raw_pixels = image.raw();
 //! }
 //! ```
-extern crate inflate;
-extern crate num_traits;
 
 use std::io::Read;
 
@@ -28,7 +26,6 @@ use decoding_image::DecodingImage;
 pub use decoder::Decoder;
 pub use error::{Error, Result};
 
-pub mod colors;
 pub mod components;
 mod decoder;
 mod decoding_image;
@@ -53,11 +50,6 @@ impl Flif {
 
     pub fn info(&self) -> &FlifInfo {
         &self.info
-    }
-
-    #[deprecated(since="0.3.1", note="please use `raw` and `into_raw` instead")]
-    pub fn get_raw_pixels(&self) -> Vec<u8> {
-        self.raw.to_vec()
     }
 
     pub fn raw(&self) -> &Box<[u8]> {

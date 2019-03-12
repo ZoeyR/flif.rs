@@ -1,88 +1,33 @@
 extern crate flif;
 extern crate png;
 
-use std::fs::File;
-use std::io::BufReader;
-
 use flif::Flif;
 
-#[test]
-fn sea_snail() {
-    let decoder = png::Decoder::new(File::open("../resources/sea_snail.png").unwrap());
+fn decode_png(png_data: &[u8]) -> Box<[u8]> {
+    let decoder = png::Decoder::new(png_data);
     let (info, mut reader) = decoder.read_info().unwrap();
-    // Allocate the output buffer.
     let mut buf = vec![0; info.buffer_size()];
-    // Read the next frame. Currently this function should only called once.
-    // The default options
     reader.next_frame(&mut buf).unwrap();
-
-    let file = BufReader::new(File::open("../resources/sea_snail.flif").unwrap());
-    let image = Flif::decode(file).unwrap();
-
-    assert_eq!(buf, &image.raw()[..]);
+    buf.into_boxed_slice()
 }
 
-#[test]
-fn sea_snail_cutout() {
-    let decoder = png::Decoder::new(File::open("../resources/sea_snail_cutout.png").unwrap());
-    let (info, mut reader) = decoder.read_info().unwrap();
-    // Allocate the output buffer.
-    let mut buf = vec![0; info.buffer_size()];
-    // Read the next frame. Currently this function should only called once.
-    // The default options
-    reader.next_frame(&mut buf).unwrap();
-
-    let file = BufReader::new(File::open("../resources/sea_snail_cutout.flif").unwrap());
-    let image = Flif::decode(file).unwrap();
-
-    assert_eq!(buf, &image.raw()[..]);
+macro_rules! test_equality {
+    ($name:ident) => {
+        #[test]
+        fn $name() {
+            let png_data =
+                include_bytes!(concat!("../../resources/", stringify!($name), ".png")).as_ref();
+            let flif_data =
+                include_bytes!(concat!("../../resources/", stringify!($name), ".flif")).as_ref();
+            let image = Flif::decode(flif_data).unwrap();
+            assert!(decode_png(png_data) == image.into_raw());
+        }
+    };
 }
 
-#[test]
-fn flif_logo() {
-    let decoder = png::Decoder::new(File::open("../resources/flif_logo.png").unwrap());
-    let (info, mut reader) = decoder.read_info().unwrap();
-    // Allocate the output buffer.
-    let mut buf = vec![0; info.buffer_size()];
-    // Read the next frame. Currently this function should only called once.
-    // The default options
-    reader.next_frame(&mut buf).unwrap();
-
-    let file = BufReader::new(File::open("../resources/flif_logo.flif").unwrap());
-    let image = Flif::decode(file).unwrap();
-
-    assert_eq!(buf, &image.raw()[..]);
-}
-
-#[test]
-fn road() {
-    let decoder = png::Decoder::new(File::open("../resources/road.png").unwrap());
-    let (info, mut reader) = decoder.read_info().unwrap();
-    // Allocate the output buffer.
-    let mut buf = vec![0; info.buffer_size()];
-    // Read the next frame. Currently this function should only called once.
-    // The default options
-    reader.next_frame(&mut buf).unwrap();
-
-    let file = BufReader::new(File::open("../resources/road.flif").unwrap());
-    let image = Flif::decode(file).unwrap();
-
-    assert_eq!(buf, &image.raw()[..]);
-}
-
-#[test]
-fn road2() {
-    let decoder = png::Decoder::new(File::open("../resources/road2.png").unwrap());
-    let (info, mut reader) = decoder.read_info().unwrap();
-    // Allocate the output buffer.
-    let mut buf = vec![0; info.buffer_size()];
-    // Read the next frame. Currently this function should only called once.
-    // The default options
-    reader.next_frame(&mut buf).unwrap();
-
-    let file = BufReader::new(File::open("../resources/road2.flif").unwrap());
-    let image = Flif::decode(file).unwrap();
-    let data = image.get_raw_pixels();
-
-    assert_eq!(buf[..4], data[..4]);
-}
+test_equality!(sea_snail);
+test_equality!(sea_snail_cutout);
+test_equality!(rust_logo);
+test_equality!(rgba_edge);
+test_equality!(road);
+test_equality!(road2);

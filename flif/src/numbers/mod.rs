@@ -1,7 +1,8 @@
 use std::cmp::{max, min};
 use std::io::Read;
 
-use error::Result;
+use crate::error::Result;
+
 use num_traits::{PrimInt, Unsigned};
 
 pub mod chances;

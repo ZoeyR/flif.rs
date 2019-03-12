@@ -5,11 +5,11 @@ const MANT_TABLE: [u16; 8] = [1900, 1850, 1800, 1750, 1650, 1600, 1600, 2048];
 // This ChanceTable works only for 8 bit images
 #[derive(Debug, Clone)]
 pub struct ChanceTable<'a> {
-    zero: u16,            // ChanceTableEntry::Zero
-    sign: u16,            // ChanceTableEntry::Sign
-    exp_false: [u16; 8],  // [Exp(0, false) ... Exp(7, false)]
-    exp_true: [u16; 8],   // [Exp(0, true) ... Exp(7, true)]
-    mant: [u16; 8],       // [Mant(0) ... Mant(7)]
+    zero: u16,           // ChanceTableEntry::Zero
+    sign: u16,           // ChanceTableEntry::Sign
+    exp_false: [u16; 8], // [Exp(0, false) ... Exp(7, false)]
+    exp_true: [u16; 8],  // [Exp(0, true) ... Exp(7, true)]
+    mant: [u16; 8],      // [Mant(0) ... Mant(7)]
     updates: &'a UpdateTable,
 }
 
@@ -235,7 +235,7 @@ mod tests {
 
     #[test]
     fn test_update_table_true() {
-        use numbers::chances::UpdateTable;
+        use crate::numbers::chances::UpdateTable;
 
         let update_table = UpdateTable::new(19, 2);
         assert_eq!(update_table.updates, UPDATE_TABLE_TRUE.as_ref());
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_update_table_false() {
-        use numbers::chances::UpdateTable;
+        use crate::numbers::chances::UpdateTable;
 
         let update_table = UpdateTable::new(19, 2);
         for i in 1..4096 {
@@ -254,10 +254,10 @@ mod tests {
 
     #[test]
     fn test_near_zero_read() {
-        use error::*;
-        use numbers::chances::{ChanceTable, ChanceTableEntry, UpdateTable};
-        use numbers::near_zero::NearZeroCoder;
-        use numbers::rac::RacRead;
+        use crate::error::*;
+        use crate::numbers::chances::{ChanceTable, ChanceTableEntry, UpdateTable};
+        use crate::numbers::near_zero::NearZeroCoder;
+        use crate::numbers::rac::RacRead;
 
         struct MockRac;
         impl RacRead for MockRac {

@@ -1,5 +1,5 @@
-use pixels::{Pixel, ColorSpace, ColorValue};
-use decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use crate::decoding_image::{CorePixelVicinity, EdgePixelVicinity};
+use crate::pixels::{ColorSpace, ColorValue, Pixel};
 
 type Pvec = [ColorValue; 10];
 
@@ -68,32 +68,33 @@ pub(crate) fn edge_pvec<P: Pixel>(pred: ColorValue, pvic: &EdgePixelVicinity<P>)
 
     pvec[i] = pred;
 
-    let left = pvic.left.unwrap_or(0);
-    let top = pvic.top.unwrap_or(0);
-    let top_left = pvic.top_left.unwrap_or(0);
-
     // median index
-    pvec[i + 1] = match pred {
-        pred if pred == left + top - top_left => 0,
-        pred if pred == left => 1,
-        pred if pred == top => 2,
-        _ => 0,
-    };
+    if let (Some(left), Some(top), Some(top_left)) = (pvic.left, pvic.top, pvic.top_left) {
+        if pred == left + top - top_left {
+        } else if pred == left {
+            pvec[i + 1] = 1
+        } else if pred == top {
+            pvec[i + 1] = 2
+        }
+    }
 
-    if let Some(top_left) = pvic.top_left {
+    if let (Some(top_left), Some(left)) = (pvic.top_left, pvic.left) {
         pvec[i + 2] = left - top_left;
+    }
+
+    if let (Some(top_left), Some(top)) = (pvic.top_left, pvic.top) {
         pvec[i + 3] = top_left - top;
     }
 
-    if let Some(top_right) = pvic.top_right {
+    if let (Some(top_right), Some(top)) = (pvic.top_right, pvic.top) {
         pvec[i + 4] = top - top_right;
     }
 
-    if let Some(top2) = pvic.top2 {
+    if let (Some(top2), Some(top)) = (pvic.top2, pvic.top) {
         pvec[i + 5] = top2 - top;
     }
 
-    if let Some(left2) = pvic.left2 {
+    if let (Some(left2), Some(left)) = (pvic.left2, pvic.left) {
         pvec[i + 6] = left2 - left;
     }
 

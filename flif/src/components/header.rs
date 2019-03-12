@@ -2,13 +2,13 @@ use std::io::Read;
 
 use super::transformations;
 use super::transformations::{Transform, Transformation};
-use pixels::ColorSpace;
-use error::*;
-use numbers::chances::UpdateTable;
-use numbers::rac::RacRead;
-use numbers::symbol::UniformSymbolCoder;
-use numbers::FlifReadExt;
-use Limits;
+use crate::error::*;
+use crate::numbers::chances::UpdateTable;
+use crate::numbers::rac::RacRead;
+use crate::numbers::symbol::UniformSymbolCoder;
+use crate::numbers::FlifReadExt;
+use crate::pixels::ColorSpace;
+use crate::Limits;
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum BytesPerChannel {

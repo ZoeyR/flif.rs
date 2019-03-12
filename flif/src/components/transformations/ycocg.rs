@@ -1,6 +1,6 @@
 use super::Transform;
-use pixels::{Rgba, RgbaChannels};
-use components::transformations::ColorRange;
+use crate::components::transformations::ColorRange;
+use crate::pixels::{Rgba, RgbaChannels};
 
 const R: usize = 0;
 const G: usize = 1;
@@ -10,10 +10,11 @@ const B: usize = 2;
 pub struct YCoGg {
     max: i16,
     alpha_range: ColorRange,
+    previous_transformation: Box<Transform>,
 }
 
 impl YCoGg {
-    pub fn new<T: Transform>(transformation: T) -> YCoGg {
+    pub fn new(transformation: Box<Transform>) -> YCoGg {
         let max_iter = [
             transformation.range(RgbaChannels::Red).max,
             transformation.range(RgbaChannels::Blue).max,
@@ -25,6 +26,7 @@ impl YCoGg {
         YCoGg {
             max: new_max,
             alpha_range: transformation.range(RgbaChannels::Alpha),
+            previous_transformation: transformation,
         }
     }
 }
@@ -37,7 +39,8 @@ impl Transform for YCoGg {
         let blue = pixel[R] + ((1 - pixel[B]) >> 1) - (pixel[G] >> 1);
         let alpha = pixel[3];
 
-        Rgba([red, green, blue, alpha])
+        self.previous_transformation
+            .undo(Rgba([red, green, blue, alpha]))
     }
 
     fn range(&self, channel: RgbaChannels) -> ColorRange {
