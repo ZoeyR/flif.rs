@@ -57,7 +57,7 @@ impl Metadata {
         header_buf[0] = reader.read_u8()?;
         match header_buf[0] {
             0 => return Ok(MetadataType::Required(0)),
-            byte @ 1...31 => return Err(Error::UnknownRequiredMetadata(byte)),
+            byte @ 1..=31 => return Err(Error::UnknownRequiredMetadata(byte)),
             _ => {}
         }
 

@@ -90,5 +90,5 @@ pub struct FlifInfo {
     pub header: Header,
     pub metadata: Vec<Metadata>,
     pub second_header: SecondHeader,
-    transform: Box<Transform>,
+    transform: Box<dyn Transform>,
 }

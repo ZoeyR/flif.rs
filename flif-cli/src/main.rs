@@ -1,3 +1,6 @@
+extern crate png;
+extern crate structopt;
+
 use std::fs::File;
 use std::io::Write;
 use std::io::{BufReader, BufWriter};
@@ -5,7 +8,6 @@ use std::io::{BufReader, BufWriter};
 use flif::components::ColorSpace;
 use flif::{Decoder, FlifInfo};
 use flif::{Error, Result};
-use png::HasParameters;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -76,15 +78,16 @@ fn decode(identify: bool, input: &str, output: Option<String>) -> Result<()> {
                 png::Encoder::new(w, info.header.width as u32, info.header.height as u32);
 
             let color_type = match info.header.channels {
-                ColorSpace::RGBA => png::ColorType::RGBA,
-                ColorSpace::RGB => png::ColorType::RGB,
+                ColorSpace::RGBA => png::ColorType::Rgba,
+                ColorSpace::RGB => png::ColorType::Rgb,
                 ColorSpace::Monochrome => png::ColorType::Grayscale,
             };
 
-            encoder.set(color_type).set(png::BitDepth::Eight);
+            encoder.set_color(color_type);
+            encoder.set_depth(png::BitDepth::Eight);
             let mut writer = encoder.write_header().unwrap();
 
-            // Get the raw pixel array of the FLIF image
+            // Get the raw pixel array of the FLIF imagepng
             let data = image.raw();
             // Save as PNG
             writer.write_image_data(&data).unwrap();

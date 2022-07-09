@@ -23,7 +23,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::InvalidHeader { desc } => desc,
-            Error::Io(ref err) => err.description(),
+            Error::Io(_) => todo!(),
             Error::LimitViolation(_) => "input image violated decoder limits",
             Error::UnknownCriticalMetadata(_) => "encountered an unknown critical metadata",
             Error::UnknownRequiredMetadata(_) => "encountered an unknown required metadata",
@@ -41,7 +41,7 @@ impl error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::InvalidHeader { .. } => None,
             Error::Io(ref err) => Some(err),

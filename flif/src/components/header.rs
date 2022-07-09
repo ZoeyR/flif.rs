@@ -134,7 +134,7 @@ impl SecondHeader {
     pub(crate) fn from_rac<R: RacRead>(
         main_header: &Header,
         rac: &mut R,
-    ) -> Result<(Self, Box<Transform>)> {
+    ) -> Result<(Self, Box<dyn Transform>)> {
         let bits_per_pixel = (0..main_header.channels as u8)
             .map(|_| match main_header.bytes_per_channel {
                 BytesPerChannel::One => Ok(8),
