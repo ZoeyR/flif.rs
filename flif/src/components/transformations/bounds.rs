@@ -9,13 +9,13 @@ use crate::pixels::{ColorSpace, Rgba, RgbaChannels};
 #[derive(Debug)]
 pub struct Bounds {
     ranges: [ColorRange; 4],
-    previous_transformation: Box<Transform>,
+    previous_transformation: Box<dyn Transform>,
 }
 
 impl Bounds {
     pub fn new<R: RacRead>(
         rac: &mut R,
-        trans: Box<Transform>,
+        trans: Box<dyn Transform>,
         channels: ColorSpace,
         update_table: &UpdateTable,
     ) -> Result<Bounds> {

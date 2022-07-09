@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.4.0] - 2019-2-21
+## [0.4.1] - 2022-07-09
+### Changed
+- Dependencies updated
+- Updated projects to 2021 edition
+
+## [0.4.0] - 2019-02-21
 ### Fixed
 - `ChannelCompact` not correctly undoing transformation
 
@@ -18,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Deprecated color module
 - get_raw_pixels() method
 
-## [0.3.0] - 2018-7-28
+## [0.3.0] - 2018-07-28
 ### Added
 - `Limits` struct to prevent OOM errors from malicious inputs
 

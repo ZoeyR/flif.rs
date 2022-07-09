@@ -84,7 +84,7 @@ pub trait Transform: ::std::fmt::Debug + Send + Sync {
     fn crange(&self, channel: RgbaChannels, values: Rgba) -> ColorRange;
 }
 
-impl Transform for Box<Transform> {
+impl Transform for Box<dyn Transform> {
     fn undo(&self, pixel: Rgba) -> Rgba {
         (**self).undo(pixel)
     }
@@ -119,8 +119,8 @@ pub fn load_transformations<R: RacRead>(
     rac: &mut R,
     channels: ColorSpace,
     update_table: &UpdateTable,
-) -> Result<(Vec<Transformation>, Box<Transform>)> {
-    let mut transform: Box<Transform> = Box::new(Orig);
+) -> Result<(Vec<Transformation>, Box<dyn Transform>)> {
+    let mut transform: Box<dyn Transform> = Box::new(Orig);
     let mut transformations = Vec::new();
     while rac.read_bit()? {
         let id = Transformation::from_id(rac.read_val(0, 13)?).ok_or(Error::InvalidOperation(
@@ -130,9 +130,9 @@ pub fn load_transformations<R: RacRead>(
             Transformation::ChannelCompact => {
                 Box::new(ChannelCompact::new(rac, transform, channels, update_table)?)
             }
-            Transformation::YCoGg => Box::new(YCoGg::new(transform)) as Box<Transform>,
+            Transformation::YCoGg => Box::new(YCoGg::new(transform)) as Box<dyn Transform>,
             Transformation::PermutePlanes => {
-                Box::new(PermutePlanes::new(transform)) as Box<Transform>
+                Box::new(PermutePlanes::new(transform)) as Box<dyn Transform>
             }
             Transformation::Bounds => {
                 Box::new(Bounds::new(rac, transform, channels, update_table)?)

@@ -10,11 +10,11 @@ const B: usize = 2;
 pub struct YCoGg {
     max: i16,
     alpha_range: ColorRange,
-    previous_transformation: Box<Transform>,
+    previous_transformation: Box<dyn Transform>,
 }
 
 impl YCoGg {
-    pub fn new(transformation: Box<Transform>) -> YCoGg {
+    pub fn new(transformation: Box<dyn Transform>) -> YCoGg {
         let max_iter = [
             transformation.range(RgbaChannels::Red).max,
             transformation.range(RgbaChannels::Blue).max,
